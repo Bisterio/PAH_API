@@ -10,10 +10,14 @@ using System.Threading.Tasks;
 namespace Service.Implement {
     public class UserService : IUserService {
         private readonly IUserDAO _userDAO;
+        private readonly ITokenDAO _tokenDAO;
+        private ITokenService _tokenService;
         private readonly int WORK_FACTOR = 13;
 
-        public UserService(IUserDAO userDAO) {
+        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, ITokenService tokenService) {
             _userDAO = userDAO;
+            _tokenDAO = tokenDAO;
+            _tokenService = tokenService;
         }
 
         public User Get(int id) {
@@ -42,7 +46,35 @@ namespace Service.Implement {
             user.Role = (int) Role.Buyer;
             user.ProfilePicture = "To be Implemented";
             user.Status = (int) Status.Available;
+            user.CreatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.Now;
             _userDAO.Register(user);
+        }
+
+        public Tokens AddRefreshToken(int id) {
+            var token = new Tokens { AccessToken = _tokenService.GenerateAccessToken(id), RefreshToken = _tokenService.GenerateRefreshToken() };
+            var dbToken = _tokenDAO.Get(id);
+            if (dbToken != null) {
+                dbToken.RefreshToken = token.RefreshToken;
+                dbToken.ExpiryTime = DateTime.Now.AddMinutes(1);
+                _tokenDAO.UpdateToken(dbToken);
+            } else {
+                _tokenDAO.Add(new Token { Id = id, RefreshToken = token.RefreshToken, ExpiryTime = DateTime.Now.AddMinutes(1) });
+            }
+            return token;
+        }
+
+        public Token GetSavedRefreshToken(int id, string refreshToken) {
+            return _tokenDAO.GetSavedRefreshToken(id, refreshToken);
+        }
+
+        public void RemoveRefreshToken(int id) {
+            var token = _tokenDAO.Get(id);
+            if (token != null) {
+                token.RefreshToken = null;
+                token.ExpiryTime = null;
+                _tokenDAO.UpdateToken(token);
+            }
         }
     }
 }

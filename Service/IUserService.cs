@@ -12,5 +12,9 @@ namespace Service {
         public User GetByEmail(string email);
         public User Login(string email, string password);
         public void Register(User user);
+
+        public Tokens AddRefreshToken(int id);
+        public Token GetSavedRefreshToken(int id, string refreshToken);
+        public void RemoveRefreshToken(int id);
     }
 }
