@@ -15,4 +15,8 @@
     <Folder Include="Request\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Repository\Service.csproj" />
+  </ItemGroup>
+
 </Project>
