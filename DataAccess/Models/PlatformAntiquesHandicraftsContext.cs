@@ -125,7 +125,7 @@ namespace DataAccess.Models
                 entity.HasOne(d => d.Customer)
                     .WithMany(p => p.Addresses)
                     .HasForeignKey(d => d.CustomerId)
-                    .HasConstraintName("FK__Address__custome__48CFD27E");
+                    .HasConstraintName("FK__Address__custome__59063A47");
             });
 
             modelBuilder.Entity<Auction>(entity =>
@@ -175,12 +175,12 @@ namespace DataAccess.Models
                 entity.HasOne(d => d.Product)
                     .WithMany(p => p.Auctions)
                     .HasForeignKey(d => d.ProductId)
-                    .HasConstraintName("FK__Auction__product__619B8048");
+                    .HasConstraintName("FK__Auction__product__59FA5E80");
 
                 entity.HasOne(d => d.Staff)
                     .WithMany(p => p.Auctions)
                     .HasForeignKey(d => d.StaffId)
-                    .HasConstraintName("FK__Auction__staffId__628FA481");
+                    .HasConstraintName("FK__Auction__staffId__5AEE82B9");
             });
 
             modelBuilder.Entity<Bid>(entity =>
@@ -206,12 +206,12 @@ namespace DataAccess.Models
                 entity.HasOne(d => d.Auction)
                     .WithMany(p => p.Bids)
                     .HasForeignKey(d => d.AuctionId)
-                    .HasConstraintName("FK__Bid__auctionId__656C112C");
+                    .HasConstraintName("FK__Bid__auctionId__5BE2A6F2");
 
                 entity.HasOne(d => d.Bidder)
                     .WithMany(p => p.Bids)
                     .HasForeignKey(d => d.BidderId)
-                    .HasConstraintName("FK__Bid__bidderId__66603565");
+                    .HasConstraintName("FK__Bid__bidderId__5CD6CB2B");
             });
 
             modelBuilder.Entity<Buyer>(entity =>
@@ -230,7 +230,7 @@ namespace DataAccess.Models
                     .WithOne(p => p.Buyer)
                     .HasForeignKey<Buyer>(d => d.Id)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Buyer__id__45F365D3");
+                    .HasConstraintName("FK__Buyer__id__5DCAEF64");
             });
 
             modelBuilder.Entity<Category>(entity =>
@@ -277,12 +277,12 @@ namespace DataAccess.Models
                 entity.HasOne(d => d.Buyer)
                     .WithMany(p => p.Feedbacks)
                     .HasForeignKey(d => d.BuyerId)
-                    .HasConstraintName("FK__Feedback__buyerI__6A30C649");
+                    .HasConstraintName("FK__Feedback__buyerI__5EBF139D");
 
                 entity.HasOne(d => d.Product)
                     .WithMany(p => p.Feedbacks)
                     .HasForeignKey(d => d.ProductId)
-                    .HasConstraintName("FK__Feedback__produc__693CA210");
+                    .HasConstraintName("FK__Feedback__produc__5FB337D6");
             });
 
             modelBuilder.Entity<Material>(entity =>
@@ -330,21 +330,25 @@ namespace DataAccess.Models
 
                 entity.Property(e => e.SellerId).HasColumnName("sellerId");
 
-                entity.Property(e => e.ShippingCost).HasColumnName("shippingCost");
+                entity.Property(e => e.ShippingCost)
+                    .HasColumnType("decimal(12, 1)")
+                    .HasColumnName("shippingCost");
 
                 entity.Property(e => e.Status).HasColumnName("status");
 
-                entity.Property(e => e.TotalAmount).HasColumnName("totalAmount");
+                entity.Property(e => e.TotalAmount)
+                    .HasColumnType("decimal(12, 1)")
+                    .HasColumnName("totalAmount");
 
                 entity.HasOne(d => d.Buyer)
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.BuyerId)
-                    .HasConstraintName("FK__Order__buyerId__571DF1D5");
+                    .HasConstraintName("FK__Order__buyerId__60A75C0F");
 
                 entity.HasOne(d => d.Seller)
                     .WithMany(p => p.Orders)
                     .HasForeignKey(d => d.SellerId)
-                    .HasConstraintName("FK__Order__sellerId__5812160E");
+                    .HasConstraintName("FK__Order__sellerId__619B8048");
             });
 
             modelBuilder.Entity<OrderCancellation>(entity =>
@@ -363,13 +367,13 @@ namespace DataAccess.Models
                     .WithOne(p => p.OrderCancellation)
                     .HasForeignKey<OrderCancellation>(d => d.Id)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__OrderCancell__id__5AEE82B9");
+                    .HasConstraintName("FK__OrderCancell__id__628FA481");
             });
 
             modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.HasKey(e => new { e.OrderId, e.ProductId })
-                    .HasName("PK__OrderIte__BAD83E4BB3485B03");
+                    .HasName("PK__OrderIte__BAD83E4B8F6C1EA4");
 
                 entity.ToTable("OrderItem");
 
@@ -379,7 +383,9 @@ namespace DataAccess.Models
 
                 entity.Property(e => e.ImageUrl).HasColumnName("imageUrl");
 
-                entity.Property(e => e.Price).HasColumnName("price");
+                entity.Property(e => e.Price)
+                    .HasColumnType("decimal(12, 1)")
+                    .HasColumnName("price");
 
                 entity.Property(e => e.Quantity).HasColumnName("quantity");
 
@@ -387,13 +393,13 @@ namespace DataAccess.Models
                     .WithMany(p => p.OrderItems)
                     .HasForeignKey(d => d.OrderId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__OrderItem__order__5DCAEF64");
+                    .HasConstraintName("FK__OrderItem__order__6383C8BA");
 
                 entity.HasOne(d => d.Product)
                     .WithMany(p => p.OrderItems)
                     .HasForeignKey(d => d.ProductId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__OrderItem__produ__5EBF139D");
+                    .HasConstraintName("FK__OrderItem__produ__6477ECF3");
             });
 
             modelBuilder.Entity<Product>(entity =>
@@ -459,17 +465,17 @@ namespace DataAccess.Models
                 entity.HasOne(d => d.Category)
                     .WithMany(p => p.Products)
                     .HasForeignKey(d => d.CategoryId)
-                    .HasConstraintName("FK__Product__categor__4F7CD00D");
+                    .HasConstraintName("FK__Product__categor__656C112C");
 
                 entity.HasOne(d => d.Material)
                     .WithMany(p => p.Products)
                     .HasForeignKey(d => d.MaterialId)
-                    .HasConstraintName("FK__Product__materia__5070F446");
+                    .HasConstraintName("FK__Product__materia__66603565");
 
                 entity.HasOne(d => d.Seller)
                     .WithMany(p => p.Products)
                     .HasForeignKey(d => d.SellerId)
-                    .HasConstraintName("FK__Product__sellerI__5165187F");
+                    .HasConstraintName("FK__Product__sellerI__6754599E");
             });
 
             modelBuilder.Entity<ProductImage>(entity =>
@@ -495,13 +501,13 @@ namespace DataAccess.Models
                 entity.HasOne(d => d.Product)
                     .WithMany(p => p.ProductImages)
                     .HasForeignKey(d => d.ProductId)
-                    .HasConstraintName("FK__ProductIm__produ__5441852A");
+                    .HasConstraintName("FK__ProductIm__produ__68487DD7");
             });
 
             modelBuilder.Entity<Response>(entity =>
             {
                 entity.HasKey(e => e.FeedbackId)
-                    .HasName("PK__Response__2613FD24B7F03313");
+                    .HasName("PK__Response__2613FD243F14E0F0");
 
                 entity.ToTable("Response");
 
@@ -521,12 +527,12 @@ namespace DataAccess.Models
                     .WithOne(p => p.Response)
                     .HasForeignKey<Response>(d => d.FeedbackId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Response__feedba__6D0D32F4");
+                    .HasConstraintName("FK__Response__feedba__693CA210");
 
                 entity.HasOne(d => d.Seller)
                     .WithMany(p => p.Responses)
                     .HasForeignKey(d => d.SellerId)
-                    .HasConstraintName("FK__Response__seller__6E01572D");
+                    .HasConstraintName("FK__Response__seller__6A30C649");
             });
 
             modelBuilder.Entity<Seller>(entity =>
@@ -563,7 +569,7 @@ namespace DataAccess.Models
                     .WithOne(p => p.Seller)
                     .HasForeignKey<Seller>(d => d.Id)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Seller__id__4316F928");
+                    .HasConstraintName("FK__Seller__id__6B24EA82");
             });
 
             modelBuilder.Entity<Token>(entity =>
@@ -587,7 +593,7 @@ namespace DataAccess.Models
                     .WithOne(p => p.Token)
                     .HasForeignKey<Token>(d => d.Id)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Token__id__38996AB5");
+                    .HasConstraintName("FK__Token__id__6C190EBB");
             });
 
             modelBuilder.Entity<Transaction>(entity =>
@@ -619,7 +625,7 @@ namespace DataAccess.Models
                 entity.HasOne(d => d.Wallet)
                     .WithMany(p => p.Transactions)
                     .HasForeignKey(d => d.WalletId)
-                    .HasConstraintName("FK__Transacti__walle__403A8C7D");
+                    .HasConstraintName("FK__Transacti__walle__6D0D32F4");
             });
 
             modelBuilder.Entity<User>(entity =>
@@ -648,7 +654,7 @@ namespace DataAccess.Models
                     .HasColumnName("name");
 
                 entity.Property(e => e.Password)
-                    .HasMaxLength(50)
+                    .HasMaxLength(60)
                     .IsUnicode(false)
                     .HasColumnName("password");
 
@@ -693,7 +699,7 @@ namespace DataAccess.Models
                     .WithOne(p => p.Wallet)
                     .HasForeignKey<Wallet>(d => d.Id)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Wallet__id__3D5E1FD2");
+                    .HasConstraintName("FK__Wallet__id__6E01572D");
             });
 
             OnModelCreatingPartial(modelBuilder);

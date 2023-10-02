@@ -17,8 +17,8 @@ namespace DataAccess.Models
         public string? RecipientPhone { get; set; }
         public string? RecipientAddress { get; set; }
         public DateTime? OrderDate { get; set; }
-        public double? TotalAmount { get; set; }
-        public double? ShippingCost { get; set; }
+        public decimal? TotalAmount { get; set; }
+        public decimal? ShippingCost { get; set; }
         public int Status { get; set; }
 
         public virtual Buyer? Buyer { get; set; }
