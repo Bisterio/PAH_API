@@ -24,9 +24,9 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetProducts([FromQuery] string? nameSearch, [FromQuery] int materialId, [FromQuery] int categoryId, [FromQuery] int type, [FromQuery] int condition, [FromQuery] int ratings, [FromQuery] decimal priceMin, [FromQuery] decimal priceMax, [FromQuery] int orderBy)
+        public IActionResult GetProducts([FromQuery] string? nameSearch, [FromQuery] int materialId, [FromQuery] int categoryId, [FromQuery] decimal priceMin, [FromQuery] decimal priceMax, [FromQuery] int orderBy)
         {
-            List<Product> productList = _productService.GetProducts(nameSearch, materialId, categoryId, type, condition, ratings, priceMin, priceMax, orderBy);
+            List<Product> productList = _productService.GetProducts(nameSearch, materialId, categoryId, priceMin, priceMax, orderBy);
             List<ProductResponse> response = _mapper.Map<List<ProductResponse>>(productList);
             return Ok(new BaseResponse { Code = 200, Message = "Get products successfully", Data = response });
         }

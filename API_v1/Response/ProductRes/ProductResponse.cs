@@ -12,6 +12,7 @@
         public string? PackageMethod { get; set; }
         public string? PackageContent { get; set; }
         public int Condition { get; set; }
+        public int Type { get; set; }
         public decimal? Ratings { get; set; }
         public string CategoryName { get; set; }
         public string MaterialName { get; set; }

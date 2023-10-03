@@ -18,7 +18,7 @@ namespace Service.Implement
             _productDAO = productDAO;
         }
 
-        public List<Product> GetProducts(string? nameSearch, int materialId, int categoryId, int type, int condition, int ratings, decimal priceMin, decimal priceMax, int orderBy)
+        public List<Product> GetProducts(string? nameSearch, int materialId, int categoryId, decimal priceMin, decimal priceMax, int orderBy)
         {
             List<Product> productList;
             try
@@ -29,26 +29,26 @@ namespace Service.Implement
                     && (string.IsNullOrEmpty(nameSearch) || p.Name.Contains(nameSearch))
                     && (materialId == 0 || p.MaterialId == materialId)
                     && (categoryId == 0 || p.CategoryId == categoryId)
-                    && (type == 0 || p.Type == type)
-                    && (condition == 0 || p.Condition == condition)
-                    && (ratings == 0 || p.Ratings == ratings)
+                    //&& (type == 0 || p.Type == type)
+                    //&& (condition == 0 || p.Condition == condition)
+                    //&& (ratings == 0 || p.Ratings == ratings)
                     && p.Price >= priceMin
                     && (priceMax == 0 || p.Price <= priceMax));
 
-                //default (0): created at desc, 1: created at asc, 2: price desc, 3: price asc
+                //default (0): new -> old , 1: old -> new, 2: low -> high, 3: high -> low
                 switch (orderBy)
                 {
                     case 1:
-                        products = products.OrderBy(p => p.CreatedAt);
+                        products = products.OrderByDescending(p => p.Condition);
                         break;
                     case 2:
-                        products = products.OrderByDescending(p => p.Price);
-                        break;
-                    case 3:
                         products = products.OrderBy(p => p.Price);
                         break;
+                    case 3:
+                        products = products.OrderByDescending(p => p.Price);
+                        break;
                     default:
-                        products = products.OrderByDescending(p => p.CreatedAt);
+                        products = products.OrderBy(p => p.Condition);
                         break;
                 }
 
