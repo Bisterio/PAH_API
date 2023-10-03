@@ -15,5 +15,10 @@
         public string? PackageContent { get; set; }
         public int Condition { get; set; }
         public int Type { get; set; }
+        public string Title { get; set; } = null!;
+        public decimal StartingPrice { get; set; }
+        public decimal Step { get; set; }
+        public DateTime? StartedAt { get; set; }
+        public DateTime? EndedAt { get; set; }
     }
 }

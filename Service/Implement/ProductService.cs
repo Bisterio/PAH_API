@@ -12,10 +12,12 @@ namespace Service.Implement
     public class ProductService : IProductService
     {
         private readonly IProductDAO _productDAO;
+        private readonly IAuctionDAO _auctionDAO;
 
-        public ProductService(IProductDAO productDAO)
+        public ProductService(IProductDAO productDAO, IAuctionDAO auctionDAO)
         {
             _productDAO = productDAO;
+            _auctionDAO = auctionDAO;
         }
 
         public List<Product> GetProducts(string? nameSearch, int materialId, int categoryId, decimal priceMin, decimal priceMax, int orderBy)
@@ -80,13 +82,25 @@ namespace Service.Implement
             return _productDAO.GetProductsBySellerId(sellerId).ToList();
         }
 
-        public void CreateProduct(Product product)
+        public void CreateProduct(Product product, Auction auction)
         {
             product.Status = (int)Status.Available;
             product.Ratings = 0;
             product.CreatedAt = DateTime.Now;
             product.UpdatedAt = DateTime.Now;
             _productDAO.CreateProduct(product);
+
+            if(product.Type == 1)
+            {
+                auction.ProductId = product.Id;
+                auction.EntryFee = 0.1m * auction.StartingPrice;
+                auction.StartingPrice = product.Price;
+                auction.StaffId = null;
+                auction.Status = (int)Status.Unavailable;
+                auction.CreatedAt = DateTime.Now;
+                auction.UpdatedAt = DateTime.Now;
+                _auctionDAO.CreateAuction(auction);
+            }            
         }
 
         public Product UpdateProduct(int id, Product product)

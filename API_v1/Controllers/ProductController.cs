@@ -68,13 +68,22 @@ namespace API.Controllers
         [HttpPost]
         public IActionResult RegisterProduct([FromBody] ProductRequest request)
         {
-            var userId = GetUserIdFromToken();
-            var user = _userService.Get(userId);
-            if (user == null || user.Role != (int) Role.Seller)
+            //var userId = GetUserIdFromToken();
+            //var user = _userService.Get(userId);
+            //if (user == null || user.Role != (int) Role.Seller)
+            //{
+            //    return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+            //}
+
+            var auctionRequest = new AuctionRequest
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
-            }
-            _productService.CreateProduct(_mapper.Map<Product>(request));
+                Title = request.Title,
+                Step = request.Step,
+                StartedAt = request.StartedAt,
+                EndedAt = request.EndedAt,
+            };
+
+            _productService.CreateProduct(_mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Register product successfully", Data = null });
         }
 

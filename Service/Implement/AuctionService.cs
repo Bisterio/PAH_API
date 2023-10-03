@@ -93,8 +93,6 @@ namespace Service.Implement
             auction.EntryFee = 0.1m * auction.StartingPrice;
             auction.StaffId = null;
             auction.Status = (int)Status.Unavailable;
-            auction.StartedAt = null;
-            auction.EndedAt = null;
             auction.CreatedAt = DateTime.Now;
             auction.UpdatedAt = DateTime.Now;
             _auctionDAO.CreateAuction(auction);
