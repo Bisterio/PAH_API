@@ -31,6 +31,8 @@ builder.Services.AddScoped<IMaterialDAO, MaterialDAO>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IProductDAO, ProductDAO>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IAuctionDAO, AuctionDAO>();
+builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped<IProductImageDAO, ProductImageDAO>();
 builder.Services.AddScoped<IOrderCancelDAO, OrderCancelDAO>();
 builder.Services.AddScoped<IAddressDAO, AddressDAO>();
@@ -63,6 +65,9 @@ builder.Services.AddAuthentication(x => {
         }
     };
 });
+
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddHostedService<API.Tunnel.TunnelService>();
 
 var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
