@@ -58,16 +58,28 @@ namespace Service.Implement
 
         public List<Auction> GetAuctionAssigned(int staffId)
         {
+            if (staffId == null)
+            {
+                throw new Exception("404: Staff not found");
+            }
             return _auctionDAO.GetAuctionAssigned(staffId).ToList();
         }
 
         public Auction GetAuctionById(int id)
         {
+            if (id == null)
+            {
+                throw new Exception("404: Auction not found");
+            }
             return _auctionDAO.GetAuctionById(id);
         }
 
         public List<Auction> GetAuctionBySellerId(int sellerId)
         {
+            if (sellerId == null)
+            {
+                throw new Exception("404: Seller not found");
+            }
             return _auctionDAO.GetAuctionBySellerId(sellerId).ToList();
         }
 

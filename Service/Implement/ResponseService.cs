@@ -19,6 +19,10 @@ namespace Service.Implement
 
         public Response GetByFeedbackId(int feedbackId)
         {
+            if (feedbackId == null)
+            {
+                throw new Exception("404: Response not found");
+            }
             return _responseDAO.GetByFeedbackId(feedbackId);
         }
 

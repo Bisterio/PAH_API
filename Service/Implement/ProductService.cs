@@ -64,9 +64,9 @@ namespace Service.Implement
 
         public Product GetProductById(int id)
         {
-            if(id == null)
+            if (id == null)
             {
-                return null;
+                throw new Exception("404: Product not found");
             }
             return _productDAO.GetProductById(id);
         }
@@ -75,7 +75,7 @@ namespace Service.Implement
         {
             if (sellerId == null)
             {
-                return null;
+                throw new Exception("404: Seller not found");
             }
             return _productDAO.GetProductsBySellerId(sellerId).ToList();
         }
@@ -91,7 +91,7 @@ namespace Service.Implement
 
         public Product UpdateProduct(int id, Product product)
         {
-            if (id == null) return null;
+            if (id == null) throw new Exception("404: Product not found");
 
             Product currentProduct = _productDAO.GetProductById(id);
 
@@ -116,7 +116,7 @@ namespace Service.Implement
 
         public Product DeleteProduct(int id)
         {
-            if (id == null) return null;
+            if (id == null) throw new Exception("404: Product not found");
 
             Product currentProduct = _productDAO.GetProductById(id);
 
