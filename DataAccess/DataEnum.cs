@@ -17,4 +17,19 @@ namespace DataAccess {
         Manager = 4,
         Staff = 5
     }
+
+    public enum OrderStatus {
+        Pending = 1,
+        ReadyForPickup = 2,
+        Delivering = 3,
+        Delivered = 4,
+        CancelApprovalPending = 10,
+        CancelledBySeller = 12,
+        CancelledByBuyer = 11
+    }
+
+    public enum AddressType {
+        Delivery = 1,
+        Pickup = 2
+    }
 }

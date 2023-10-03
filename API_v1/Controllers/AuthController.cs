@@ -1,4 +1,5 @@
-﻿using API.Request;
+﻿using API.ErrorHandling;
+using API.Request;
 using API.Response;
 using API.Response.UserRes;
 using AutoMapper;
@@ -45,7 +46,7 @@ namespace API.Controllers {
         public IActionResult Login([FromBody] LoginRequest request) {
             var user = _userService.Login(request.Email, request.Password);
             if (user == null) {
-                return Unauthorized(new ErrorResponse { Code = 401, Message = "Email or password is incorrect" });
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Email or password is incorrect" });
             }
             var token = _userService.AddRefreshToken(user.Id);
             return Ok(new BaseResponse { Code = 200, Message = "Login successfully", Data = token});
@@ -61,7 +62,7 @@ namespace API.Controllers {
 
             var dbToken = _userService.GetSavedRefreshToken(id, token.RefreshToken);
             if (dbToken == null) {
-                return Unauthorized();
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Please login again" });
             }
 
             var newToken = _userService.AddRefreshToken(id);

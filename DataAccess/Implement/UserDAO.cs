@@ -11,11 +11,11 @@ namespace DataAccess.Implement {
         }
 
         public User Get(int id) {
-            return GetAll().FirstOrDefault(p => p.Id == id && p.Status == (int) Status.Available);
+            return GetAll().FirstOrDefault(p => p.Id == id && p.Status != (int) Status.Unavailable);
         }
 
         public User GetByEmail(string email) {
-            return GetAll().FirstOrDefault(p => p.Email.Equals(email) && p.Status == (int) Status.Available);
+            return GetAll().FirstOrDefault(p => p.Email.Equals(email) && p.Status != (int) Status.Unavailable);
         }
 
         public void Register(User user) {

@@ -8,6 +8,7 @@ namespace API.Mapper {
         public UserProfile() {
             CreateMap<RegisterRequest, User>().ForMember(dest => dest.Name, opt => opt.MapFrom(p => p.Name));
             CreateMap<User, UserResponse>();
+            CreateMap<Seller, SellerResponse>();
         }
     }
 }

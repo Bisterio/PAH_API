@@ -32,7 +32,7 @@ namespace Service.Implement {
                         _config["Jwt:Issuer"],
                         _config["Jwt:Audience"],
                         claims,
-                        expires: DateTime.Now.AddMinutes(1),
+                        expires: DateTime.Now.AddMinutes(10),
                         signingCredentials: signIn);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

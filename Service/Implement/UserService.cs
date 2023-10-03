@@ -11,13 +11,15 @@ namespace Service.Implement {
     public class UserService : IUserService {
         private readonly IUserDAO _userDAO;
         private readonly ITokenDAO _tokenDAO;
+        private readonly IBuyerDAO _buyerDAO;
         private ITokenService _tokenService;
         private readonly int WORK_FACTOR = 13;
 
-        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, ITokenService tokenService) {
+        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, ITokenService tokenService, IBuyerDAO buyerDAO) {
             _userDAO = userDAO;
             _tokenDAO = tokenDAO;
             _tokenService = tokenService;
+            _buyerDAO = buyerDAO;
         }
 
         public User Get(int id) {
@@ -37,6 +39,10 @@ namespace Service.Implement {
             if (user != null) {
                 var verifyPassword = BC.EnhancedVerify(password, user.Password);
                 if (!verifyPassword) return null;
+                var buyer = _buyerDAO.Get(user.Id);
+                if (buyer == null) {
+                    _buyerDAO.Create(new Buyer { Id = user.Id, JoinedAt = DateTime.Now });
+                }
             }
             return user;
         }
@@ -49,6 +55,10 @@ namespace Service.Implement {
             user.CreatedAt = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
             _userDAO.Register(user);
+            var newUser = _userDAO.GetByEmail(user.Email);
+
+            if (newUser == null) throw new Exception("500: Cannot insert new user");
+            _buyerDAO.Create(new Buyer { Id = newUser.Id, JoinedAt = DateTime.Now });
         }
 
         public Tokens AddRefreshToken(int id) {
