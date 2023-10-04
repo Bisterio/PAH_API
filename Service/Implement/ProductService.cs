@@ -28,7 +28,7 @@ namespace Service.Implement
             {
                 var products = _productDAO.GetProducts()
                     .Where(p => p.Status == (int)Status.Available
-                    //&& p. == (int)Status.Available
+                    && p.Seller.Status == (int)SellerStatus.Available
                     && (string.IsNullOrEmpty(nameSearch) || p.Name.Contains(nameSearch))
                     && (materialId == 0 || p.MaterialId == materialId)
                     && (categoryId == 0 || p.CategoryId == categoryId)
@@ -70,7 +70,7 @@ namespace Service.Implement
             if (id == null)
             {
                 throw new Exception("404: Product not found");
-            }
+            } 
             return _productDAO.GetProductById(id);
         }
 

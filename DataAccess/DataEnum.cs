@@ -60,4 +60,17 @@ namespace DataAccess {
         Sold = 7,
         Expired = 8,
     }
+
+    public enum SellerStatus
+    {
+        Pending = 1,
+        Available = 2, 
+        Unavailable = 0,
+    }
+
+    public enum BidStatus
+    {
+        Active = 1,
+        Retracted = 0,
+    }
 }

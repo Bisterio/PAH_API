@@ -18,7 +18,7 @@ namespace Service
         public void CreateAuction(Auction auction);
         public void StaffApproveAuction(int id);
         public void StaffRejectAuction(int id);
-        public void OpenAuction(int id);
-        public void EndAuction(int id);
+        //public void OpenAuction(int id);
+        //public void EndAuction(int id);
     }
 }
