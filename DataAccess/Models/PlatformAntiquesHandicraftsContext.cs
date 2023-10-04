@@ -373,7 +373,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.HasKey(e => new { e.OrderId, e.ProductId })
-                    .HasName("PK__OrderIte__BAD83E4B8F6C1EA4");
+                    .HasName("PK__OrderIte__BAD83E4B6A0AF6A9");
 
                 entity.ToTable("OrderItem");
 
@@ -507,7 +507,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<Response>(entity =>
             {
                 entity.HasKey(e => e.FeedbackId)
-                    .HasName("PK__Response__2613FD243F14E0F0");
+                    .HasName("PK__Response__2613FD24CD68D140");
 
                 entity.ToTable("Response");
 
@@ -564,6 +564,8 @@ namespace DataAccess.Models
                 entity.Property(e => e.RegisteredAt)
                     .HasColumnType("datetime")
                     .HasColumnName("registeredAt");
+
+                entity.Property(e => e.Status).HasColumnName("status");
 
                 entity.HasOne(d => d.IdNavigation)
                     .WithOne(p => p.Seller)
