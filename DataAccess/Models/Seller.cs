@@ -18,6 +18,7 @@ namespace DataAccess.Models
         public string? ProfilePicture { get; set; }
         public DateTime? RegisteredAt { get; set; }
         public decimal? Ratings { get; set; }
+        public int Status { get; set; }
 
         public virtual User IdNavigation { get; set; } = null!;
         public virtual ICollection<Order> Orders { get; set; }
