@@ -90,13 +90,22 @@ namespace API.Controllers
         [HttpPatch("{id}")]
         public IActionResult EditProduct(int id, [FromBody] ProductRequest request)
         {
-            var userId = GetUserIdFromToken();
-            var user = _userService.Get(userId);
-            if (user == null || user.Role != (int)Role.Seller)
+            //var userId = GetUserIdFromToken();
+            //var user = _userService.Get(userId);
+            //if (user == null || user.Role != (int)Role.Seller)
+            //{
+            //    return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+            //}
+
+            var auctionRequest = new AuctionRequest
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
-            }
-            Product product = _productService.UpdateProduct(id, _mapper.Map<Product>(request));
+                Title = request.Title,
+                Step = request.Step,
+                StartedAt = request.StartedAt,
+                EndedAt = request.EndedAt,
+            };
+
+            Product product = _productService.UpdateProduct(id, _mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));
             if (product == null)
             {
                 return NotFound(new ErrorDetails { StatusCode = 400, Message = "This product is not exist" });

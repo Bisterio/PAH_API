@@ -13,7 +13,7 @@ namespace Service
         public Product GetProductById(int id);
         public List<Product> GetProductsBySellerId(int sellerId);
         public void CreateProduct(Product product, Auction auction);
-        public Product UpdateProduct(int id, Product product);
+        public Product UpdateProduct(int id, Product product, Auction auction);
         public Product DeleteProduct(int id);
     }
 }

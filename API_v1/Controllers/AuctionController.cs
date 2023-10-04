@@ -83,5 +83,31 @@ namespace API.Controllers
             _auctionService.CreateAuction(_mapper.Map<Auction>(request));
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Create auction successfully", Data = null });
         }
+
+        [HttpPatch("staff/approve/{id}")]
+        public IActionResult StaffApproveAuction(int id)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int) Role.Staff)
+            {
+                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+            }
+            _auctionService.StaffApproveAuction(id);
+            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Auction approved successfully", Data = null });
+        }
+
+        [HttpPatch("staff/reject/{id}")]
+        public IActionResult StaffRejectAuction(int id)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int )Role.Staff)
+            {
+                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+            }
+            _auctionService.StaffRejectAuction(id);
+            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Auction rejected successfully", Data = null });
+        }
     }
 }

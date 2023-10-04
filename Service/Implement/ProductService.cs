@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Service.Implement
 {
@@ -84,26 +85,26 @@ namespace Service.Implement
 
         public void CreateProduct(Product product, Auction auction)
         {
-            product.Status = (int)Status.Available;
+            product.Status = (int) Status.Available;
             product.Ratings = 0;
             product.CreatedAt = DateTime.Now;
             product.UpdatedAt = DateTime.Now;
             _productDAO.CreateProduct(product);
 
-            if(product.Type == 1)
+            if(product.Type == (int) ProductType.Auction)
             {
                 auction.ProductId = product.Id;
                 auction.EntryFee = 0.1m * auction.StartingPrice;
                 auction.StartingPrice = product.Price;
                 auction.StaffId = null;
-                auction.Status = (int)Status.Unavailable;
+                auction.Status = (int) AuctionStatus.Pending;
                 auction.CreatedAt = DateTime.Now;
                 auction.UpdatedAt = DateTime.Now;
                 _auctionDAO.CreateAuction(auction);
             }            
         }
 
-        public Product UpdateProduct(int id, Product product)
+        public Product UpdateProduct(int id, Product product, Auction auction)
         {
             if (id == null) throw new Exception("404: Product not found");
 
@@ -125,6 +126,17 @@ namespace Service.Implement
 
             _productDAO.UpdateProduct(currentProduct);
 
+            if (product.Type == (int) ProductType.Auction && auction.Status == (int) AuctionStatus.Rejected) // bi reject moi cho sua lai
+            {
+                Auction currentAuction = _auctionDAO.GetAuctionById(id);
+
+                currentAuction.EntryFee = 0.1m * auction.StartingPrice;
+                currentAuction.StartingPrice = product.Price;
+                currentAuction.Status = (int) AuctionStatus.Pending;
+                currentAuction.UpdatedAt = DateTime.Now;
+                _auctionDAO.UpdateAuction(auction);
+            }
+
             return currentProduct;
         }
 
@@ -134,11 +146,26 @@ namespace Service.Implement
 
             Product currentProduct = _productDAO.GetProductById(id);
 
-            currentProduct.Status = (int)Status.Unavailable;
-            currentProduct.UpdatedAt = DateTime.Now;
+            if (currentProduct.Type == (int)ProductType.Auction)
+            {
+                List<Auction> auctionLists = _auctionDAO.GetAuctionsByProductId(id).ToList();
 
-            _productDAO.UpdateProduct(currentProduct);
-
+                foreach (Auction auction in auctionLists)
+                {
+                    if (auction.Status != (int)AuctionStatus.Unassigned 
+                        && auction.Status != (int)AuctionStatus.Sold 
+                        && auction.Status != (int)AuctionStatus.Expired)
+                    {
+                        throw new Exception("400: This product has an active auction.");
+                    }
+                    auction.Status = (int)AuctionStatus.Unavailable;
+                    auction.UpdatedAt = DateTime.Now;
+                    _auctionDAO.UpdateAuction(auction);
+                }
+                currentProduct.Status = (int)Status.Unavailable;
+                currentProduct.UpdatedAt = DateTime.Now;
+                _productDAO.UpdateProduct(currentProduct);
+            }
             return currentProduct;
         }
     }
