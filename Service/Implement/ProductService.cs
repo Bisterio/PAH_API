@@ -6,30 +6,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Service.Implement
 {
     public class ProductService : IProductService
     {
         private readonly IProductDAO _productDAO;
+        private readonly IAuctionDAO _auctionDAO;
+        private readonly IProductImageDAO _productImageDAO;
 
-        public ProductService(IProductDAO productDAO)
+        public ProductService(IProductDAO productDAO, IAuctionDAO auctionDAO, IProductImageDAO productImageDAO)
         {
             _productDAO = productDAO;
+            _auctionDAO = auctionDAO;
+            _productImageDAO = productImageDAO;
         }
 
-        public List<Product> GetProducts(string? nameSearch, int materialId, int categoryId, decimal priceMin, decimal priceMax, int orderBy)
+        public List<Product> GetProducts(string? nameSearch, int materialId, int categoryId, int type, decimal priceMin, decimal priceMax, int orderBy)
         {
             List<Product> productList;
             try
             {
                 var products = _productDAO.GetProducts()
                     .Where(p => p.Status == (int)Status.Available
-                    //&& p. == (int)Status.Available
+                    && p.Seller.Status == (int)SellerStatus.Available
                     && (string.IsNullOrEmpty(nameSearch) || p.Name.Contains(nameSearch))
                     && (materialId == 0 || p.MaterialId == materialId)
                     && (categoryId == 0 || p.CategoryId == categoryId)
-                    //&& (type == 0 || p.Type == type)
+                    && (type == 0 || p.Type == type)
                     //&& (condition == 0 || p.Condition == condition)
                     //&& (ratings == 0 || p.Ratings == ratings)
                     && p.Price >= priceMin
@@ -64,10 +69,10 @@ namespace Service.Implement
 
         public Product GetProductById(int id)
         {
-            if(id == null)
+            if (id == null)
             {
-                return null;
-            }
+                throw new Exception("404: Product not found");
+            } 
             return _productDAO.GetProductById(id);
         }
 
@@ -75,23 +80,35 @@ namespace Service.Implement
         {
             if (sellerId == null)
             {
-                return null;
+                throw new Exception("404: Seller not found");
             }
             return _productDAO.GetProductsBySellerId(sellerId).ToList();
         }
 
-        public void CreateProduct(Product product)
+        public void CreateProduct(Product product, Auction auction)
         {
-            product.Status = (int)Status.Available;
+            product.Status = (int) Status.Available;
             product.Ratings = 0;
             product.CreatedAt = DateTime.Now;
             product.UpdatedAt = DateTime.Now;
             _productDAO.CreateProduct(product);
+
+            if(product.Type == (int) ProductType.Auction)
+            {
+                auction.ProductId = product.Id;
+                auction.EntryFee = 0.1m * auction.StartingPrice;
+                auction.StartingPrice = product.Price;
+                auction.StaffId = null;
+                auction.Status = (int) AuctionStatus.Pending;
+                auction.CreatedAt = DateTime.Now;
+                auction.UpdatedAt = DateTime.Now;
+                _auctionDAO.CreateAuction(auction);
+            }            
         }
 
-        public Product UpdateProduct(int id, Product product)
+        public Product UpdateProduct(int id, Product product, Auction auction)
         {
-            if (id == null) return null;
+            if (id == null) throw new Exception("404: Product not found");
 
             Product currentProduct = _productDAO.GetProductById(id);
 
@@ -111,20 +128,46 @@ namespace Service.Implement
 
             _productDAO.UpdateProduct(currentProduct);
 
+            if (product.Type == (int) ProductType.Auction && auction.Status == (int) AuctionStatus.Rejected) // bi reject moi cho sua lai
+            {
+                Auction currentAuction = _auctionDAO.GetAuctionById(id);
+
+                currentAuction.EntryFee = 0.1m * auction.StartingPrice;
+                currentAuction.StartingPrice = product.Price;
+                currentAuction.Status = (int) AuctionStatus.Pending;
+                currentAuction.UpdatedAt = DateTime.Now;
+                _auctionDAO.UpdateAuction(auction);
+            }
+
             return currentProduct;
         }
 
         public Product DeleteProduct(int id)
         {
-            if (id == null) return null;
+            if (id == null) throw new Exception("404: Product not found");
 
             Product currentProduct = _productDAO.GetProductById(id);
 
-            currentProduct.Status = (int)Status.Unavailable;
-            currentProduct.UpdatedAt = DateTime.Now;
+            if (currentProduct.Type == (int)ProductType.Auction)
+            {
+                List<Auction> auctionLists = _auctionDAO.GetAuctionsByProductId(id).ToList();
 
-            _productDAO.UpdateProduct(currentProduct);
-
+                foreach (Auction auction in auctionLists)
+                {
+                    if (auction.Status != (int)AuctionStatus.Unassigned 
+                        && auction.Status != (int)AuctionStatus.Sold 
+                        && auction.Status != (int)AuctionStatus.Expired)
+                    {
+                        throw new Exception("400: This product has an active auction.");
+                    }
+                    auction.Status = (int)AuctionStatus.Unavailable;
+                    auction.UpdatedAt = DateTime.Now;
+                    _auctionDAO.UpdateAuction(auction);
+                }
+                currentProduct.Status = (int)Status.Unavailable;
+                currentProduct.UpdatedAt = DateTime.Now;
+                _productDAO.UpdateProduct(currentProduct);
+            }
             return currentProduct;
         }
     }

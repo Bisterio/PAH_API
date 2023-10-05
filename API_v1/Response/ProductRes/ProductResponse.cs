@@ -17,5 +17,6 @@
         public string CategoryName { get; set; }
         public string MaterialName { get; set; }
         public string SellerName { get; set; }
+        public string ImageUrl { get; set; }
     }
 }

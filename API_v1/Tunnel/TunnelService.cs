@@ -27,21 +27,21 @@ namespace API.Tunnel
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await WaitForApplicationStarted();
+            //await WaitForApplicationStarted();
 
-            var urls = server.Features.Get<IServerAddressesFeature>()!.Addresses;
-            // Use https:// if you authenticated ngrok, otherwise, you can only use http://
-            var localUrl = urls.Single(u => u.StartsWith("https://"));
+            //var urls = server.Features.Get<IServerAddressesFeature>()!.Addresses;
+            //// Use https:// if you authenticated ngrok, otherwise, you can only use http://
+            //var localUrl = urls.Single(u => u.StartsWith("https://"));
 
-            logger.LogInformation("Starting ngrok tunnel for {LocalUrl}", localUrl);
-            var ngrokTask = StartNgrokTunnel(localUrl, stoppingToken);
+            //logger.LogInformation("Starting ngrok tunnel for {LocalUrl}", localUrl);
+            //var ngrokTask = StartNgrokTunnel(localUrl, stoppingToken);
 
-            var publicUrl = await GetNgrokPublicUrl();
-            logger.LogInformation("Public ngrok URL: {NgrokPublicUrl}", publicUrl);
+            //var publicUrl = await GetNgrokPublicUrl();
+            //logger.LogInformation("Public ngrok URL: {NgrokPublicUrl}", publicUrl);
 
-            await ngrokTask;
+            //await ngrokTask;
 
-            logger.LogInformation("Ngrok tunnel stopped");
+            //logger.LogInformation("Ngrok tunnel stopped");
         }
 
         private Task WaitForApplicationStarted()

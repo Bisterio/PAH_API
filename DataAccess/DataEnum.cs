@@ -32,4 +32,45 @@ namespace DataAccess {
         Delivery = 1,
         Pickup = 2
     }
+
+    public enum ProductType
+    {
+        ForSale = 1,
+        Auction = 2,
+    }
+
+    public enum Condition
+    {
+        Mint = 1,
+        NearMint = 2,
+        VeryFine = 3,
+        Good = 4,
+        Poor = 5,
+    }
+
+    public enum AuctionStatus
+    {
+        Unavailable = 0,
+        Unassigned = 1,
+        Pending = 2,
+        Rejected = 3,
+        Approved = 4,
+        Opened = 5,
+        Ended = 6,
+        Sold = 7,
+        Expired = 8,
+    }
+
+    public enum SellerStatus
+    {
+        Pending = 1,
+        Available = 2, 
+        Unavailable = 0,
+    }
+
+    public enum BidStatus
+    {
+        Active = 1,
+        Retracted = 0,
+    }
 }

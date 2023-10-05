@@ -10,6 +10,7 @@ namespace API.Mapper
         public AuctionProfile() 
         {
             CreateMap<AuctionRequest, Auction>();
+            CreateMap<Auction, AuctionListResponse>();
             CreateMap<Auction, AuctionResponse>();
         }
     }

@@ -44,6 +44,17 @@ namespace DataAccess.Implement
                 .FirstOrDefault(a => a.Id == id);
         }
 
+        public IQueryable<Auction> GetAuctionsByProductId(int productId)
+        {
+            return GetAll()
+                .Include(a => a.Product)
+                .Include(a => a.Staff)
+                .Include(a => a.Product.Category)
+                .Include(a => a.Product.Material)
+                .Include(a => a.Product.Seller)
+                .Where(a => a.ProductId == productId);
+        }
+
         public IQueryable<Auction> GetAuctionBySellerId(int sellerId)
         {
             return GetAll()
@@ -57,12 +68,28 @@ namespace DataAccess.Implement
 
         public IQueryable<Auction> GetAuctionJoined(int bidderId)
         {
-            throw new NotImplementedException();
+            return GetAll()
+                .Include(a => a.Product)
+                .Include(a => a.Staff)
+                .Include(a => a.Product.Category)
+                .Include(a => a.Product.Material)
+                .Include(a => a.Product.Seller)
+                .Where(a => a.Bids.Any(b => b.BidderId == bidderId && b.Status == (int)BidStatus.Active));
         }
 
         public void CreateAuction(Auction auction)
         {
             Create(auction);
+        }
+
+        public void UpdateAuction(Auction auction)
+        {
+            Update(auction);
+        }
+
+        public void ChangeStatusAuction(Auction auction)
+        {
+            Update(auction);
         }
     }
 }

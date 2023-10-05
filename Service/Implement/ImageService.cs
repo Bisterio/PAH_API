@@ -1,4 +1,6 @@
-﻿using Firebase.Auth;
+﻿using DataAccess;
+using DataAccess.Models;
+using Firebase.Auth;
 using Firebase.Storage;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -10,9 +12,11 @@ using System.Threading.Tasks;
 namespace Service.Implement {
     public class ImageService : IImageService {
         private readonly IConfiguration _config;
+        private readonly IProductImageDAO _productImageDAO;
 
-        public ImageService(IConfiguration config) {
+        public ImageService(IConfiguration config, IProductImageDAO productImageDAO) {
             _config = config;
+            _productImageDAO = productImageDAO;
         }
 
         public async Task<string> StoreImageAsync(string fileName, Stream stream) {
@@ -38,6 +42,11 @@ namespace Service.Implement {
             // await the task to wait until upload completes and get the download url
             var downloadUrl = await task;
             return downloadUrl;
+        }
+
+        public ProductImage GetMainImageByProductId(int productId)
+        {
+            return _productImageDAO.GetByProductId(productId).OrderBy(i => i.CreatedAt).FirstOrDefault();
         }
     }
 }

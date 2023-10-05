@@ -19,11 +19,19 @@ namespace Service.Implement
 
         public Feedback GetById(int id)
         {
+            if (id == null)
+            {
+                throw new Exception("404: Feedback not found");
+            }
             return _feedbackDAO.GetById(id);
         }
 
         public List<Feedback> GetAll(int productId)
         {
+            if(productId == null)
+            {
+                throw new Exception("404: Product not found");
+            }
             return _feedbackDAO.GetAll(productId).ToList();
         }
 

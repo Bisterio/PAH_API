@@ -23,7 +23,7 @@ namespace Service.Implement
             try
             {
                 var auctions = _auctionDAO.GetAuctions()
-                    .Where(a => a.Status == (int)Status.Available
+                    .Where(a => a.Status == (int) AuctionStatus.Opened
                     //&& a.Product.SellerId. == (int)Status.Available
                     && (string.IsNullOrEmpty(title) || a.Title.Contains(title))
                     && (materialId == 0 || a.Product.MaterialId == materialId)
@@ -33,7 +33,7 @@ namespace Service.Implement
                 switch (orderBy)
                 {
                     case 1:
-                        auctions = auctions.OrderByDescending(a => a.Product.Condition);
+                        auctions = auctions.OrderBy(a => a.StartedAt);
                         break;
                     //case 2:
                     //    auctions = auctions.OrderByDescending(p => p.StartedAt);
@@ -42,7 +42,7 @@ namespace Service.Implement
                     //    auctions = auctions.OrderBy(p => p.Price);
                     //    break;
                     default:
-                        auctions = auctions.OrderBy(a => a.Product.Condition);
+                        auctions = auctions.OrderByDescending(a => a.StartedAt);
                         break;
                 }
 
@@ -58,34 +58,149 @@ namespace Service.Implement
 
         public List<Auction> GetAuctionAssigned(int staffId)
         {
+            if (staffId == null)
+            {
+                throw new Exception("404: Staff not found");
+            }
             return _auctionDAO.GetAuctionAssigned(staffId).ToList();
+        }
+
+        public List<Auction> GetAuctionsByProductId(int productId)
+        {
+            if (productId == null)
+            {
+                throw new Exception("404: Product not found");
+            }
+            return _auctionDAO.GetAuctionsByProductId(productId).ToList();
         }
 
         public Auction GetAuctionById(int id)
         {
+            if (id == null)
+            {
+                throw new Exception("404: Auction not found");
+            }
             return _auctionDAO.GetAuctionById(id);
         }
 
         public List<Auction> GetAuctionBySellerId(int sellerId)
         {
+            if (sellerId == null)
+            {
+                throw new Exception("404: Seller not found");
+            }
             return _auctionDAO.GetAuctionBySellerId(sellerId).ToList();
         }
 
         public List<Auction> GetAuctionJoined(int bidderId)
         {
-            throw new NotImplementedException();
+            if (bidderId == null)
+            {
+                throw new Exception("404: Bidder not found");
+            }
+            return _auctionDAO.GetAuctionJoined(bidderId).ToList();
         }
 
         public void CreateAuction(Auction auction)
         {
             auction.EntryFee = 0.1m * auction.StartingPrice;
             auction.StaffId = null;
-            auction.Status = (int)Status.Unavailable;
-            auction.StartedAt = null;
-            auction.EndedAt = null;
+            auction.Status = (int) AuctionStatus.Unassigned;
             auction.CreatedAt = DateTime.Now;
             auction.UpdatedAt = DateTime.Now;
             _auctionDAO.CreateAuction(auction);
         }
+
+        public void StaffApproveAuction(int id)
+        {
+            Auction auction = GetAuctionById(id);
+
+            if(auction.Status == (int) AuctionStatus.Unassigned)
+            {
+                throw new Exception("400: This auction is unassigned.");
+            }
+            else if (auction.Status == (int) AuctionStatus.Pending)
+            {
+                auction.Status = (int)AuctionStatus.Approved;
+                auction.UpdatedAt = DateTime.Now;
+                _auctionDAO.UpdateAuction(auction);
+            } 
+            else
+            {
+                throw new Exception("400: This auction is already approved.");
+            }
+        }
+
+        public void StaffRejectAuction(int id)
+        {
+            Auction auction = GetAuctionById(id);
+
+            if (auction.Status == (int)AuctionStatus.Unassigned)
+            {
+                throw new Exception("400: This auction is unassigned.");
+            }
+            else if (auction.Status == (int)AuctionStatus.Pending)
+            {
+                auction.Status = (int)AuctionStatus.Rejected;
+                auction.UpdatedAt = DateTime.Now;
+                _auctionDAO.UpdateAuction(auction);
+            }
+            else
+            {
+                throw new Exception("400: This auction cannot be rejected.");
+            }
+        }
+
+        //public void OpenAuction(int id)
+        //{
+        //    Auction auction = GetAuctionById(id);
+        //    var status = auction.Status;
+        //    switch (status)
+        //    {
+        //        case (int) AuctionStatus.Approved:
+        //            if (auction.StartedAt == DateTime.Now)
+        //            {
+        //                auction.Status = (int)AuctionStatus.Opened;
+        //                auction.UpdatedAt = DateTime.Now;
+        //                _auctionDAO.UpdateAuction(auction);
+        //            }                    
+        //            break;
+
+        //        case (int)AuctionStatus.Pending:
+        //            throw new Exception("400: This auction is unapproved.");
+
+        //        case (int)AuctionStatus.Unassigned:
+        //            throw new Exception("400: This auction is unassigned.");
+
+        //        case (int)AuctionStatus.Rejected:
+        //            throw new Exception("400: This auction is rejected.");
+
+        //        case (int)AuctionStatus.Opened:
+        //            throw new Exception("400: This auction is opening.");
+
+        //        default: throw new Exception("400: This auction is ended.");
+        //    }
+        //}
+
+        //public void EndAuction(int id)
+        //{
+        //    Auction auction = GetAuctionById(id);
+        //    var status = auction.Status;
+
+        //    if (auction.Status == (int)AuctionStatus.Opened)
+        //    {
+        //        throw new Exception("400: This auction is opening.");
+        //    }
+        //    else if (auction.Status == (int)AuctionStatus.Ended
+        //        || auction.Status == (int)AuctionStatus.Sold
+        //        || auction.Status == (int)AuctionStatus.Expired)
+        //    {
+        //        throw new Exception("400: This auction is ended.");
+        //    }
+        //    else
+        //    {
+        //        throw new Exception("400: This auction cannot be rejected.");
+        //    }
+        //}
     }
 }
