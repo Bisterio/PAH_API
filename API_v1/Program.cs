@@ -3,6 +3,7 @@ using DataAccess;
 using DataAccess.Implement;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Service;
@@ -14,12 +15,21 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddHttpClient("GHN", httpClient => {
+    httpClient.BaseAddress = new Uri(builder.Configuration["API3rdParty:GHN:dev"]);
+});
 builder.Services.AddDbContext<PlatformAntiquesHandicraftsContext>(options => options.UseSqlServer("name=ConnectionStrings:dev"));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+builder.Services.AddScoped<ValidateModelAttribute>();
+builder.Services.Configure<ApiBehaviorOptions>(options => {
+    options.SuppressModelStateInvalidFilter = true;
+});
+
 builder.Services.AddScoped<IUserDAO, UserDAO>();
 builder.Services.AddScoped<ITokenDAO, TokenDAO>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -36,6 +46,7 @@ builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped<IProductImageDAO, ProductImageDAO>();
 builder.Services.AddScoped<IOrderCancelDAO, OrderCancelDAO>();
 builder.Services.AddScoped<IAddressDAO, AddressDAO>();
+builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IBuyerDAO, BuyerDAO>();
 builder.Services.AddScoped<IOrderDAO, OrderDAO>();
 builder.Services.AddScoped<IOrderService, OrderService>();
