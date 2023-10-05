@@ -2,6 +2,7 @@
 using API.Request;
 using API.Response;
 using API.Response.AuctionRes;
+using API.Response.ProductRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
@@ -20,12 +21,14 @@ namespace API.Controllers
         private readonly IAuctionService _auctionService;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
+        private readonly IImageService _imageService;
 
-        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService)
+        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService)
         {
             _auctionService = auctionService;
             _mapper = mapper;
             _userService = userService;
+            _imageService = imageService;
         }
 
         private int GetUserIdFromToken()
@@ -38,7 +41,12 @@ namespace API.Controllers
         public IActionResult GetAuctions([FromQuery] string? title, [FromQuery] int categoryId, [FromQuery] int materialId, [FromQuery] int orderBy) 
         { 
             List<Auction> auctionList = _auctionService.GetAuctions(title, categoryId, materialId, orderBy);
-            List<AuctionResponse> response = _mapper.Map<List<AuctionResponse>>(auctionList);
+            List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
+            foreach (var item in response)
+            {
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
+                item.ImageUrl = image.ImageUrl;
+            }
             return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }
 
@@ -53,7 +61,12 @@ namespace API.Controllers
         public IActionResult GetAuctionBySellerId(int id)
         {
             List<Auction> auctionList = _auctionService.GetAuctionBySellerId(id);
-            List<AuctionResponse> response = _mapper.Map<List<AuctionResponse>>(auctionList);
+            List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
+            foreach (var item in response)
+            {
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
+                item.ImageUrl = image.ImageUrl;
+            }
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }
 
@@ -67,7 +80,31 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
             }
             List<Auction> auctionList = _auctionService.GetAuctionAssigned(id);
-            List<AuctionResponse> response = _mapper.Map<List<AuctionResponse>>(auctionList);
+            List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
+            foreach (var item in response)
+            {
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
+                item.ImageUrl = image.ImageUrl;
+            }
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+        }
+
+        [HttpGet("bidder/{id}")]
+        public IActionResult GetAuctionsByBidderId(int id)
+        {
+            //var userId = GetUserIdFromToken();
+            //var user = _userService.Get(userId);
+            //if (user == null || user.Role != (int)Role.Buyer)
+            //{
+            //    return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+            //}
+            List<Auction> auctionList = _auctionService.GetAuctionJoined(id);
+            List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
+            foreach (var item in response)
+            {
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
+                item.ImageUrl = image.ImageUrl;
+            }
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }
 

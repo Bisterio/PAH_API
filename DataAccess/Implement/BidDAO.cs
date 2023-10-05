@@ -19,5 +19,15 @@ namespace DataAccess.Implement
                 .Include(b => b.Bidder)
                 .Where(b => b.AuctionId == auctionId && b.Status == (int)BidStatus.Active);
         }
+
+        public void CreateBid(Bid bid)
+        {
+            Create(bid);
+        }
+
+        public void RetractBid(int id)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -14,14 +14,16 @@ namespace Service.Implement
     {
         private readonly IProductDAO _productDAO;
         private readonly IAuctionDAO _auctionDAO;
+        private readonly IProductImageDAO _productImageDAO;
 
-        public ProductService(IProductDAO productDAO, IAuctionDAO auctionDAO)
+        public ProductService(IProductDAO productDAO, IAuctionDAO auctionDAO, IProductImageDAO productImageDAO)
         {
             _productDAO = productDAO;
             _auctionDAO = auctionDAO;
+            _productImageDAO = productImageDAO;
         }
 
-        public List<Product> GetProducts(string? nameSearch, int materialId, int categoryId, decimal priceMin, decimal priceMax, int orderBy)
+        public List<Product> GetProducts(string? nameSearch, int materialId, int categoryId, int type, decimal priceMin, decimal priceMax, int orderBy)
         {
             List<Product> productList;
             try
@@ -32,7 +34,7 @@ namespace Service.Implement
                     && (string.IsNullOrEmpty(nameSearch) || p.Name.Contains(nameSearch))
                     && (materialId == 0 || p.MaterialId == materialId)
                     && (categoryId == 0 || p.CategoryId == categoryId)
-                    //&& (type == 0 || p.Type == type)
+                    && (type == 0 || p.Type == type)
                     //&& (condition == 0 || p.Condition == condition)
                     //&& (ratings == 0 || p.Ratings == ratings)
                     && p.Price >= priceMin

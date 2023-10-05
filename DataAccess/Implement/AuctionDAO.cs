@@ -68,7 +68,13 @@ namespace DataAccess.Implement
 
         public IQueryable<Auction> GetAuctionJoined(int bidderId)
         {
-            throw new NotImplementedException();
+            return GetAll()
+                .Include(a => a.Product)
+                .Include(a => a.Staff)
+                .Include(a => a.Product.Category)
+                .Include(a => a.Product.Material)
+                .Include(a => a.Product.Seller)
+                .Where(a => a.Bids.Any(b => b.BidderId == bidderId && b.Status == (int)BidStatus.Active));
         }
 
         public void CreateAuction(Auction auction)

@@ -16,15 +16,17 @@ namespace API.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
+        private readonly IImageService _imageService;
         private readonly IProductService _productService;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
 
-        public ProductController(IProductService productService, IUserService userService, IMapper mapper)
+        public ProductController(IProductService productService, IUserService userService, IMapper mapper, IImageService imageService)
         {
             _productService = productService;
             _userService = userService;
             _mapper = mapper;
+            _imageService = imageService;
         }
 
         private int GetUserIdFromToken()
@@ -34,10 +36,15 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetProducts([FromQuery] string? nameSearch, [FromQuery] int materialId, [FromQuery] int categoryId, [FromQuery] decimal priceMin, [FromQuery] decimal priceMax, [FromQuery] int orderBy)
+        public IActionResult GetProducts([FromQuery] string? nameSearch, [FromQuery] int materialId, [FromQuery] int categoryId, [FromQuery] int type, [FromQuery] decimal priceMin, [FromQuery] decimal priceMax, [FromQuery] int orderBy)
         {
-            List<Product> productList = _productService.GetProducts(nameSearch, materialId, categoryId, priceMin, priceMax, orderBy);
-            List<ProductResponse> response = _mapper.Map<List<ProductResponse>>(productList);
+            List<Product> productList = _productService.GetProducts(nameSearch, materialId, categoryId, type, priceMin, priceMax, orderBy);
+            List<ProductListResponse> response = _mapper.Map<List<ProductListResponse>>(productList);
+            foreach (var item in response)
+            {
+                ProductImage image = _imageService.GetMainImageByProductId(item.Id);
+                item.ImageUrl = image.ImageUrl;
+            }
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get products successfully", Data = response });
         }
 
@@ -49,7 +56,12 @@ namespace API.Controllers
             {
                 return NotFound(new ErrorDetails { StatusCode = 400, Message = "This seller is not exist" });
             }
-            List<ProductResponse> response = _mapper.Map<List<ProductResponse>>(productList);
+            List<ProductListResponse> response = _mapper.Map<List<ProductListResponse>>(productList);
+            foreach (var item in response)
+            {
+                ProductImage image = _imageService.GetMainImageByProductId(item.Id);
+                item.ImageUrl = image.ImageUrl;
+            }
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get products by seller successfully", Data = response });
         }
 

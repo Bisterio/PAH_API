@@ -33,7 +33,7 @@ namespace Service.Implement
                 switch (orderBy)
                 {
                     case 1:
-                        auctions = auctions.OrderByDescending(a => a.Product.Condition);
+                        auctions = auctions.OrderBy(a => a.StartedAt);
                         break;
                     //case 2:
                     //    auctions = auctions.OrderByDescending(p => p.StartedAt);
@@ -42,7 +42,7 @@ namespace Service.Implement
                     //    auctions = auctions.OrderBy(p => p.Price);
                     //    break;
                     default:
-                        auctions = auctions.OrderBy(a => a.Product.Condition);
+                        auctions = auctions.OrderByDescending(a => a.StartedAt);
                         break;
                 }
 
@@ -94,7 +94,11 @@ namespace Service.Implement
 
         public List<Auction> GetAuctionJoined(int bidderId)
         {
-            throw new NotImplementedException();
+            if (bidderId == null)
+            {
+                throw new Exception("404: Bidder not found");
+            }
+            return _auctionDAO.GetAuctionJoined(bidderId).ToList();
         }
 
         public void CreateAuction(Auction auction)

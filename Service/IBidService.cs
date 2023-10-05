@@ -10,5 +10,6 @@ namespace Service
     public interface IBidService
     {
         public List<Bid> GetAllBidsFromAuction(int auctionId);
+        public void PlaceBid(Bid bid);
     }
 }
