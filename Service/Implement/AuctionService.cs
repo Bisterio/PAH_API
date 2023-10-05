@@ -11,6 +11,7 @@ namespace Service.Implement
     public class AuctionService : IAuctionService
     {
         private readonly IAuctionDAO _auctionDAO;
+        private readonly IBidDAO _bidDAO;
 
         public AuctionService (IAuctionDAO auctionDAO)
         {
