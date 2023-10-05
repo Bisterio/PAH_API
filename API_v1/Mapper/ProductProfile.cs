@@ -9,8 +9,9 @@ namespace API.Mapper
     {
         public ProductProfile() 
         {
-            CreateMap<Product, ProductListResponse>();
             CreateMap<ProductRequest, Product>();
+            CreateMap<Product, ProductListResponse>();
+            CreateMap<Product, ProductDetailResponse>();
             CreateMap<Product, ProductResponse>();
         }
     }
