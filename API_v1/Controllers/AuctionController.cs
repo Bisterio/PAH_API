@@ -62,7 +62,11 @@ namespace API.Controllers
         public IActionResult GetAuctionById(int id)
         {
             Auction auction = _auctionService.GetAuctionById(id);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = _mapper.Map<AuctionResponse>(auction) });
+            List<ProductImage> imageList = _imageService.GetAllImagesByProductId(id);
+            List<string> imageUrls = imageList.Select(i => i.ImageUrl).ToList();
+            AuctionDetailResponse response = _mapper.Map<AuctionDetailResponse>(auction);
+            response.ImageUrls = imageUrls;
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }
 
         [HttpGet("seller/{id}")]
