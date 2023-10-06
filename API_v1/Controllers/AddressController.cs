@@ -42,11 +42,16 @@ namespace API.Controllers {
         public IActionResult GetDeliveryByCurrentUser()
         {
             var id = GetUserIdFromToken();
+            Address address = _addressService.GetDeliveryByCurrentUser(id);
+            if(address == null)
+            {
+                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This user doesn't have any address." });
+            }
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get address default successfully",
-                Data = _mapper.Map<AddressResponse>(_addressService.GetDeliveryByCurrentUser(id))
+                Data = _mapper.Map<AddressResponse>(address)
             });
         }
 
