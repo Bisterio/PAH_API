@@ -26,8 +26,26 @@ namespace Service.Implement
 
         public Bid GetHighestBidFromAuction(int auctionId)
         {
-            Bid bid = _bidDAO.GetBidsByAuctionId(auctionId).OrderByDescending(a => a.BidAmount).FirstOrDefault();
+            Bid bid = _bidDAO.GetBidsByAuctionId(auctionId)
+                .Where(b => b.Status == (int)BidStatus.Active)
+                .OrderByDescending(a => a.BidAmount)
+                .FirstOrDefault();
             return bid;
+        }
+
+        public int GetNumberOfBidders(int auctionId)
+        {
+            return GetAllBidsFromAuction(auctionId)
+                .Where(b => b.Status == (int)BidStatus.Active)
+                .GroupBy(b => b.BidderId)
+                .Count();
+        }
+
+        public int GetNumberOfBids(int auctionId)
+        {
+            return GetAllBidsFromAuction(auctionId)
+                .Where(b => b.Status == (int)BidStatus.Active)
+                .Count();
         }
 
         public void PlaceBid(Bid bid)

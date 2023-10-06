@@ -52,12 +52,23 @@ namespace API.Controllers
             {
                 sellerResponse = _mapper.Map<SellerResponse>(seller);
                 Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true).FirstOrDefault();
-                sellerResponse.Province = address.Province;
-                sellerResponse.WardCode = address.WardCode;
-                sellerResponse.Ward = address.Ward;
-                sellerResponse.DistrictId = address.DistrictId;
-                sellerResponse.District = address.District;
-                sellerResponse.Street = address.Street;
+
+                if (address != null)
+                {
+                    sellerResponse.Province = address.Province;
+                    sellerResponse.WardCode = address.WardCode;
+                    sellerResponse.Ward = address.Ward;
+                    sellerResponse.DistrictId = address.DistrictId;
+                    sellerResponse.District = address.District;
+                    sellerResponse.Street = address.Street;
+                }
+
+                sellerResponse.Province = null;
+                sellerResponse.WardCode = null;
+                sellerResponse.Ward = null;
+                sellerResponse.DistrictId = null;
+                sellerResponse.District = null;
+                sellerResponse.Street = null;
             }
             return sellerResponse;
         }
@@ -71,6 +82,7 @@ namespace API.Controllers
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
+
                 Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
                 item.CurrentPrice = item.StartingPrice;
                 if (highestBid != null)
@@ -95,6 +107,9 @@ namespace API.Controllers
             List<string> imageUrls = imageList.Select(i => i.ImageUrl).ToList();
             AuctionDetailResponse response = _mapper.Map<AuctionDetailResponse>(auction);
             response.ImageUrls = imageUrls;
+
+            response.NumberOfBids = _bidService.GetNumberOfBids(id);
+            response.NumberOfBidders = _bidService.GetNumberOfBidders(id);
 
             Bid highestBid = _bidService.GetHighestBidFromAuction(auction.Id);
             response.CurrentPrice = response.StartingPrice;
@@ -126,6 +141,13 @@ namespace API.Controllers
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
             }
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }
@@ -145,6 +167,13 @@ namespace API.Controllers
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
             }
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }
@@ -164,6 +193,13 @@ namespace API.Controllers
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
             }
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }

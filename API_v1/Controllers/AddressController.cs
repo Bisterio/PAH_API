@@ -37,7 +37,19 @@ namespace API.Controllers {
                 Data = _addressService.GetByCustomerId(id).Select(p => _mapper.Map<AddressResponse>(p)) 
             });
         }
-        
+
+        [HttpGet("current")]
+        public IActionResult GetDeliveryByCurrentUser()
+        {
+            var id = GetUserIdFromToken();
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get address default successfully",
+                Data = _mapper.Map<AddressResponse>(_addressService.GetDeliveryByCurrentUser(id))
+            });
+        }
+
         [HttpPost]
         [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult Create([FromBody] AddressRequest request) {

@@ -50,6 +50,13 @@ namespace Service.Implement {
             return _addressDAO.GetByCustomerId(customerId).ToList();
         }
 
+        public Address GetDeliveryByCurrentUser(int id)
+        {
+            return _addressDAO.GetByCustomerId(id)
+                .Where(a => a.Type == (int)AddressType.Delivery && a.IsDefault == true)
+                .FirstOrDefault();
+        }
+
         public void Update(Address address, int customerId) {
             var db = _addressDAO.Get(address.Id);
 
