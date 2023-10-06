@@ -3,6 +3,7 @@ using API.Request;
 using API.Response;
 using API.Response.AuctionRes;
 using API.Response.ProductRes;
+using API.Response.SellerRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
@@ -23,20 +24,42 @@ namespace API.Controllers
         private readonly IMapper _mapper;
         private readonly IImageService _imageService;
         private readonly IBidService _bidService;
+        private readonly ISellerService _sellerService;
+        private readonly IAddressService _addressService;
 
-        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService, IBidService bidService)
+        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService, IBidService bidService, ISellerService sellerService, IAddressService addressService)
         {
             _auctionService = auctionService;
             _mapper = mapper;
             _userService = userService;
             _imageService = imageService;
             _bidService = bidService;
+            _sellerService = sellerService;
+            _addressService = addressService;
         }
 
         private int GetUserIdFromToken()
         {
             var user = HttpContext.User;
             return int.Parse(user.Claims.FirstOrDefault(p => p.Type == "UserId").Value);
+        }
+
+        private SellerResponse GetSellerResponse(int sellerId)
+        {
+            Seller seller = _sellerService.GetSeller(sellerId);
+            SellerResponse sellerResponse = new SellerResponse();
+            if (seller != null)
+            {
+                sellerResponse = _mapper.Map<SellerResponse>(seller);
+                Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup).FirstOrDefault();
+                sellerResponse.Province = address.Province;
+                sellerResponse.WardCode = address.WardCode;
+                sellerResponse.Ward = address.Ward;
+                sellerResponse.DistrictId = address.DistrictId;
+                sellerResponse.District = address.District;
+                sellerResponse.Street = address.Street;
+            }
+            return sellerResponse;
         }
 
         [HttpGet]
@@ -66,6 +89,7 @@ namespace API.Controllers
             List<string> imageUrls = imageList.Select(i => i.ImageUrl).ToList();
             AuctionDetailResponse response = _mapper.Map<AuctionDetailResponse>(auction);
             response.ImageUrls = imageUrls;
+            response.Seller = GetSellerResponse((int)auction.Product.SellerId);
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }
 

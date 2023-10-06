@@ -1,7 +1,9 @@
 ﻿using API.ErrorHandling;
 using API.Request;
 using API.Response;
+using API.Response.FeedbackRes;
 using API.Response.ProductRes;
+using API.Response.SellerRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
@@ -20,19 +22,44 @@ namespace API.Controllers
         private readonly IProductService _productService;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
+        private readonly ISellerService _sellerService;
+        private readonly IAddressService _addressService;
+        private readonly IFeedbackService _feedbackService;
 
-        public ProductController(IProductService productService, IUserService userService, IMapper mapper, IImageService imageService)
+        public ProductController(IProductService productService, IUserService userService, IMapper mapper, IImageService imageService, 
+            ISellerService sellerService, IAddressService addressService, IFeedbackService feedbackService)
         {
             _productService = productService;
             _userService = userService;
             _mapper = mapper;
             _imageService = imageService;
+            _sellerService = sellerService;
+            _addressService = addressService;
+            _feedbackService = feedbackService;
         }
 
         private int GetUserIdFromToken()
         {
             var user = HttpContext.User;
             return int.Parse(user.Claims.FirstOrDefault(p => p.Type == "UserId").Value);
+        }
+
+        private SellerResponse GetSellerResponse(int sellerId)
+        {
+            Seller seller = _sellerService.GetSeller(sellerId);
+            SellerResponse sellerResponse = new SellerResponse();
+            if (seller != null)
+            {
+                sellerResponse = _mapper.Map<SellerResponse>(seller);
+                Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup).FirstOrDefault();
+                sellerResponse.Province = address.Province;
+                sellerResponse.WardCode = address.WardCode;
+                sellerResponse.Ward = address.Ward;
+                sellerResponse.DistrictId = address.DistrictId;
+                sellerResponse.District = address.District;
+                sellerResponse.Street = address.Street;
+            }
+            return sellerResponse;
         }
 
         [HttpGet]
@@ -77,6 +104,16 @@ namespace API.Controllers
             List<ProductImage> imageList = _imageService.GetAllImagesByProductId(id);
             List<string> imageUrls = imageList.Select(i => i.ImageUrl).ToList();
             response.ImageUrls = imageUrls;
+
+            response.Seller = GetSellerResponse((int)product.SellerId);
+
+            List<FeedbackResponse> feedbacks = _mapper.Map<List<FeedbackResponse>>(_feedbackService.GetAll(id));
+            if(feedbacks == null || feedbacks.Count == 0)
+            {
+                feedbacks = new List<FeedbackResponse>();
+            }
+            response.Feedbacks = feedbacks;
+
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get product successfully", Data = response });
         }
 
