@@ -24,6 +24,12 @@ namespace Service.Implement
             return _bidDAO.GetBidsByAuctionId(auctionId).ToList();
         }
 
+        public Bid GetHighestBidFromAuction(int auctionId)
+        {
+            Bid bid = _bidDAO.GetBidsByAuctionId(auctionId).OrderByDescending(a => a.BidAmount).FirstOrDefault();
+            return bid;
+        }
+
         public void PlaceBid(Bid bid)
         {
             if(bid.AuctionId != null)

@@ -73,7 +73,10 @@ namespace API.Controllers
             {
                 return NotFound(new ErrorDetails { StatusCode = 400, Message = "This product is not exist" });
             }
-            ProductResponse response = _mapper.Map<ProductResponse>(product);
+            ProductDetailResponse response = _mapper.Map<ProductDetailResponse>(product);
+            List<ProductImage> imageList = _imageService.GetAllImagesByProductId(id);
+            List<string> imageUrls = imageList.Select(i => i.ImageUrl).ToList();
+            response.ImageUrls = imageUrls;
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get product successfully", Data = response });
         }
 

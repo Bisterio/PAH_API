@@ -22,13 +22,15 @@ namespace API.Controllers
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
         private readonly IImageService _imageService;
+        private readonly IBidService _bidService;
 
-        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService)
+        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService, IBidService bidService)
         {
             _auctionService = auctionService;
             _mapper = mapper;
             _userService = userService;
             _imageService = imageService;
+            _bidService = bidService;
         }
 
         private int GetUserIdFromToken()
@@ -46,6 +48,12 @@ namespace API.Controllers
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
             }
             return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }
@@ -54,7 +62,11 @@ namespace API.Controllers
         public IActionResult GetAuctionById(int id)
         {
             Auction auction = _auctionService.GetAuctionById(id);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = _mapper.Map<AuctionResponse>(auction) });
+            List<ProductImage> imageList = _imageService.GetAllImagesByProductId(id);
+            List<string> imageUrls = imageList.Select(i => i.ImageUrl).ToList();
+            AuctionDetailResponse response = _mapper.Map<AuctionDetailResponse>(auction);
+            response.ImageUrls = imageUrls;
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
         }
 
         [HttpGet("seller/{id}")]

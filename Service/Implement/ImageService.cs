@@ -48,5 +48,10 @@ namespace Service.Implement {
         {
             return _productImageDAO.GetByProductId(productId).OrderBy(i => i.CreatedAt).FirstOrDefault();
         }
+
+        public List<ProductImage> GetAllImagesByProductId(int productId)
+        {
+            return _productImageDAO.GetByProductId(productId).OrderBy(i => i.CreatedAt).ToList();
+        }
     }
 }

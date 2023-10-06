@@ -9,5 +9,6 @@ namespace Service {
     public interface IImageService {
         public Task<string> StoreImageAsync(string fileName, Stream stream);
         public ProductImage GetMainImageByProductId(int productId);
+        public List<ProductImage> GetAllImagesByProductId(int productId);
     }
 }
