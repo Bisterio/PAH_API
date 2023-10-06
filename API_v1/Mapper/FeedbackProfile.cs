@@ -1,4 +1,5 @@
 ﻿using API.Request;
+using API.Response.FeedbackRes;
 using AutoMapper;
 using DataAccess.Models;
 
@@ -9,6 +10,7 @@ namespace API.Mapper
         public FeedbackProfile()
         {
             CreateMap<FeedbackRequest, Feedback>();
+            CreateMap<Feedback, FeedbackResponse>();
         }
     }
 }

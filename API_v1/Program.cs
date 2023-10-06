@@ -54,6 +54,10 @@ builder.Services.AddScoped<IAuctionDAO, AuctionDAO>();
 builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped<IBidDAO, BidDAO>();
 builder.Services.AddScoped<IBidService, BidService>();
+builder.Services.AddScoped<ISellerDAO, SellerDAO>();
+builder.Services.AddScoped<ISellerService, SellerService>();
+builder.Services.AddScoped<IFeedbackDAO, FeedbackDAO>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
 builder.Services.AddAuthentication(x => {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

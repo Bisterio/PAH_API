@@ -15,5 +15,6 @@
         public List<string> ImageUrls { get; set; }
 
         public ProductRes.ProductResponse Product { get; set; }
+        public SellerRes.SellerResponse Seller { get; set; }
     }
 }
