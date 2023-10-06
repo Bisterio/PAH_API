@@ -51,7 +51,7 @@ namespace API.Controllers
             if (seller != null)
             {
                 sellerResponse = _mapper.Map<SellerResponse>(seller);
-                Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup).FirstOrDefault();
+                Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true).FirstOrDefault();
                 sellerResponse.Province = address.Province;
                 sellerResponse.WardCode = address.WardCode;
                 sellerResponse.Ward = address.Ward;
