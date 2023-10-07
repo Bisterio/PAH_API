@@ -10,7 +10,8 @@ namespace Service
     public interface IFeedbackService
     {
         public Feedback GetById(int id);
-        public List<Feedback> GetAll(int productId); 
+        public List<Feedback> GetAll(int productId);
+        public List<Feedback> GetTop3Newest(int productId);
         public void CreateFeedback(Feedback feedback);
         //public void Update(Feedback feedback);
         //public void Delete(Feedback feedback);

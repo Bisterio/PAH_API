@@ -117,7 +117,11 @@ namespace API.Controllers
 
             response.Seller = GetSellerResponse((int)product.SellerId);
 
-            List<FeedbackResponse> feedbacks = _mapper.Map<List<FeedbackResponse>>(_feedbackService.GetAll(id));
+            List<FeedbackResponse> feedbacks = _mapper.Map<List<FeedbackResponse>>(_feedbackService.GetTop3Newest(id));
+            foreach (var feedback in feedbacks)
+            {
+                feedback.BuyerName = _userService.Get(feedback.BuyerId).Name;
+            }
             if(feedbacks == null || feedbacks.Count == 0)
             {
                 feedbacks = new List<FeedbackResponse>();
