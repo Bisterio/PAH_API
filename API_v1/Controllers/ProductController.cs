@@ -51,13 +51,23 @@ namespace API.Controllers
             if (seller != null)
             {
                 sellerResponse = _mapper.Map<SellerResponse>(seller);
+                sellerResponse.Province = null;
+                sellerResponse.WardCode = null;
+                sellerResponse.Ward = null;
+                sellerResponse.DistrictId = null;
+                sellerResponse.District = null;
+                sellerResponse.Street = null;
+
                 Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true).FirstOrDefault();
-                sellerResponse.Province = address.Province;
-                sellerResponse.WardCode = address.WardCode;
-                sellerResponse.Ward = address.Ward;
-                sellerResponse.DistrictId = address.DistrictId;
-                sellerResponse.District = address.District;
-                sellerResponse.Street = address.Street;
+                if(address != null)
+                {
+                    sellerResponse.Province = address.Province;
+                    sellerResponse.WardCode = address.WardCode;
+                    sellerResponse.Ward = address.Ward;
+                    sellerResponse.DistrictId = address.DistrictId;
+                    sellerResponse.District = address.District;
+                    sellerResponse.Street = address.Street;
+                }
             }
             return sellerResponse;
         }
