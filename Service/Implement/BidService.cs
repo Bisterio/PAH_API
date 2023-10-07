@@ -21,7 +21,7 @@ namespace Service.Implement
 
         public List<Bid> GetAllBidsFromAuction(int auctionId)
         {
-            return _bidDAO.GetBidsByAuctionId(auctionId).ToList();
+            return _bidDAO.GetBidsByAuctionId(auctionId).OrderByDescending(b => b.BidDate).ToList();
         }
 
         public Bid GetHighestBidFromAuction(int auctionId)
