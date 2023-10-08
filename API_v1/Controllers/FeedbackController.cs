@@ -46,9 +46,10 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("product")]
-        public IActionResult GetAll(int productId)
+        public IActionResult GetAll(int productId, [FromQuery] PagingParam pagingParam)
         {
-            List<Feedback> feedbackList = _feedbackService.GetAll(productId);
+            List<Feedback> feedbackList = _feedbackService.GetAll(productId)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<FeedbackResponse> responses = _mapper.Map<List<FeedbackResponse>>(feedbackList);
             foreach (FeedbackResponse response in responses)
             {

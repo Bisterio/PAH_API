@@ -1,4 +1,5 @@
-﻿using API.Response;
+﻿using API.Request;
+using API.Response;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,9 +21,10 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult Get([FromQuery] PagingParam pagingParam)
         {
-            List<Category> categoryList = _categoryService.GetAll();
+            List<Category> categoryList = _categoryService.GetAll()
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList(); ;
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get all categories successfully", Data = categoryList });
         }
     }

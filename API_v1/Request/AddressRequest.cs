@@ -10,6 +10,8 @@ namespace API.Request {
         [Required]
         public string Province { get; set; }
         [Required]
+        public int ProvinceId { get; set; }
+        [Required]
         public string District { get; set; }
         [Required]
         public int DistrictId { get; set; }

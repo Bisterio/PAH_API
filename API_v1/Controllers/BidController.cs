@@ -1,4 +1,5 @@
-﻿using API.Response;
+﻿using API.Request;
+using API.Response;
 using API.Response.BidRes;
 using AutoMapper;
 using DataAccess.Models;
@@ -25,9 +26,10 @@ namespace API.Controllers
         }
 
         [HttpGet("auction/{id}")]
-        public IActionResult GetBidsFromAuction(int id) 
+        public IActionResult GetBidsFromAuction(int id, [FromQuery] PagingParam pagingParam) 
         {
-            List<Bid> bidList = _bidService.GetAllBidsFromAuction(id);
+            List<Bid> bidList = _bidService.GetAllBidsFromAuction(id)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<BidResponse> response = _mapper.Map<List<BidResponse>>(bidList);
             foreach (var bid in response)
             {
