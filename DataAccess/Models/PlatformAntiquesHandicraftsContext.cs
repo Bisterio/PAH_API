@@ -95,6 +95,8 @@ namespace DataAccess.Models
                     .HasMaxLength(255)
                     .HasColumnName("province");
 
+                entity.Property(e => e.ProvinceId).HasColumnName("provinceId");
+
                 entity.Property(e => e.RecipientName)
                     .HasMaxLength(255)
                     .HasColumnName("recipientName");
@@ -373,7 +375,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.HasKey(e => new { e.OrderId, e.ProductId })
-                    .HasName("PK__OrderIte__BAD83E4B6A0AF6A9");
+                    .HasName("PK__OrderIte__BAD83E4BA98A2C33");
 
                 entity.ToTable("OrderItem");
 
@@ -507,7 +509,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<Response>(entity =>
             {
                 entity.HasKey(e => e.FeedbackId)
-                    .HasName("PK__Response__2613FD24CD68D140");
+                    .HasName("PK__Response__2613FD2468742D92");
 
                 entity.ToTable("Response");
 

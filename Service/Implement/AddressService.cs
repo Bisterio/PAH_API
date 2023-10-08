@@ -64,6 +64,7 @@ namespace Service.Implement {
             db.RecipientName = address.RecipientName;
             db.RecipientPhone = address.RecipientPhone;
             db.Province = address.Province;
+            db.ProvinceId = address.ProvinceId;
             db.District = address.District;
             db.DistrictId = address.DistrictId;
             db.Ward = address.Ward;
