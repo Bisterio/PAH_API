@@ -44,13 +44,13 @@ namespace API.Controllers
             return int.Parse(user.Claims.FirstOrDefault(p => p.Type == "UserId").Value);
         }
 
-        private SellerResponse GetSellerResponse(int sellerId)
+        private SellerWithAddressResponse GetSellerResponse(int sellerId)
         {
             Seller seller = _sellerService.GetSeller(sellerId);
-            SellerResponse sellerResponse = new SellerResponse();
+            SellerWithAddressResponse sellerResponse = new SellerWithAddressResponse();
             if (seller != null)
             {
-                sellerResponse = _mapper.Map<SellerResponse>(seller);
+                sellerResponse = _mapper.Map<SellerWithAddressResponse>(seller);
                 sellerResponse.Province = null;
                 sellerResponse.WardCode = null;
                 sellerResponse.Ward = null;
