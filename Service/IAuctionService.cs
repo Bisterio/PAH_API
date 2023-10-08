@@ -18,6 +18,8 @@ namespace Service
         public void CreateAuction(Auction auction);
         public void StaffApproveAuction(int id);
         public void StaffRejectAuction(int id);
+        public void HostAuction(int auctionId, int status);
+        //public void TestSchedule();
         //public void OpenAuction(int id);
         //public void EndAuction(int id);
     }

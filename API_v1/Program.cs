@@ -2,10 +2,12 @@ using API.ErrorHandling;
 using DataAccess;
 using DataAccess.Implement;
 using DataAccess.Models;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Service;
 using Service.Implement;
 using System.Text;
@@ -21,15 +23,41 @@ builder.Services.AddHttpClient("GHN", httpClient => {
 builder.Services.AddDbContext<PlatformAntiquesHandicraftsContext>(options => options.UseSqlServer("name=ConnectionStrings:dev"));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+//Add authorize to swagger
+builder.Services.AddSwaggerGen(c => {
+    c.SwaggerDoc("v1", new OpenApiInfo {
+        Title = "JWTToken_Auth_API",
+        Version = "v1"
+    });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme() {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 1safsfsdfdfd\"",
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement {{
+        new OpenApiSecurityScheme {
+            Reference = new OpenApiReference {
+                Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+            }
+        },
+        new string[] {}}
+    });
+});
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+//Filter
 builder.Services.AddScoped<ValidateModelAttribute>();
 builder.Services.Configure<ApiBehaviorOptions>(options => {
     options.SuppressModelStateInvalidFilter = true;
 });
 
+//DI for scoped services
 builder.Services.AddScoped<IUserDAO, UserDAO>();
 builder.Services.AddScoped<ITokenDAO, TokenDAO>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -54,11 +82,13 @@ builder.Services.AddScoped<IAuctionDAO, AuctionDAO>();
 builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped<IBidDAO, BidDAO>();
 builder.Services.AddScoped<IBidService, BidService>();
+builder.Services.AddScoped<IJobTestService, JobTestService>();
 builder.Services.AddScoped<ISellerDAO, SellerDAO>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 builder.Services.AddScoped<IFeedbackDAO, FeedbackDAO>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
+//JWT authentication
 builder.Services.AddAuthentication(x => {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -83,6 +113,12 @@ builder.Services.AddAuthentication(x => {
     };
 });
 
+//Hangfire Task scheduler
+builder.Services.AddHangfire(x => {
+    x.UseSqlServerStorage(builder.Configuration["ConnectionStrings:dev"]);
+});
+builder.Services.AddHangfireServer();
+
 if (builder.Environment.IsDevelopment())
     builder.Services.AddHostedService<API.Tunnel.TunnelService>();
 
@@ -99,9 +135,11 @@ app.ConfigureExceptionHandler(logger);
 
 app.UseHttpsRedirection();
 
-
 app.UseAuthentication();
+
 app.UseAuthorization();
+
+app.UseHangfireDashboard();
 
 app.MapControllers();
 

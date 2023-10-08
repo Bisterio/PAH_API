@@ -1,5 +1,6 @@
 ﻿using DataAccess;
 using DataAccess.Models;
+using Hangfire;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +13,12 @@ namespace Service.Implement
     {
         private readonly IAuctionDAO _auctionDAO;
         private readonly IBidDAO _bidDAO;
+        private readonly IBackgroundJobClient _backgroundJobClient;
 
-        public AuctionService (IAuctionDAO auctionDAO)
+        public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient)
         {
             _auctionDAO = auctionDAO;
+            _backgroundJobClient = backgroundJobClient;
         }
 
         public List<Auction> GetAuctions(string? title, int categoryId, int materialId, int orderBy)
@@ -125,6 +128,9 @@ namespace Service.Implement
                 auction.Status = (int)AuctionStatus.Approved;
                 auction.UpdatedAt = DateTime.Now;
                 _auctionDAO.UpdateAuction(auction);
+                //Schedule task to open/end auction
+                _backgroundJobClient.Schedule(() => HostAuction(auction.Id, (int) AuctionStatus.Opened), auction.StartedAt.Value);
+                _backgroundJobClient.Schedule(() => HostAuction(auction.Id, (int) AuctionStatus.Ended), auction.EndedAt.Value);
             } 
             else
             {
@@ -151,6 +157,27 @@ namespace Service.Implement
                 throw new Exception("400: This auction cannot be rejected.");
             }
         }
+
+        public void HostAuction(int auctionId, int status) {
+            var auction = GetAuctionById(auctionId);
+
+            if (auction == null) {
+                return;
+            }
+
+            auction.Status = status;
+            _auctionDAO.UpdateAuction(auction);
+        }
+
+        //public void TestSchedule() {
+        //    var auction = _auctionDAO.GetAuctionById(3);
+
+        //    auction.StartedAt = DateTime.Now.AddMinutes(1);
+        //    auction.EndedAt = DateTime.Now.AddMinutes(2);
+        //    _auctionDAO.UpdateAuction(auction);
+        //    _backgroundJobClient.Schedule(() => HostAuction(auction.Id, (int) AuctionStatus.Opened), auction.StartedAt.Value);
+        //    _backgroundJobClient.Schedule(() => HostAuction(auction.Id, (int) AuctionStatus.Ended), auction.EndedAt.Value);
+        //}
 
         //public void OpenAuction(int id)
         //{

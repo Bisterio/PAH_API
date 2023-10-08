@@ -63,9 +63,14 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAuctions([FromQuery] string? title, [FromQuery] int categoryId, [FromQuery] int materialId, [FromQuery] int orderBy) 
+        public IActionResult GetAuctions([FromQuery] string? title, 
+            [FromQuery] int categoryId, 
+            [FromQuery] int materialId, 
+            [FromQuery] int orderBy,
+            [FromQuery] PagingParam pagingParam) 
         { 
-            List<Auction> auctionList = _auctionService.GetAuctions(title, categoryId, materialId, orderBy);
+            List<Auction> auctionList = _auctionService.GetAuctions(title, categoryId, materialId, orderBy)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
             {
@@ -108,19 +113,10 @@ namespace API.Controllers
         }
 
         [HttpGet("seller/{id}")]
-        public IActionResult GetAuctionBySellerId(int id)
+        public IActionResult GetAuctionBySellerId(int id, [FromQuery] PagingParam pagingParam)
         {
-            //var userId = GetUserIdFromToken();
-            //var user = _userService.Get(userId);
-            //if (user == null || user.Role != (int)Role.Seller)
-            //{
-            //    return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
-            //}
-            List<Auction> auctionList = _auctionService.GetAuctionBySellerId(id);
-            if (auctionList == null)
-            {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This seller is not exist" });
-            }
+            List<Auction> auctionList = _auctionService.GetAuctionBySellerId(id)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
             {
@@ -131,7 +127,7 @@ namespace API.Controllers
         }
 
         [HttpGet("staff/{id}")]
-        public IActionResult GetAuctionAssigned(int id)
+        public IActionResult GetAuctionAssigned(int id, [FromQuery] PagingParam pagingParam)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -139,7 +135,8 @@ namespace API.Controllers
             {
                 return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
             }
-            List<Auction> auctionList = _auctionService.GetAuctionAssigned(id);
+            List<Auction> auctionList = _auctionService.GetAuctionAssigned(id)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
             {
@@ -150,7 +147,7 @@ namespace API.Controllers
         }
 
         [HttpGet("bidder/{id}")]
-        public IActionResult GetAuctionsByBidderId(int id)
+        public IActionResult GetAuctionsByBidderId(int id, [FromQuery] PagingParam pagingParam)
         {
             //var userId = GetUserIdFromToken();
             //var user = _userService.Get(userId);
@@ -158,7 +155,8 @@ namespace API.Controllers
             //{
             //    return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
             //}
-            List<Auction> auctionList = _auctionService.GetAuctionJoined(id);
+            List<Auction> auctionList = _auctionService.GetAuctionJoined(id)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
             {

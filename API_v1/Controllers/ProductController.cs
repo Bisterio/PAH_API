@@ -63,9 +63,14 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetProducts([FromQuery] string? nameSearch, [FromQuery] int materialId, [FromQuery] int categoryId, [FromQuery] int type, [FromQuery] decimal priceMin, [FromQuery] decimal priceMax, [FromQuery] int orderBy)
+        public IActionResult GetProducts([FromQuery] string? nameSearch, 
+            [FromQuery] int materialId, [FromQuery] int categoryId, 
+            [FromQuery] int type, [FromQuery] decimal priceMin, 
+            [FromQuery] decimal priceMax, [FromQuery] int orderBy,
+            [FromQuery] PagingParam pagingParam)
         {
-            List<Product> productList = _productService.GetProducts(nameSearch, materialId, categoryId, type, priceMin, priceMax, orderBy);
+            List<Product> productList = _productService.GetProducts(nameSearch, materialId, categoryId, type, priceMin, priceMax, orderBy)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<ProductListResponse> response = _mapper.Map<List<ProductListResponse>>(productList);
             foreach (var item in response)
             {
@@ -76,9 +81,10 @@ namespace API.Controllers
         }
 
         [HttpGet("seller/{id}")]
-        public IActionResult GetProductsBySellerId(int id)
+        public IActionResult GetProductsBySellerId(int id, [FromQuery] PagingParam pagingParam)
         {
-            List<Product> productList = _productService.GetProductsBySellerId(id);
+            List<Product> productList = _productService.GetProductsBySellerId(id)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             if (productList == null)
             {
                 return NotFound(new ErrorDetails { StatusCode = 400, Message = "This seller is not exist" });
