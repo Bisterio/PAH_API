@@ -58,6 +58,8 @@ builder.Services.AddScoped<ISellerDAO, SellerDAO>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 builder.Services.AddScoped<IFeedbackDAO, FeedbackDAO>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IWalletDAO, WalletDAO>();
+builder.Services.AddScoped<IWalletService, WalletService>();
 
 builder.Services.AddAuthentication(x => {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

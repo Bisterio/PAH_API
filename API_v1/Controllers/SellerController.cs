@@ -33,7 +33,7 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet]
+        [HttpGet("current")]
         public IActionResult Get()
         {
             var userId = GetUserIdFromToken();
