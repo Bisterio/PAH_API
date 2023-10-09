@@ -34,6 +34,12 @@ namespace Service.Implement {
             return _userDAO.GetByEmail(email);
         }
 
+        public void Deactivate(User user)
+        {
+            user.Status = (int)Status.Unavailable;
+            _userDAO.Deactivate(user);
+        }
+
         public User Login(string email, string password) {
             var user = _userDAO.GetByEmail(email);
             if (user != null) {

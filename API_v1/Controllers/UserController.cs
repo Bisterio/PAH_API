@@ -2,6 +2,7 @@
 using API.Response;
 using API.Response.UserRes;
 using AutoMapper;
+using DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +41,24 @@ namespace API.Controllers
             }
             var user = _userService.Get(userId);
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get user successfully", Data = _mapper.Map<UserDetailResponse>(user) });
+        }
+
+        [HttpGet]
+        public IActionResult GetAll()
+        {
+            List<User> userList = _userService.GetAll();
+            List<UserResponse> responses = _mapper.Map<List<UserResponse>>(userList);
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get all users successfully", Data = responses });
+        }
+
+        [Authorize]
+        [HttpPatch("deactivate")]
+        public IActionResult SelfDeactivate()
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            _userService.Deactivate(user);
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Self deactivate successfully", Data = null });
         }
     }
 }

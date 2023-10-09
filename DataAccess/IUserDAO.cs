@@ -10,7 +10,7 @@ namespace DataAccess {
         public User Get(int id);
         public User GetByEmail(string email);
         public IQueryable<User> GetAll();
-
+        public void Deactivate(User user);
         public void Register(User user);
     }
 }
