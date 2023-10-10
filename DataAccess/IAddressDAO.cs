@@ -13,5 +13,7 @@ namespace DataAccess {
         public Address Get(int id);
 
         public IQueryable<Address> GetByCustomerId(int id);
+        public IQueryable<Address> GetPickupByCustomerId(int id);
+        public IQueryable<Address> GetDeliveryByCustomerId(int id);
     }
 }

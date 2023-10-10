@@ -17,8 +17,32 @@ namespace Service.Implement {
         }
 
         public void Create(Address address) {
+            List<Address> addresses = new List<Address>();
+            if (address.Type == (int)AddressType.Pickup)
+            {
+                addresses = _addressDAO.GetPickupByCustomerId((int)address.CustomerId).ToList();
+                if (addresses.Count == 1)
+                {
+                    throw new Exception("400: You can only have 1 pickup address");
+                }
+                address.Id = 0;
+                address.IsDefault = true;
+                address.CreatedAt = DateTime.Now;
+                address.UpdatedAt = DateTime.Now;
+                _addressDAO.Create(address);
+            }
+            addresses = _addressDAO.GetDeliveryByCustomerId((int)address.CustomerId).ToList();
+            foreach (Address existedAddress in addresses)
+            {
+                if (existedAddress.IsDefault == true)
+                {
+                    existedAddress.IsDefault = false;
+                }
+            }
             address.Id = 0;
-            address.IsDefault = false;
+            address.IsDefault = true;
+            address.CreatedAt = DateTime.Now;
+            address.UpdatedAt = DateTime.Now;
             _addressDAO.Create(address);
         }
 

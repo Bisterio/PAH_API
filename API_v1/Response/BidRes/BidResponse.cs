@@ -8,5 +8,6 @@
         public string BidderName { get; set; }
         public decimal? BidAmount { get; set; }
         public DateTime? BidDate { get; set; }
+        public int Status { get; set; }
     }
 }

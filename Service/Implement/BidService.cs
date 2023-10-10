@@ -1,4 +1,5 @@
 ﻿using DataAccess;
+using DataAccess.Implement;
 using DataAccess.Models;
 using System;
 using System.Collections.Generic;
@@ -19,9 +20,10 @@ namespace Service.Implement
             _auctionDAO = auctionDAO;
         }
 
-        public List<Bid> GetAllBidsFromAuction(int auctionId)
+        public List<Bid> GetAllBidsFromAuction(int auctionId, int status)
         {
-            return _bidDAO.GetBidsByAuctionId(auctionId).OrderByDescending(b => b.BidDate).ToList();
+            var bids = _bidDAO.GetBidsByAuctionId(auctionId).Where(b => status == 0 || b.Status == status).OrderByDescending(b => b.BidDate).ToList();
+            return bids;
         }
 
         public Bid GetHighestBidFromAuction(int auctionId)
@@ -35,16 +37,14 @@ namespace Service.Implement
 
         public int GetNumberOfBidders(int auctionId)
         {
-            return GetAllBidsFromAuction(auctionId)
-                .Where(b => b.Status == (int)BidStatus.Active)
+            return GetAllBidsFromAuction(auctionId, (int)BidStatus.Active)
                 .GroupBy(b => b.BidderId)
                 .Count();
         }
 
         public int GetNumberOfBids(int auctionId)
         {
-            return GetAllBidsFromAuction(auctionId)
-                .Where(b => b.Status == (int)BidStatus.Active)
+            return GetAllBidsFromAuction(auctionId, (int)BidStatus.Active)
                 .Count();
         }
 

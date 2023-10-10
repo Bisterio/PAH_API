@@ -26,9 +26,9 @@ namespace API.Controllers
         }
 
         [HttpGet("auction/{id}")]
-        public IActionResult GetBidsFromAuction(int id, [FromQuery] PagingParam pagingParam) 
+        public IActionResult GetBidsFromAuction(int id, [FromQuery] int status, [FromQuery] PagingParam pagingParam) 
         {
-            List<Bid> bidList = _bidService.GetAllBidsFromAuction(id)
+            List<Bid> bidList = _bidService.GetAllBidsFromAuction(id, status)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<BidResponse> response = _mapper.Map<List<BidResponse>>(bidList);
             foreach (var bid in response)

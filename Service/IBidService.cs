@@ -9,7 +9,7 @@ namespace Service
 {
     public interface IBidService
     {
-        public List<Bid> GetAllBidsFromAuction(int auctionId);
+        public List<Bid> GetAllBidsFromAuction(int auctionId, int status);
         public int GetNumberOfBids(int auctionId);
         public int GetNumberOfBidders(int auctionId);
         public Bid GetHighestBidFromAuction(int auctionId);
