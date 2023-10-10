@@ -2,6 +2,7 @@
 
 namespace API.Request {
     public class AddressRequest {
+        public int Id { get; set; }
         [Required]
         public string RecipientName { get; set; }
         [Required]
@@ -22,5 +23,6 @@ namespace API.Request {
         public string Street { get; set; }
         [Required]
         public int Type { get; set; }
+        public bool? IsDefault { get; set; }
     }
 }
