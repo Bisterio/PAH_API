@@ -7,6 +7,7 @@ using API.Response.SellerRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
@@ -27,7 +28,8 @@ namespace API.Controllers
         private readonly ISellerService _sellerService;
         private readonly IAddressService _addressService;
 
-        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService, IBidService bidService, ISellerService sellerService, IAddressService addressService)
+        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService, 
+            IBidService bidService, ISellerService sellerService, IAddressService addressService)
         {
             _auctionService = auctionService;
             _mapper = mapper;
@@ -58,7 +60,9 @@ namespace API.Controllers
                 sellerResponse.District = null;
                 sellerResponse.Street = null;
 
-                Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true).FirstOrDefault();
+                Address address = _addressService.GetByCustomerId(sellerId)
+                    .Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true)
+                    .FirstOrDefault();
 
                 if (address != null)
                 {
@@ -95,7 +99,12 @@ namespace API.Controllers
                     item.CurrentPrice = highestBid.BidAmount;
                 }
             }
-            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int) HttpStatusCode.OK, 
+                Message = "Get auctions successfully",
+                Data = response 
+            });
         }
 
         [HttpGet("{id}")]
@@ -105,7 +114,11 @@ namespace API.Controllers
 
             if (auction == null)
             {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This auction is not exist" });
+                return NotFound(new ErrorDetails 
+                { 
+                    StatusCode = 400, 
+                    Message = "This auction is not exist" 
+                });
             }
 
             List<ProductImage> imageList = _imageService.GetAllImagesByProductId((int)auction.ProductId);
@@ -124,7 +137,12 @@ namespace API.Controllers
             }
 
             response.Seller = GetSellerResponse((int)auction.Product.SellerId);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get auctions successfully", 
+                Data = response 
+            });
         }
 
         [HttpGet("seller/{id}")]
@@ -145,9 +163,15 @@ namespace API.Controllers
                     item.CurrentPrice = highestBid.BidAmount;
                 }
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get auctions successfully", 
+                Data = response 
+            });
         }
 
+        [Authorize]
         [HttpGet("staff/{id}")]
         public IActionResult GetAuctionAssigned(int id, [FromQuery] PagingParam pagingParam)
         {
@@ -155,7 +179,11 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int)Role.Staff)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this" 
+                });
             }
             List<Auction> auctionList = _auctionService.GetAuctionAssigned(id)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
@@ -172,7 +200,12 @@ namespace API.Controllers
                     item.CurrentPrice = highestBid.BidAmount;
                 }
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get auctions successfully", 
+                Data = response 
+            });
         }
 
         [HttpGet("bidder/{id}")]
@@ -186,6 +219,7 @@ namespace API.Controllers
             //}
             List<Auction> auctionList = _auctionService.GetAuctionJoined(id)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
+
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
             {
@@ -199,7 +233,12 @@ namespace API.Controllers
                     item.CurrentPrice = highestBid.BidAmount;
                 }
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+            return Ok(new BaseResponse 
+            {
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get auctions successfully",
+                Data = response 
+            });
         }
 
         [HttpPost]
@@ -209,12 +248,22 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int)Role.Seller)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this"
+                });
             }
             _auctionService.CreateAuction(_mapper.Map<Auction>(request));
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Create auction successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Create auction successfully", 
+                Data = null 
+            });
         }
 
+        [Authorize]
         [HttpPatch("staff/approve/{id}")]
         public IActionResult StaffApproveAuction(int id)
         {
@@ -222,12 +271,22 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int) Role.Staff)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                {
+                    StatusCode = (int) HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this" 
+                });
             }
             _auctionService.StaffApproveAuction(id);
-            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Auction approved successfully", Data = null });
+            return Ok(new BaseResponse
+            { 
+                Code = (int) HttpStatusCode.OK, 
+                Message = "Auction approved successfully", 
+                Data = null 
+            });
         }
 
+        [Authorize]
         [HttpPatch("staff/reject/{id}")]
         public IActionResult StaffRejectAuction(int id)
         {
@@ -235,10 +294,19 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int )Role.Staff)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this" 
+                });
             }
             _auctionService.StaffRejectAuction(id);
-            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Auction rejected successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int) HttpStatusCode.OK, 
+                Message = "Auction rejected successfully", 
+                Data = null 
+            });
         }
     }
 }

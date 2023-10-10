@@ -30,12 +30,18 @@ namespace API.Controllers
         {
             List<Bid> bidList = _bidService.GetAllBidsFromAuction(id, status)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
+
             List<BidResponse> response = _mapper.Map<List<BidResponse>>(bidList);
             foreach (var bid in response)
             {
                 bid.BidderName = _userService.Get((int)bid.BidderId).Name;
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get bids successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get bids successfully",
+                Data = response
+            });
         }
     }
 }

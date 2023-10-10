@@ -7,6 +7,7 @@ using API.Response.SellerRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
@@ -58,7 +59,9 @@ namespace API.Controllers
                 sellerResponse.District = null;
                 sellerResponse.Street = null;
 
-                Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true).FirstOrDefault();
+                Address address = _addressService.GetByCustomerId(sellerId)
+                    .Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true)
+                    .FirstOrDefault();
                 if(address != null)
                 {
                     sellerResponse.Province = address.Province;
@@ -81,13 +84,19 @@ namespace API.Controllers
         {
             List<Product> productList = _productService.GetProducts(nameSearch, materialId, categoryId, type, priceMin, priceMax, orderBy)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
+
             List<ProductListResponse> response = _mapper.Map<List<ProductListResponse>>(productList);
             foreach (var item in response)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.Id);
                 item.ImageUrl = image.ImageUrl;
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get products successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get products successfully", 
+                Data = response 
+            });
         }
 
         [HttpGet("seller/{id}")]
@@ -105,7 +114,12 @@ namespace API.Controllers
                 ProductImage image = _imageService.GetMainImageByProductId(item.Id);
                 item.ImageUrl = image.ImageUrl;
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get products by seller successfully", Data = response });
+            return Ok(new BaseResponse
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get products by seller successfully",
+                Data = response 
+            });
         }
 
         [HttpGet("{id}")]
@@ -134,19 +148,27 @@ namespace API.Controllers
             }
             response.Feedbacks = feedbacks;
 
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get product successfully", Data = response });
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get product successfully", 
+                Data = response
+            });
         }
 
+        [Authorize]
         [HttpPost]
         public IActionResult RegisterProduct([FromBody] ProductRequest request)
         {
-            //var userId = GetUserIdFromToken();
-            //var user = _userService.Get(userId);
-            //if (user == null || user.Role != (int) Role.Seller)
-            //{
-            //    return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
-            //}
-
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Seller)
+            {
+                return Unauthorized(new ErrorDetails 
+                { StatusCode = (int)HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this"
+                });
+            }
             var auctionRequest = new AuctionRequest
             {
                 Title = request.Title,
@@ -154,20 +176,29 @@ namespace API.Controllers
                 StartedAt = request.StartedAt,
                 EndedAt = request.EndedAt,
             };
-
             _productService.CreateProduct(_mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Register product successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Register product successfully", 
+                Data = null 
+            });
         }
 
+        [Authorize]
         [HttpPatch("{id}")]
         public IActionResult EditProduct(int id, [FromBody] ProductRequest request)
         {
-            //var userId = GetUserIdFromToken();
-            //var user = _userService.Get(userId);
-            //if (user == null || user.Role != (int)Role.Seller)
-            //{
-            //    return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
-            //}
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Seller)
+            {
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this" 
+                });
+            }
 
             var auctionRequest = new AuctionRequest
             {
@@ -180,9 +211,18 @@ namespace API.Controllers
             Product product = _productService.UpdateProduct(id, _mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));
             if (product == null)
             {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This product is not exist" });
+                return NotFound(new ErrorDetails 
+                { 
+                    StatusCode = 400, 
+                    Message = "This product is not exist" 
+                });
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Edit product successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Edit product successfully", 
+                Data = null 
+            });
         }
 
         [HttpDelete("{id}")]
@@ -192,14 +232,27 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int)Role.Seller)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this" 
+                });
             }
             Product product = _productService.DeleteProduct(id);
             if (product == null)
             {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This product is not exist" });
+                return NotFound(new ErrorDetails 
+                { 
+                    StatusCode = 400, 
+                    Message = "This product is not exist" 
+                });
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Edit product successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Edit product successfully", 
+                Data = null
+            });
         }
     }
 }
