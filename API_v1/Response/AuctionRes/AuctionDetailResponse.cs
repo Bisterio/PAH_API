@@ -10,6 +10,7 @@
         public decimal StartingPrice { get; set; }
         public decimal? CurrentPrice { get; set; }
         public decimal Step { get; set; }
+        public int Status { get; set; }
         public DateTime? StartedAt { get; set; }
         public DateTime? EndedAt { get; set; }
         public int NumberOfBids { get; set; }
