@@ -190,8 +190,8 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet("staff/{id}")]
-        public IActionResult GetAuctionAssigned(int id, [FromQuery] PagingParam pagingParam)
+        [HttpGet("staff")]
+        public IActionResult GetAuctionAssigned([FromQuery] PagingParam pagingParam)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -203,7 +203,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this" 
                 });
             }
-            List<Auction> auctionList = _auctionService.GetAuctionAssigned(id)
+            List<Auction> auctionList = _auctionService.GetAuctionAssigned(userId)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
