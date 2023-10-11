@@ -41,7 +41,11 @@ namespace API.Controllers
              //|| user.Role != (int)Role.Seller
             if (user == null)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails
+                { StatusCode =
+                (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
             }
             var seller = _sellerService.GetSeller(userId);
             if (seller == null)
@@ -49,7 +53,12 @@ namespace API.Controllers
                 seller = new DataAccess.Models.Seller();
             }
             SellerDetailResponse response = _mapper.Map<SellerDetailResponse>(seller);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get seller successfully", Data = response });
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get seller successfully",
+                Data = response 
+            });
         }
     }
 }

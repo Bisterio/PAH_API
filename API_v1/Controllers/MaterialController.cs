@@ -23,7 +23,12 @@ namespace API.Controllers
         public IActionResult Get()
         {
             List<Material> materialList = _materialService.GetAll();
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get all materials successfully", Data = materialList });
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get all materials successfully",
+                Data = materialList 
+            });
         }
     }
 }

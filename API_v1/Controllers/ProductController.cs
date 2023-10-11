@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
+using Service.Implement;
 using System.Net;
 
 namespace API.Controllers
@@ -75,6 +76,13 @@ namespace API.Controllers
             return sellerResponse;
         }
 
+        private int CountAuctions(string? nameSearch, int materialId, int categoryId, int type, decimal priceMin, decimal priceMax)
+        {
+            int count = 0;
+            count = _productService.GetProducts(nameSearch, materialId, categoryId, type, priceMin, priceMax, 0).Count();
+            return count;
+        }
+
         [HttpGet]
         public IActionResult GetProducts([FromQuery] string? nameSearch, 
             [FromQuery] int materialId, [FromQuery] int categoryId, 
@@ -85,17 +93,26 @@ namespace API.Controllers
             List<Product> productList = _productService.GetProducts(nameSearch, materialId, categoryId, type, priceMin, priceMax, orderBy)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
 
-            List<ProductListResponse> response = _mapper.Map<List<ProductListResponse>>(productList);
-            foreach (var item in response)
+            List<ProductListResponse> mappedList = _mapper.Map<List<ProductListResponse>>(productList);
+            foreach (var item in mappedList)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.Id);
                 item.ImageUrl = image.ImageUrl;
             }
+
+            int count = CountAuctions(nameSearch, materialId, categoryId, type, priceMin, priceMax);
+
+            ProductListCountResponse response = new ProductListCountResponse()
+            {
+                Count = count,
+                ProductList = mappedList
+            };
+
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get products successfully", 
-                Data = response 
+                Data = response
             });
         }
 

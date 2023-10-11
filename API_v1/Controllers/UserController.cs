@@ -37,10 +37,19 @@ namespace API.Controllers
             var userId = GetUserIdFromToken();
             if(userId == -1)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You must login to use this." });
+                return Unauthorized(new ErrorDetails
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You must login to use this." 
+                });
             }
             var user = _userService.Get(userId);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get user successfully", Data = _mapper.Map<UserDetailResponse>(user) });
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get user successfully", 
+                Data = _mapper.Map<UserDetailResponse>(user)
+            });
         }
 
         [HttpGet]
@@ -48,7 +57,12 @@ namespace API.Controllers
         {
             List<User> userList = _userService.GetAll();
             List<UserResponse> responses = _mapper.Map<List<UserResponse>>(userList);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get all users successfully", Data = responses });
+            return Ok(new BaseResponse 
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get all users successfully", 
+                Data = responses
+            });
         }
 
         [Authorize]
@@ -58,7 +72,12 @@ namespace API.Controllers
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
             _userService.Deactivate(user);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Self deactivate successfully", Data = null });
+            return Ok(new BaseResponse
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Self deactivate successfully", 
+                Data = null
+            });
         }
     }
 }

@@ -21,13 +21,13 @@ namespace Service.Implement
             _backgroundJobClient = backgroundJobClient;
         }
 
-        public List<Auction> GetAuctions(string? title, int categoryId, int materialId, int orderBy)
+        public List<Auction> GetAuctions(string? title, int status, int categoryId, int materialId, int orderBy)
         {
             List<Auction> auctionList;
             try
             {
                 var auctions = _auctionDAO.GetAuctions()
-                    .Where(a => a.Status == (int) AuctionStatus.Opened
+                    .Where(a => status == 0 || a.Status == status
                     //&& a.Product.SellerId. == (int)Status.Available
                     && (string.IsNullOrEmpty(title) || a.Title.Contains(title))
                     && (materialId == 0 || a.Product.MaterialId == materialId)

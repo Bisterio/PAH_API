@@ -41,7 +41,12 @@ namespace API.Controllers
             Feedback feedback = _feedbackService.GetById(id);
             FeedbackResponse response = _mapper.Map<FeedbackResponse>(feedback);
             response.BuyerName = _userService.Get(response.BuyerId).Name;
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get feedback successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get feedback successfully",
+                Data = response 
+            });
         }
 
         [HttpGet]
@@ -55,7 +60,12 @@ namespace API.Controllers
             {
                 response.BuyerName = _userService.Get(response.BuyerId).Name;
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get all feedbacks successfully", Data = responses });
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get all feedbacks successfully",
+                Data = responses
+            });
         }
 
         [HttpPost]
@@ -66,7 +76,12 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             _feedbackService.CreateFeedback(_mapper.Map<Feedback>(request));
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Feedback successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Feedback successfully", 
+                Data = null 
+            });
         }
     }
 }

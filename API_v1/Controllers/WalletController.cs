@@ -40,7 +40,12 @@ namespace API.Controllers
                 wallet = new Wallet();
             }
             WalletCurrentUserResponse response = _mapper.Map<WalletCurrentUserResponse>(wallet);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get current user wallet successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get current user wallet successfully",
+                Data = response 
+            });
         }
     }
 }
