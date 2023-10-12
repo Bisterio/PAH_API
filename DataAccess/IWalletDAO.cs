@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 
 namespace DataAccess
 {
-    public interface ISellerDAO
+    public interface IWalletDAO
     {
-        public Seller GetSeller(int id);
-        public void CreateSeller(Seller seller);
+        public Wallet GetByCurrentUser(int id);
     }
 }

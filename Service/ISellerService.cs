@@ -10,5 +10,6 @@ namespace Service
     public interface ISellerService
     {
         public Seller GetSeller(int id);
+        public void CreateSeller(int id, Seller seller);
     }
 }

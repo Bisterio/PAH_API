@@ -17,5 +17,15 @@ namespace DataAccess.Implement {
         public IQueryable<Address> GetByCustomerId(int id) {
             return GetAll().Where(p => p.CustomerId == id);
         }
+
+        public IQueryable<Address> GetDeliveryByCustomerId(int id)
+        {
+            return GetAll().Where(p => p.CustomerId == id && p.Type == (int)AddressType.Delivery);
+        }
+
+        public IQueryable<Address> GetPickupByCustomerId(int id)
+        {
+            return GetAll().Where(p => p.CustomerId == id && p.Type == (int)AddressType.Pickup);
+        }
     }
 }

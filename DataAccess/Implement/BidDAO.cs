@@ -17,7 +17,7 @@ namespace DataAccess.Implement
             return GetAll()
                 .Include(b => b.Auction)
                 .Include(b => b.Bidder)
-                .Where(b => b.AuctionId == auctionId && b.Status == (int)BidStatus.Active);
+                .Where(b => b.AuctionId == auctionId);
         }
 
         public void CreateBid(Bid bid)

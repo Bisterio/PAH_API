@@ -7,6 +7,7 @@ using API.Response.SellerRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
@@ -27,7 +28,8 @@ namespace API.Controllers
         private readonly ISellerService _sellerService;
         private readonly IAddressService _addressService;
 
-        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService, IBidService bidService, ISellerService sellerService, IAddressService addressService)
+        public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService, 
+            IBidService bidService, ISellerService sellerService, IAddressService addressService)
         {
             _auctionService = auctionService;
             _mapper = mapper;
@@ -44,38 +46,61 @@ namespace API.Controllers
             return int.Parse(user.Claims.FirstOrDefault(p => p.Type == "UserId").Value);
         }
 
-        private SellerResponse GetSellerResponse(int sellerId)
+        private SellerWithAddressResponse GetSellerResponse(int sellerId)
         {
             Seller seller = _sellerService.GetSeller(sellerId);
-            SellerResponse sellerResponse = new SellerResponse();
+            SellerWithAddressResponse sellerResponse = new SellerWithAddressResponse();
             if (seller != null)
             {
-                sellerResponse = _mapper.Map<SellerResponse>(seller);
-                Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true).FirstOrDefault();
-                sellerResponse.Province = address.Province;
-                sellerResponse.WardCode = address.WardCode;
-                sellerResponse.Ward = address.Ward;
-                sellerResponse.DistrictId = address.DistrictId;
-                sellerResponse.District = address.District;
-                sellerResponse.Street = address.Street;
+                sellerResponse = _mapper.Map<SellerWithAddressResponse>(seller);
+                sellerResponse.Province = null;
+                sellerResponse.WardCode = null;
+                sellerResponse.Ward = null;
+                sellerResponse.DistrictId = null;
+                sellerResponse.District = null;
+                sellerResponse.Street = null;
+
+                Address address = _addressService.GetByCustomerId(sellerId)
+                    .Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true)
+                    .FirstOrDefault();
+
+                if (address != null)
+                {
+                    sellerResponse.Province = address.Province;
+                    sellerResponse.WardCode = address.WardCode;
+                    sellerResponse.Ward = address.Ward;
+                    sellerResponse.DistrictId = address.DistrictId;
+                    sellerResponse.District = address.District;
+                    sellerResponse.Street = address.Street;
+                }
             }
             return sellerResponse;
         }
 
+        private int CountAuctions(string? title, int status, int categoryId, int materialId)
+        {
+            int count = 0;
+            count = _auctionService.GetAuctions(title, status, categoryId, materialId, 0).Count();
+            return count;
+        }
+
         [HttpGet]
-        public IActionResult GetAuctions([FromQuery] string? title, 
+        public IActionResult GetAuctions([FromQuery] string? title,
+            [FromQuery] int status,
             [FromQuery] int categoryId, 
             [FromQuery] int materialId, 
             [FromQuery] int orderBy,
             [FromQuery] PagingParam pagingParam) 
         { 
-            List<Auction> auctionList = _auctionService.GetAuctions(title, categoryId, materialId, orderBy)
+            List<Auction> auctionList = _auctionService.GetAuctions(title, status, categoryId, materialId, orderBy)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
-            List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
-            foreach (var item in response)
+            List<AuctionListResponse> mappedList = _mapper.Map<List<AuctionListResponse>>(auctionList);
+            
+            foreach (var item in mappedList)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
+
                 Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
                 item.CurrentPrice = item.StartingPrice;
                 if (highestBid != null)
@@ -83,7 +108,21 @@ namespace API.Controllers
                     item.CurrentPrice = highestBid.BidAmount;
                 }
             }
-            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+
+            int count = CountAuctions(title, status, categoryId, materialId);
+
+            AuctionListCountResponse response = new AuctionListCountResponse()
+            {
+                Count = count,
+                AuctionList = mappedList                
+            };
+
+            return Ok(new BaseResponse 
+            { 
+                Code = (int) HttpStatusCode.OK, 
+                Message = "Get auctions successfully",
+                Data = response
+            });
         }
 
         [HttpGet("{id}")]
@@ -93,13 +132,20 @@ namespace API.Controllers
 
             if (auction == null)
             {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This auction is not exist" });
+                return NotFound(new ErrorDetails 
+                { 
+                    StatusCode = 400, 
+                    Message = "This auction is not exist" 
+                });
             }
 
             List<ProductImage> imageList = _imageService.GetAllImagesByProductId((int)auction.ProductId);
             List<string> imageUrls = imageList.Select(i => i.ImageUrl).ToList();
             AuctionDetailResponse response = _mapper.Map<AuctionDetailResponse>(auction);
             response.ImageUrls = imageUrls;
+
+            response.NumberOfBids = _bidService.GetNumberOfBids(id);
+            response.NumberOfBidders = _bidService.GetNumberOfBidders(id);
 
             Bid highestBid = _bidService.GetHighestBidFromAuction(auction.Id);
             response.CurrentPrice = response.StartingPrice;
@@ -109,7 +155,12 @@ namespace API.Controllers
             }
 
             response.Seller = GetSellerResponse((int)auction.Product.SellerId);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get auctions successfully", 
+                Data = response 
+            });
         }
 
         [HttpGet("seller/{id}")]
@@ -122,28 +173,57 @@ namespace API.Controllers
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get auctions successfully", 
+                Data = response 
+            });
         }
 
-        [HttpGet("staff/{id}")]
-        public IActionResult GetAuctionAssigned(int id, [FromQuery] PagingParam pagingParam)
+        [Authorize]
+        [HttpGet("staff")]
+        public IActionResult GetAuctionAssigned([FromQuery] PagingParam pagingParam)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int)Role.Staff)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this" 
+                });
             }
-            List<Auction> auctionList = _auctionService.GetAuctionAssigned(id)
+            List<Auction> auctionList = _auctionService.GetAuctionAssigned(userId)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get auctions successfully", 
+                Data = response 
+            });
         }
 
         [HttpGet("bidder/{id}")]
@@ -157,13 +237,26 @@ namespace API.Controllers
             //}
             List<Auction> auctionList = _auctionService.GetAuctionJoined(id)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
+
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get auctions successfully", Data = response });
+            return Ok(new BaseResponse 
+            {
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get auctions successfully",
+                Data = response 
+            });
         }
 
         [HttpPost]
@@ -173,12 +266,22 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int)Role.Seller)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this"
+                });
             }
             _auctionService.CreateAuction(_mapper.Map<Auction>(request));
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Create auction successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Create auction successfully", 
+                Data = null 
+            });
         }
 
+        [Authorize]
         [HttpPatch("staff/approve/{id}")]
         public IActionResult StaffApproveAuction(int id)
         {
@@ -186,12 +289,22 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int) Role.Staff)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                {
+                    StatusCode = (int) HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this" 
+                });
             }
             _auctionService.StaffApproveAuction(id);
-            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Auction approved successfully", Data = null });
+            return Ok(new BaseResponse
+            { 
+                Code = (int) HttpStatusCode.OK, 
+                Message = "Auction approved successfully", 
+                Data = null 
+            });
         }
 
+        [Authorize]
         [HttpPatch("staff/reject/{id}")]
         public IActionResult StaffRejectAuction(int id)
         {
@@ -199,10 +312,19 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int )Role.Staff)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this" 
+                });
             }
             _auctionService.StaffRejectAuction(id);
-            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Auction rejected successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int) HttpStatusCode.OK, 
+                Message = "Auction rejected successfully", 
+                Data = null 
+            });
         }
     }
 }

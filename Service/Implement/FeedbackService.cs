@@ -35,6 +35,15 @@ namespace Service.Implement
             return _feedbackDAO.GetAll(productId).ToList();
         }
 
+        public List<Feedback> GetTop3Newest(int productId)
+        {
+            if (productId == null)
+            {
+                throw new Exception("404: Product not found");
+            }
+            return _feedbackDAO.GetAll(productId).Take(3).ToList();
+        }
+
         public void CreateFeedback(Feedback feedback)
         {
             feedback.Status = (int)Status.Available;

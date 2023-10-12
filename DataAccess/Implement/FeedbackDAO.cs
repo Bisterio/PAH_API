@@ -18,7 +18,7 @@ namespace DataAccess.Implement
 
         public IQueryable<Feedback> GetAll(int productId)
         {
-            return GetAll().Where(f => f.ProductId == productId && f.Status == (int)Status.Available);
+            return GetAll().Where(f => f.ProductId == productId && f.Status == (int)Status.Available).OrderByDescending(f => f.Timestamp);
         }
 
         public void CreateFeedback(Feedback feedback)

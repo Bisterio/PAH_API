@@ -18,7 +18,7 @@
         public string MaterialName { get; set; }
         public string SellerName { get; set; }
         public List<string> ImageUrls { get; set; }
-        public SellerRes.SellerResponse Seller { get; set; }
+        public SellerRes.SellerWithAddressResponse Seller { get; set; }
         public List<FeedbackRes.FeedbackResponse> Feedbacks {  get; set; } 
     }
 }

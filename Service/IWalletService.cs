@@ -5,11 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DataAccess
+namespace Service
 {
-    public interface ISellerDAO
+    public interface IWalletService
     {
-        public Seller GetSeller(int id);
-        public void CreateSeller(Seller seller);
+        public Wallet GetByCurrentUser(int id);
     }
 }

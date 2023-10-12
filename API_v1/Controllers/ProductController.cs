@@ -7,9 +7,11 @@ using API.Response.SellerRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
+using Service.Implement;
 using System.Net;
 
 namespace API.Controllers
@@ -44,22 +46,41 @@ namespace API.Controllers
             return int.Parse(user.Claims.FirstOrDefault(p => p.Type == "UserId").Value);
         }
 
-        private SellerResponse GetSellerResponse(int sellerId)
+        private SellerWithAddressResponse GetSellerResponse(int sellerId)
         {
             Seller seller = _sellerService.GetSeller(sellerId);
-            SellerResponse sellerResponse = new SellerResponse();
+            SellerWithAddressResponse sellerResponse = new SellerWithAddressResponse();
             if (seller != null)
             {
-                sellerResponse = _mapper.Map<SellerResponse>(seller);
-                Address address = _addressService.GetByCustomerId(sellerId).Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true).FirstOrDefault();
-                sellerResponse.Province = address.Province;
-                sellerResponse.WardCode = address.WardCode;
-                sellerResponse.Ward = address.Ward;
-                sellerResponse.DistrictId = address.DistrictId;
-                sellerResponse.District = address.District;
-                sellerResponse.Street = address.Street;
+                sellerResponse = _mapper.Map<SellerWithAddressResponse>(seller);
+                sellerResponse.Province = null;
+                sellerResponse.WardCode = null;
+                sellerResponse.Ward = null;
+                sellerResponse.DistrictId = null;
+                sellerResponse.District = null;
+                sellerResponse.Street = null;
+
+                Address address = _addressService.GetByCustomerId(sellerId)
+                    .Where(a => a.Type == (int)AddressType.Pickup && a.IsDefault == true)
+                    .FirstOrDefault();
+                if(address != null)
+                {
+                    sellerResponse.Province = address.Province;
+                    sellerResponse.WardCode = address.WardCode;
+                    sellerResponse.Ward = address.Ward;
+                    sellerResponse.DistrictId = address.DistrictId;
+                    sellerResponse.District = address.District;
+                    sellerResponse.Street = address.Street;
+                }
             }
             return sellerResponse;
+        }
+
+        private int CountAuctions(string? nameSearch, int materialId, int categoryId, int type, decimal priceMin, decimal priceMax)
+        {
+            int count = 0;
+            count = _productService.GetProducts(nameSearch, materialId, categoryId, type, priceMin, priceMax, 0).Count();
+            return count;
         }
 
         [HttpGet]
@@ -71,13 +92,28 @@ namespace API.Controllers
         {
             List<Product> productList = _productService.GetProducts(nameSearch, materialId, categoryId, type, priceMin, priceMax, orderBy)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
-            List<ProductListResponse> response = _mapper.Map<List<ProductListResponse>>(productList);
-            foreach (var item in response)
+
+            List<ProductListResponse> mappedList = _mapper.Map<List<ProductListResponse>>(productList);
+            foreach (var item in mappedList)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.Id);
                 item.ImageUrl = image.ImageUrl;
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get products successfully", Data = response });
+
+            int count = CountAuctions(nameSearch, materialId, categoryId, type, priceMin, priceMax);
+
+            ProductListCountResponse response = new ProductListCountResponse()
+            {
+                Count = count,
+                ProductList = mappedList
+            };
+
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get products successfully", 
+                Data = response
+            });
         }
 
         [HttpGet("seller/{id}")]
@@ -95,7 +131,12 @@ namespace API.Controllers
                 ProductImage image = _imageService.GetMainImageByProductId(item.Id);
                 item.ImageUrl = image.ImageUrl;
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get products by seller successfully", Data = response });
+            return Ok(new BaseResponse
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get products by seller successfully",
+                Data = response 
+            });
         }
 
         [HttpGet("{id}")]
@@ -113,26 +154,38 @@ namespace API.Controllers
 
             response.Seller = GetSellerResponse((int)product.SellerId);
 
-            List<FeedbackResponse> feedbacks = _mapper.Map<List<FeedbackResponse>>(_feedbackService.GetAll(id));
+            List<FeedbackResponse> feedbacks = _mapper.Map<List<FeedbackResponse>>(_feedbackService.GetTop3Newest(id));
+            foreach (var feedback in feedbacks)
+            {
+                feedback.BuyerName = _userService.Get(feedback.BuyerId).Name;
+            }
             if(feedbacks == null || feedbacks.Count == 0)
             {
                 feedbacks = new List<FeedbackResponse>();
             }
             response.Feedbacks = feedbacks;
 
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get product successfully", Data = response });
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Get product successfully", 
+                Data = response
+            });
         }
 
+        [Authorize]
         [HttpPost]
         public IActionResult RegisterProduct([FromBody] ProductRequest request)
         {
-            //var userId = GetUserIdFromToken();
-            //var user = _userService.Get(userId);
-            //if (user == null || user.Role != (int) Role.Seller)
-            //{
-            //    return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
-            //}
-
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Seller)
+            {
+                return Unauthorized(new ErrorDetails 
+                { StatusCode = (int)HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this"
+                });
+            }
             var auctionRequest = new AuctionRequest
             {
                 Title = request.Title,
@@ -140,20 +193,29 @@ namespace API.Controllers
                 StartedAt = request.StartedAt,
                 EndedAt = request.EndedAt,
             };
-
             _productService.CreateProduct(_mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Register product successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Register product successfully", 
+                Data = null 
+            });
         }
 
+        [Authorize]
         [HttpPatch("{id}")]
         public IActionResult EditProduct(int id, [FromBody] ProductRequest request)
         {
-            //var userId = GetUserIdFromToken();
-            //var user = _userService.Get(userId);
-            //if (user == null || user.Role != (int)Role.Seller)
-            //{
-            //    return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
-            //}
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Seller)
+            {
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this" 
+                });
+            }
 
             var auctionRequest = new AuctionRequest
             {
@@ -166,9 +228,18 @@ namespace API.Controllers
             Product product = _productService.UpdateProduct(id, _mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));
             if (product == null)
             {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This product is not exist" });
+                return NotFound(new ErrorDetails 
+                { 
+                    StatusCode = 400, 
+                    Message = "This product is not exist" 
+                });
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Edit product successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Edit product successfully", 
+                Data = null 
+            });
         }
 
         [HttpDelete("{id}")]
@@ -178,14 +249,27 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int)Role.Seller)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this" 
+                });
             }
             Product product = _productService.DeleteProduct(id);
             if (product == null)
             {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This product is not exist" });
+                return NotFound(new ErrorDetails 
+                { 
+                    StatusCode = 400, 
+                    Message = "This product is not exist" 
+                });
             }
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Edit product successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Edit product successfully", 
+                Data = null
+            });
         }
     }
 }

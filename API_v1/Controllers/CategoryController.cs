@@ -24,8 +24,14 @@ namespace API.Controllers
         public IActionResult Get([FromQuery] PagingParam pagingParam)
         {
             List<Category> categoryList = _categoryService.GetAll()
-                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList(); ;
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get all categories successfully", Data = categoryList });
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
+
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get all categories successfully",
+                Data = categoryList 
+            });
         }
     }
 }

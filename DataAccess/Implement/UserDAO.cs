@@ -10,6 +10,11 @@ namespace DataAccess.Implement {
         public UserDAO(PlatformAntiquesHandicraftsContext context) : base(context) {
         }
 
+        public void Deactivate(User user)
+        {
+            Update(user);
+        }
+
         public User Get(int id) {
             return GetAll().FirstOrDefault(p => p.Id == id && p.Status != (int) Status.Unavailable);
         }

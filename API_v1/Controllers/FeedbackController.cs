@@ -1,6 +1,7 @@
 ﻿using API.ErrorHandling;
 using API.Request;
 using API.Response;
+using API.Response.FeedbackRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
@@ -38,7 +39,14 @@ namespace API.Controllers
         public IActionResult GetById(int id)
         {
             Feedback feedback = _feedbackService.GetById(id);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get feedback successfully", Data = feedback });
+            FeedbackResponse response = _mapper.Map<FeedbackResponse>(feedback);
+            response.BuyerName = _userService.Get(response.BuyerId).Name;
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get feedback successfully",
+                Data = response 
+            });
         }
 
         [HttpGet]
@@ -47,7 +55,17 @@ namespace API.Controllers
         {
             List<Feedback> feedbackList = _feedbackService.GetAll(productId)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get all feedbacks successfully", Data = feedbackList });
+            List<FeedbackResponse> responses = _mapper.Map<List<FeedbackResponse>>(feedbackList);
+            foreach (FeedbackResponse response in responses)
+            {
+                response.BuyerName = _userService.Get(response.BuyerId).Name;
+            }
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get all feedbacks successfully",
+                Data = responses
+            });
         }
 
         [HttpPost]
@@ -58,7 +76,12 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
             _feedbackService.CreateFeedback(_mapper.Map<Feedback>(request));
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Feedback successfully", Data = null });
+            return Ok(new BaseResponse 
+            { 
+                Code = (int)HttpStatusCode.OK, 
+                Message = "Feedback successfully", 
+                Data = null 
+            });
         }
     }
 }

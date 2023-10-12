@@ -9,7 +9,7 @@ namespace Service
 {
     public interface IAuctionService
     {
-        public List<Auction> GetAuctions(string? title, int categoryId, int materialId, int orderBy);
+        public List<Auction> GetAuctions(string? title, int status, int categoryId, int materialId, int orderBy);
         public Auction GetAuctionById(int id);
         public List<Auction> GetAuctionAssigned(int staffId);
         public List<Auction> GetAuctionsByProductId(int productId);

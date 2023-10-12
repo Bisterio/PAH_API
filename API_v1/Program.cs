@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Cors;
 using Service;
 using Service.Implement;
 using System.Text;
@@ -51,6 +53,16 @@ builder.Services.AddSwaggerGen(c => {
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowEverything", builder =>
+    {
+        builder.WithOrigins("*") // Replace with your allowed origins
+               .AllowAnyHeader()
+               .AllowAnyMethod();
+    });
+});
+
 //Filter
 builder.Services.AddScoped<ValidateModelAttribute>();
 builder.Services.Configure<ApiBehaviorOptions>(options => {
@@ -87,6 +99,8 @@ builder.Services.AddScoped<ISellerDAO, SellerDAO>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 builder.Services.AddScoped<IFeedbackDAO, FeedbackDAO>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IWalletDAO, WalletDAO>();
+builder.Services.AddScoped<IWalletService, WalletService>();
 
 //JWT authentication
 builder.Services.AddAuthentication(x => {
@@ -138,6 +152,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseCors("AllowEverything");
 
 app.UseHangfireDashboard();
 
