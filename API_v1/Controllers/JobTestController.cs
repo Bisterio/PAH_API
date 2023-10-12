@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
@@ -6,6 +7,7 @@ using Service;
 namespace API.Controllers {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
     public class JobTestController : ControllerBase {
         private readonly IJobTestService _jobTestService;
         private readonly IBackgroundJobClient _backgroundJobClient;

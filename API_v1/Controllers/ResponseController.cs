@@ -4,6 +4,7 @@ using API.Response;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
@@ -14,6 +15,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
     public class ResponseController : ControllerBase
     {
         private readonly IResponseService _responseService;

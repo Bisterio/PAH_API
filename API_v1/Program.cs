@@ -22,6 +22,9 @@ builder.Services.AddControllers();
 builder.Services.AddHttpClient("GHN", httpClient => {
     httpClient.BaseAddress = new Uri(builder.Configuration["API3rdParty:GHN:dev"]);
 });
+builder.Services.AddHttpClient("Zalopay", httpClient => {
+    httpClient.BaseAddress = new Uri(builder.Configuration["API3rdParty:Zalopay:dev"]);
+});
 builder.Services.AddDbContext<PlatformAntiquesHandicraftsContext>(options => options.UseSqlServer("name=ConnectionStrings:dev"));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -99,8 +102,9 @@ builder.Services.AddScoped<ISellerDAO, SellerDAO>();
 builder.Services.AddScoped<ISellerService, SellerService>();
 builder.Services.AddScoped<IFeedbackDAO, FeedbackDAO>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
-builder.Services.AddScoped<IWalletDAO, WalletDAO>();
 builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IWalletDAO, WalletDAO>();
+builder.Services.AddScoped<ITransactionDAO, TransactionDAO>();
 
 //JWT authentication
 builder.Services.AddAuthentication(x => {
@@ -127,6 +131,16 @@ builder.Services.AddAuthentication(x => {
     };
 });
 
+//CORS policy
+builder.Services.AddCors(options => {
+    options.AddDefaultPolicy(
+        builder => {
+            builder.WithOrigins("http://localhost:3000")
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+        });
+});
+
 //Hangfire Task scheduler
 builder.Services.AddHangfire(x => {
     x.UseSqlServerStorage(builder.Configuration["ConnectionStrings:dev"]);
@@ -148,6 +162,8 @@ if (app.Environment.IsDevelopment()) {
 app.ConfigureExceptionHandler(logger);
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthentication();
 

@@ -1,5 +1,6 @@
 ﻿using Firebase.Auth;
 using Firebase.Storage;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
@@ -7,6 +8,7 @@ using Service;
 namespace API.Controllers {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
     public class ImageController : ControllerBase {
         private readonly IConfiguration _configuration;
         private readonly IImageService _imageService;

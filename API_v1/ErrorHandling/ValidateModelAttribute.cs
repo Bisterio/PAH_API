@@ -14,7 +14,8 @@ namespace API.ErrorHandling
                 errorMessage.ToList().ForEach(p => message = message + p + " ");
                 context.Result = new UnprocessableEntityObjectResult(new ErrorDetails { 
                     StatusCode = (int) HttpStatusCode.BadRequest, 
-                    Message = message});
+                    Message = message
+                });
             }
         }
         public void OnActionExecuted(ActionExecutedContext context) { }

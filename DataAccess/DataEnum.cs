@@ -25,7 +25,8 @@ namespace DataAccess {
         Delivered = 4,
         CancelApprovalPending = 10,
         CancelledBySeller = 12,
-        CancelledByBuyer = 11
+        CancelledByBuyer = 11,
+        WaitingSellerConfirm = 5
     }
 
     public enum AddressType {
@@ -72,5 +73,17 @@ namespace DataAccess {
     {
         Active = 1,
         Retracted = 2,
+    }
+
+    public enum PaymentType {
+        Wallet = 1,
+        Zalopay = 2
+    }
+
+    public enum TransactionType {
+        Deposit = 1,
+        Withdraw = 2,
+        Payment = 3,
+        Refund = 4
     }
 }

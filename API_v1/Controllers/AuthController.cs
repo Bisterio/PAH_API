@@ -6,6 +6,7 @@ using AutoMapper;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -19,6 +20,7 @@ namespace API.Controllers {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
     public class AuthController : ControllerBase {
         private readonly ILogger _logger;
         private readonly IUserService _userService;

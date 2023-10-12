@@ -1,5 +1,6 @@
 ﻿using API.Response;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
@@ -10,6 +11,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
     public class MaterialController : ControllerBase
     {
         private readonly IMaterialService _materialService;
