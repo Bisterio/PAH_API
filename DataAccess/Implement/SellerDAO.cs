@@ -12,6 +12,11 @@ namespace DataAccess.Implement
     {
         public SellerDAO(PlatformAntiquesHandicraftsContext context) : base(context) { }
 
+        public void CreateSeller(Seller seller)
+        {
+            Create(seller);
+        }
+
         public Seller GetSeller(int id)
         {
             return GetAll()

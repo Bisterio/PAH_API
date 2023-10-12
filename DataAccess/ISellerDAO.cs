@@ -10,5 +10,6 @@ namespace DataAccess
     public interface ISellerDAO
     {
         public Seller GetSeller(int id);
+        public void CreateSeller(Seller seller);
     }
 }

@@ -74,6 +74,11 @@ namespace Service.Implement {
             return _addressDAO.GetByCustomerId(customerId).ToList();
         }
 
+        public Address GetPickupBySellerId(int sellerId)
+        {
+            return _addressDAO.GetPickupByCustomerId(sellerId).FirstOrDefault();
+        }
+
         public Address GetDeliveryByCurrentUser(int id)
         {
             return _addressDAO.GetByCustomerId(id)
