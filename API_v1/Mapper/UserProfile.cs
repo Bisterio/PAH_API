@@ -10,6 +10,7 @@ namespace API.Mapper {
             CreateMap<User, UserResponse>();
             CreateMap<Seller, SellerResponse>();
             CreateMap<User, UserDetailResponse>();
+            CreateMap<User, StaffResponse>();
         }
     }
 }

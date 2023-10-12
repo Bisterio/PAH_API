@@ -65,6 +65,19 @@ namespace API.Controllers
             });
         }
 
+        [HttpGet("/api/staff")]
+        public IActionResult GetAllStaffs()
+        {
+            List<User> staffList = _userService.GetAllStaffs();
+            List<StaffResponse> responses = _mapper.Map<List<StaffResponse>>(staffList);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get all staffs successfully",
+                Data = responses
+            });
+        }
+
         [Authorize]
         [HttpPatch("deactivate")]
         public IActionResult SelfDeactivate()

@@ -92,5 +92,10 @@ namespace Service.Implement {
                 _tokenDAO.UpdateToken(token);
             }
         }
+
+        public List<User> GetAllStaffs()
+        {
+            return _userDAO.GetAll().Where(u => u.Status == (int)Status.Available && u.Role == (int)Role.Staff).ToList();
+        }
     }
 }

@@ -9,6 +9,7 @@ namespace Service {
     public interface IUserService {
         public User Get(int id);
         public List<User> GetAll();
+        public List<User> GetAllStaffs();
         public User GetByEmail(string email);
         public User Login(string email, string password);
         public void Register(User user);
