@@ -11,11 +11,13 @@ using Service;
 using Service.CustomRequest;
 using Service.ThirdParty.Zalopay;
 using System.Net;
+using DataAccess;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     [EnableCors]
     public class WalletController : ControllerBase {
         private readonly IWalletService _walletService;
@@ -57,6 +59,36 @@ namespace API.Controllers
                 Code = (int) HttpStatusCode.OK, 
                 Message = "Topup successfully", 
                 Data = null 
+            });
+        }
+
+        [HttpPost("payment/order/{orderId:int}")]
+        public IActionResult Pay(int orderId) {
+            var userId = GetUserIdFromToken();
+            if (userId == null) {
+                return Unauthorized(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "You are not logged in"
+                });
+            }
+            var user = _userService.Get(userId);
+            if (user == null) {
+                return Unauthorized(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "Your account is not available"
+                });
+            }
+            if (user.Role != (int) Role.Buyer && user.Role != (int) Role.Seller) {
+                return Unauthorized(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            _walletService.CheckoutWallet(userId, orderId);
+            return Ok(new BaseResponse {
+                Code = (int) HttpStatusCode.OK,
+                Message = $"Pay for order {orderId} successfully",
+                Data = null
             });
         }
 

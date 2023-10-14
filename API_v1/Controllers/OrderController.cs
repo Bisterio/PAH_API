@@ -84,7 +84,7 @@ namespace API.Controllers
                 });
             }
             
-            if (user.Role != (int) Role.Buyer) {
+            if (user.Role != (int) Role.Buyer && user.Role != (int) Role.Seller) {
                 return Unauthorized(new ErrorDetails { 
                     StatusCode = (int) HttpStatusCode.Unauthorized, 
                     Message = "You are not allowed to access this" 

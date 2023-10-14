@@ -18,10 +18,11 @@ namespace Service.Implement
         private readonly IOrderDAO _orderDAO;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public WalletService(IWalletDAO walletDAO, ITransactionDAO transactionDAO, IHttpClientFactory httpClientFactory) {
+        public WalletService(IWalletDAO walletDAO, ITransactionDAO transactionDAO, IHttpClientFactory httpClientFactory, IOrderDAO orderDAO) {
             _walletDAO = walletDAO;
             _transactionDAO = transactionDAO;
             _httpClientFactory = httpClientFactory;
+            _orderDAO = orderDAO;
         }
 
         public async Task Topup(int userId, TopupRequest topupRequest) {
@@ -100,7 +101,7 @@ namespace Service.Implement
             }
 
             //Subtract from wallet, create transaction, update order
-            wallet.AvailableBalance -= order.TotalAmount;
+            wallet.AvailableBalance -= (order.TotalAmount + order.ShippingCost);
             _walletDAO.Update(wallet);
             _transactionDAO.Create(new DataAccess.Models.Transaction {
                 Id = 0,

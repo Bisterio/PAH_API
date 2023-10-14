@@ -12,6 +12,7 @@ namespace DataAccess {
 
         public IQueryable<Order> GetAllByBuyerId(int id);
         public IQueryable<Order> GetAllBySellerId(int id);
+        public IQueryable<Order> GetAllByBuyerIdAfterCheckout(int buyerId, DateTime now);
 
         public void Create(Order order);
         public Order UpdateOrder(Order order);
