@@ -284,7 +284,7 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpPatch("staff")]
+        [HttpGet("assign")]
         public IActionResult AssignStaffToAuction(int id, int staffId)
         {
             var userId = GetUserIdFromToken();
@@ -307,7 +307,7 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpPatch("staff/approve/{id}")]
+        [HttpGet("staff/approve/{id}")]
         public IActionResult StaffApproveAuction(int id)
         {
             var userId = GetUserIdFromToken();
@@ -330,7 +330,7 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpPatch("staff/reject/{id}")]
+        [HttpGet("staff/reject/{id}")]
         public IActionResult StaffRejectAuction(int id)
         {
             var userId = GetUserIdFromToken();

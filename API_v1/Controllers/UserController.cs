@@ -92,7 +92,7 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpPatch("deactivate")]
+        [HttpGet("deactivate")]
         public IActionResult SelfDeactivate()
         {
             var userId = GetUserIdFromToken();
