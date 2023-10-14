@@ -140,5 +140,11 @@ namespace Service.Implement {
         {
             return _userDAO.GetAll().Where(u => u.Status == (int)Status.Available && u.Role == (int)Role.Staff).ToList();
         }
+
+        public List<User> GetAllBuyersSellers()
+        {
+            return _userDAO.GetAll().Where(u => u.Status == (int)Status.Available 
+            && (u.Role == (int)Role.Buyer || u.Role == (int)Role.Seller)).ToList();
+        }
     }
 }

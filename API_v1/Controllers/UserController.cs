@@ -65,6 +65,19 @@ namespace API.Controllers
             });
         }
 
+        [HttpGet("customer")]
+        public IActionResult GetAllBuyerAndSeller()
+        {
+            List<User> userList = _userService.GetAllBuyersSellers();
+            List<UserResponse> responses = _mapper.Map<List<UserResponse>>(userList);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get all customers successfully",
+                Data = responses
+            });
+        }
+
         [HttpGet("/api/staff")]
         public IActionResult GetAllStaffs()
         {
