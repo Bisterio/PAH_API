@@ -284,6 +284,29 @@ namespace API.Controllers
         }
 
         [Authorize]
+        [HttpPatch("staff")]
+        public IActionResult AssignStaffToAuction(int id, int staffId)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Manager)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            _auctionService.AssignStaff(id, staffId);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Assign staff successfully",
+                Data = null
+            });
+        }
+
+        [Authorize]
         [HttpPatch("staff/approve/{id}")]
         public IActionResult StaffApproveAuction(int id)
         {

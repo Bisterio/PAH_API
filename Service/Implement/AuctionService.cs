@@ -13,11 +13,13 @@ namespace Service.Implement
     {
         private readonly IAuctionDAO _auctionDAO;
         private readonly IBidDAO _bidDAO;
+        private readonly IUserDAO _userDAO;
         private readonly IBackgroundJobClient _backgroundJobClient;
 
-        public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient)
+        public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO)
         {
             _auctionDAO = auctionDAO;
+            _userDAO = userDAO;
             _backgroundJobClient = backgroundJobClient;
         }
 
@@ -113,6 +115,25 @@ namespace Service.Implement
             auction.CreatedAt = DateTime.Now;
             auction.UpdatedAt = DateTime.Now;
             _auctionDAO.CreateAuction(auction);
+        }
+
+        public void AssignStaff(int id, int staffId)
+        {
+            if (id == null)
+            {
+                throw new Exception("404: Auction not found");
+            } 
+            else if (staffId == null || _userDAO.Get(staffId).Role != (int)Role.Staff)
+            {
+                throw new Exception("404: Staff not found");
+            }
+            Auction auction = _auctionDAO.GetAuctionById(id);
+            if (auction.Status > (int)AuctionStatus.Unassigned)
+            {
+                throw new Exception("400: This auction has been assigned");
+            }
+            auction.StaffId = staffId;
+            _auctionDAO.UpdateAuction(auction);
         }
 
         public void StaffApproveAuction(int id)
