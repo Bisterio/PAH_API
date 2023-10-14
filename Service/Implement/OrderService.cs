@@ -74,9 +74,19 @@ namespace Service.Implement {
 
             var dateNow = DateTime.Now;
             var totalWithShip = request.Total;
+            request.Order.ForEach(p => totalWithShip += p.ShippingCost);
+
+            var wallet = _walletService.GetByCurrentUser(buyerId);
+            if (wallet == null) {
+                throw new Exception("400: Wallet not found");
+            }
+            if (wallet.AvailableBalance < totalWithShip) {
+                throw new Exception("400: Wallet not enough to create order");
+            }
+
             foreach (var order in request.Order) {
                 List<Product> products = new List<Product>();
-                totalWithShip += order.ShippingCost;
+                //totalWithShip += order.ShippingCost;
                 
                 Order insert = new Order {
                     BuyerId = buyerId,
@@ -125,14 +135,6 @@ namespace Service.Implement {
         }
 
         private void CheckoutWallet(decimal total, int buyerId, DateTime now) {
-            var wallet = _walletService.GetByCurrentUser(buyerId);
-            if (wallet == null) {
-                throw new Exception("400: Wallet not found");
-            }
-            if (wallet.AvailableBalance < total) {
-                return;
-            }
-
             var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(buyerId, now).ToList();
             orderList.ForEach(order => {
                 _walletService.CheckoutWallet(buyerId, order.Id);
