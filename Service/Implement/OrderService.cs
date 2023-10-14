@@ -1,5 +1,6 @@
 ﻿using DataAccess;
 using DataAccess.Models;
+using Microsoft.EntityFrameworkCore;
 using Service.CustomRequest;
 using System;
 using System.Collections.Generic;
@@ -15,13 +16,18 @@ namespace Service.Implement {
         private readonly IAddressDAO _addressDAO;
         private readonly IProductImageDAO _productImageDAO;
         private readonly IOrderCancelDAO _orderCancelDAO;
+        private readonly IWalletService _walletService;
 
-        public OrderService(IOrderDAO orderDAO, IProductDAO productDAO, IAddressDAO addressDAO, IProductImageDAO productImageDAO, IOrderCancelDAO orderCancelDAO) {
+        public OrderService(IOrderDAO orderDAO, 
+            IProductDAO productDAO, IAddressDAO addressDAO, 
+            IProductImageDAO productImageDAO, IOrderCancelDAO orderCancelDAO,
+            IWalletService walletService) {
             _orderDAO = orderDAO;
             _productDAO = productDAO;
             _addressDAO = addressDAO;
             _productImageDAO = productImageDAO;
             _orderCancelDAO = orderCancelDAO;
+            _walletService = walletService;
         }
 
         public void SellerCancelOrder(int sellerId, int orderId, string reason) {
@@ -66,8 +72,21 @@ namespace Service.Implement {
             if (address.CustomerId != buyerId) throw new Exception("401: Address does not associate with current buyer");
             if (address.Type != (int) AddressType.Delivery) throw new Exception("401: Address type must be delivery");
 
+            var dateNow = DateTime.Now;
+            var totalWithShip = request.Total;
+            request.Order.ForEach(p => totalWithShip += p.ShippingCost);
+
+            var wallet = _walletService.GetByCurrentUser(buyerId);
+            if (wallet == null) {
+                throw new Exception("400: Wallet not found");
+            }
+            if (wallet.AvailableBalance < totalWithShip) {
+                throw new Exception("400: Wallet not enough to create order");
+            }
+
             foreach (var order in request.Order) {
                 List<Product> products = new List<Product>();
+                //totalWithShip += order.ShippingCost;
                 
                 Order insert = new Order {
                     BuyerId = buyerId,
@@ -75,7 +94,7 @@ namespace Service.Implement {
                     RecipientName = address.RecipientName,
                     RecipientPhone = address.RecipientPhone,
                     RecipientAddress = address.Street + ", " + address.Ward + ", " + address.District + ", " + address.Province,
-                    OrderDate = DateTime.Now,
+                    OrderDate = dateNow,
                     Status = (int) OrderStatus.Pending,
                     ShippingCost = order.ShippingCost,
                     TotalAmount = order.Total,
@@ -99,10 +118,31 @@ namespace Service.Implement {
                         Quantity = product.Amount,
                         ImageUrl = _productImageDAO.GetByProductId(dbProduct.Id).FirstOrDefault().ImageUrl
                     });
-                    insert.TotalAmount += dbProduct.Price * product.Amount;
+                    //insert.TotalAmount += dbProduct.Price * product.Amount;
                 }
                 _orderDAO.Create(insert);
             }
+            switch (request.PaymentType) {
+                case (int)PaymentType.Wallet:
+                    CheckoutWallet(totalWithShip, buyerId, dateNow); 
+                    break;
+                case (int) PaymentType.Zalopay:
+                    CheckoutZalopay(); 
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void CheckoutWallet(decimal total, int buyerId, DateTime now) {
+            var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(buyerId, now).ToList();
+            orderList.ForEach(order => {
+                _walletService.CheckoutWallet(buyerId, order.Id);
+            });
+        }
+
+        private void CheckoutZalopay() {
+
         }
 
         private bool CheckPrice(decimal requestPrice, decimal dbPrice) {
