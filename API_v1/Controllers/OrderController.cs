@@ -7,15 +7,19 @@ using AutoMapper.Configuration.Conventions;
 using DataAccess;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
+using Service.CustomRequest;
 using System.Net;
 
-namespace API.Controllers {
+namespace API.Controllers
+{
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
+    [EnableCors]
     public class OrderController : ControllerBase {
         private readonly IOrderService _orderService;
         private readonly IUserService _userService;
@@ -48,8 +52,8 @@ namespace API.Controllers {
 
             var orders = _orderService.GetByBuyerId(id)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
-            orders.Select(p => _mapper.Map<OrderResponse>(p));
-            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get Buyer's order list successfully", Data = orders});
+            var responseOrders = orders.Select(p => _mapper.Map<OrderResponse>(p));
+            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get Buyer's order list successfully", Data = responseOrders});
         }
         
         [HttpGet("/api/seller/order")]
@@ -63,19 +67,30 @@ namespace API.Controllers {
 
             var orders = _orderService.GetBySellerId(id)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
-            orders.Select(p => _mapper.Map<OrderResponse>(p));
-            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get Seller's order list successfully", Data = orders});
+            var responseOrders = orders.Select(p => _mapper.Map<OrderResponse>(p));
+            return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get Seller's order list successfully", Data = responseOrders});
         }
 
         [HttpPost("/api/buyer/checkout")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult Checkout([FromBody] CheckoutRequest request) {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
 
             if (user == null) {
-                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails { 
+                    StatusCode = (int) HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this" 
+                });
             }
-            _orderService.Create(request.ProductIds, user.Id, request.AddressId);
+            
+            if (user.Role != (int) Role.Buyer) {
+                return Unauthorized(new ErrorDetails { 
+                    StatusCode = (int) HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this" 
+                });
+            }
+            _orderService.Checkout(request, user.Id, request.AddressId);
             return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Checkout successfully", Data = null });
         }
 

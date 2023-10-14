@@ -3,6 +3,7 @@ using API.Response;
 using API.Response.BidRes;
 using AutoMapper;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
@@ -12,6 +13,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors]
     public class BidController : ControllerBase
     {
         private readonly IBidService _bidService;

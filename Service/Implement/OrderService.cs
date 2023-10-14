@@ -1,5 +1,6 @@
 ﻿using DataAccess;
 using DataAccess.Models;
+using Service.CustomRequest;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +28,7 @@ namespace Service.Implement {
             var order = _orderDAO.Get(orderId);
 
             if (order == null) throw new Exception("404: Order not found");
-            if (sellerId != order.SellerId || order.Status != (int) OrderStatus.Pending) throw new Exception("401: You are not allowed to cancel this order");
+            if (sellerId != order.SellerId || order.Status != (int) OrderStatus.WaitingSellerConfirm) throw new Exception("401: You are not allowed to cancel this order");
 
             order.Status = (int) OrderStatus.CancelledBySeller;
             _orderDAO.UpdateOrder(order);
@@ -49,7 +50,7 @@ namespace Service.Implement {
             var order = _orderDAO.Get(orderId);
 
             if (order == null) throw new Exception("404: Order not found");
-            if (buyerId != order.BuyerId || order.Status != (int) OrderStatus.Pending) throw new Exception("401: You are not allowed to cancel this order");
+            if (buyerId != order.BuyerId || order.Status != (int) OrderStatus.WaitingSellerConfirm) throw new Exception($"401: You are not allowed to cancel this order with status: {order.Status}");
 
             order.Status = (int) OrderStatus.CancelApprovalPending;
             _orderDAO.UpdateOrder(order);
@@ -59,40 +60,53 @@ namespace Service.Implement {
             _orderDAO.Create(order);
         }
 
-        public void Create(List<int> productId, int buyerId, int addressId) {
-            List<Product> products = new List<Product>();
+        public void Checkout(CheckoutRequest request, int buyerId, int addressId) {
             var address = _addressDAO.Get(addressId);
-            foreach (int id in productId) {
-                Product p = _productDAO.GetProductById(id);
-                if (p == null) {
-                    throw new Exception();
-                }
-                products.Add(p);
-            }
-            foreach (var productBySeller in products.GroupBy(p => p.SellerId)) {
-                Order order = new Order {
+            if (address == null) throw new Exception("404: Address not found when checkout");
+            if (address.CustomerId != buyerId) throw new Exception("401: Address does not associate with current buyer");
+            if (address.Type != (int) AddressType.Delivery) throw new Exception("401: Address type must be delivery");
+
+            foreach (var order in request.Order) {
+                List<Product> products = new List<Product>();
+                
+                Order insert = new Order {
                     BuyerId = buyerId,
-                    SellerId = productBySeller.FirstOrDefault().SellerId,
+                    SellerId = order.SellerId,
                     RecipientName = address.RecipientName,
                     RecipientPhone = address.RecipientPhone,
-                    RecipientAddress = address.Street + address.Ward + address.District + address.Province,
+                    RecipientAddress = address.Street + ", " + address.Ward + ", " + address.District + ", " + address.Province,
                     OrderDate = DateTime.Now,
                     Status = (int) OrderStatus.Pending,
-                    ShippingCost = 0, //Update function later
-                    TotalAmount = 0,
+                    ShippingCost = order.ShippingCost,
+                    TotalAmount = order.Total,
                     OrderItems = new List<OrderItem>()
                 };
-                productBySeller.ToList().ForEach(p => {
-                    order.OrderItems.Add(new OrderItem {
-                        ProductId = p.Id,
-                        Price = p.Price,
-                        Quantity = 1, //Update later base on business rule
-                        ImageUrl = _productImageDAO.GetByProductId(p.Id).FirstOrDefault().ImageUrl
+
+                foreach (var product in order.Products) {
+                    var dbProduct = _productDAO.GetProductById(product.Id);
+                    if (dbProduct == null) {
+                        throw new Exception("404: Product not found when create order");
+                    }
+                    if (!CheckPrice(product.Price, dbProduct.Price)) {
+                        throw new Exception("400: Price does not match with product in database");
+                    }
+                    if (order.SellerId != dbProduct.SellerId) {
+                        throw new Exception("400: Seller does not match with seller's product in database");
+                    }
+                    insert.OrderItems.Add(new OrderItem {
+                        ProductId = dbProduct.Id,
+                        Price = dbProduct.Price,
+                        Quantity = product.Amount,
+                        ImageUrl = _productImageDAO.GetByProductId(dbProduct.Id).FirstOrDefault().ImageUrl
                     });
-                    order.TotalAmount += p.Price;
-                });
-                _orderDAO.Create(order);
+                    insert.TotalAmount += dbProduct.Price * product.Amount;
+                }
+                _orderDAO.Create(insert);
             }
+        }
+
+        private bool CheckPrice(decimal requestPrice, decimal dbPrice) {
+            return requestPrice == dbPrice;
         }
 
         public List<Order> GetAll() {

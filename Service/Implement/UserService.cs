@@ -12,14 +12,17 @@ namespace Service.Implement {
         private readonly IUserDAO _userDAO;
         private readonly ITokenDAO _tokenDAO;
         private readonly IBuyerDAO _buyerDAO;
+        private readonly IWalletDAO _walletDAO;
         private ITokenService _tokenService;
         private readonly int WORK_FACTOR = 13;
+        private static readonly string DEFAULT_AVT = "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg";
 
-        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, ITokenService tokenService, IBuyerDAO buyerDAO) {
+        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, ITokenService tokenService, IBuyerDAO buyerDAO, IWalletDAO walletDAO) {
             _userDAO = userDAO;
             _tokenDAO = tokenDAO;
             _tokenService = tokenService;
             _buyerDAO = buyerDAO;
+            _walletDAO = walletDAO;
         }
 
         public User Get(int id) {
@@ -45,26 +48,66 @@ namespace Service.Implement {
             if (user != null) {
                 var verifyPassword = BC.EnhancedVerify(password, user.Password);
                 if (!verifyPassword) return null;
+
+                //Create buyer
                 var buyer = _buyerDAO.Get(user.Id);
                 if (buyer == null) {
                     _buyerDAO.Create(new Buyer { Id = user.Id, JoinedAt = DateTime.Now });
+                }
+
+                //Create wallet
+                var wallet = _walletDAO.GetWithoutStatus(user.Id);
+                if (wallet == null) {
+                    _walletDAO.Create(new Wallet { Id = user.Id, AvailableBalance = 0, LockedBalance = 0, Status = (int) Status.Available });
                 }
             }
             return user;
         }
 
         public void Register(User user) {
+            var dbUser = _userDAO.GetByEmail(user.Email);
+            if (dbUser != null) {
+                throw new Exception("409: Email already exists");
+            }
+
             user.Password = BC.EnhancedHashPassword(user.Password, WORK_FACTOR);
             user.Role = (int) Role.Buyer;
-            user.ProfilePicture = "To be Implemented";
             user.Status = (int) Status.Available;
             user.CreatedAt = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
+            user.ProfilePicture = DEFAULT_AVT;
             _userDAO.Register(user);
             var newUser = _userDAO.GetByEmail(user.Email);
 
             if (newUser == null) throw new Exception("500: Cannot insert new user");
-            _buyerDAO.Create(new Buyer { Id = newUser.Id, JoinedAt = DateTime.Now });
+
+            //Create buyer
+            CreateBuyer(newUser.Id);
+
+            //Create Wallet
+            CreateWallet(newUser.Id);
+        }
+
+        private void CreateBuyer(int userId) {
+            var buyer = _buyerDAO.Get(userId);
+            if (buyer == null) {
+                _buyerDAO.Create(new Buyer { Id = userId, JoinedAt = DateTime.Now });
+            } else {
+                buyer.JoinedAt = DateTime.Now;
+                _buyerDAO.Update(buyer);
+            }
+        }
+
+        private void CreateWallet(int userId) {
+            var wallet = _walletDAO.GetWithoutStatus(userId);
+            if (wallet == null) {
+                _walletDAO.Create(new Wallet { Id = userId, AvailableBalance = 0, LockedBalance = 0, Status = (int) Status.Available });
+            } else {
+                wallet.AvailableBalance = 0;
+                wallet.LockedBalance = 0;
+                wallet.Status = (int) Status.Available;
+                _walletDAO.Update(wallet);
+            }
         }
 
         public Tokens AddRefreshToken(int id) {
