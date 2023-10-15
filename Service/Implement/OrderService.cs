@@ -187,7 +187,9 @@ namespace Service.Implement {
         }
 
         public Order Get(int orderId) {
-            return _orderDAO.Get(orderId);
+            var order = _orderDAO.Get(orderId);
+            order.OrderItems.ToList().ForEach(p => { p.Product = _productDAO.GetProductById(p.ProductId); });
+            return order;
         }
     }
 }
