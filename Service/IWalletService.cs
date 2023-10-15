@@ -1,5 +1,5 @@
 ﻿using DataAccess.Models;
-using Service.ThirdParty.Zalopay;
+using Request.ThirdParty.Zalopay;
 using System;
 using System.Collections.Generic;
 using System.Linq;

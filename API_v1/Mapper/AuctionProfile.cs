@@ -1,7 +1,7 @@
-﻿using API.Request;
-using API.Response.AuctionRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
+using Request;
+using Respon.AuctionRes;
 
 namespace API.Mapper
 {

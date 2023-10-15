@@ -1,12 +1,12 @@
 ﻿using API.ErrorHandling;
-using API.Response;
-using API.Response.UserRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Respon;
+using Respon.UserRes;
 using Service;
 using System.Net;
 

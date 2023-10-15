@@ -1,7 +1,4 @@
 ﻿using API.ErrorHandling;
-using API.Request;
-using API.Response;
-using API.Response.FeedbackRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
@@ -9,6 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Request;
+using Request.Param;
+using Respon;
+using Respon.FeedbackRes;
 using Service;
 using System.Net;
 

@@ -1,6 +1,6 @@
-﻿using API.Request;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
+using Request;
 
 namespace API.Mapper
 {

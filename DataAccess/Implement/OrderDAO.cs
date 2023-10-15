@@ -21,15 +21,15 @@ namespace DataAccess.Implement {
         }
 
         public IQueryable<Order> GetAllByBuyerId(int id) {
-            return GetAll().Include(p => p.OrderItems).Include(p => p.Seller).Where(p => p.BuyerId == id && p.Status != (int) Status.Unavailable);
+            return GetAll().Include(p => p.OrderItems).Include(p => p.Seller).Where(p => p.BuyerId == id && p.Status != (int) Status.Unavailable).OrderByDescending(p => p.OrderDate);
         }
 
         public IQueryable<Order> GetAllBySellerId(int id) {
-            return GetAll().Include(p => p.OrderItems).Include(p => p.Seller).Where(p => p.SellerId == id && p.Status != (int) Status.Unavailable);
+            return GetAll().Include(p => p.OrderItems).Include(p => p.Seller).Where(p => p.SellerId == id && p.Status != (int) Status.Unavailable).OrderByDescending(p => p.OrderDate);
         }
 
         public IQueryable<Order> GetAllOrder() {
-            return GetAll().Include(p => p.OrderItems).Include(p => p.Seller).Where(p => p.Status != (int) Status.Unavailable);
+            return GetAll().Include(p => p.OrderItems).Include(p => p.Seller).Where(p => p.Status != (int) Status.Unavailable).OrderByDescending(p => p.OrderDate);
         }
 
         public IQueryable<Order> GetAllByBuyerIdAfterCheckout(int buyerId, DateTime now) {

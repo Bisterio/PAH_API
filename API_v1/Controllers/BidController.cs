@@ -1,11 +1,11 @@
-﻿using API.Request;
-using API.Response;
-using API.Response.BidRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Request.Param;
+using Respon;
+using Respon.BidRes;
 using Service;
 using System.Net;
 

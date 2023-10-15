@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DataAccess\DataAccess.csproj" />
+    <ProjectReference Include="..\Request\Request.csproj" />
+    <ProjectReference Include="..\Response\Respon.csproj" />
   </ItemGroup>
 
 </Project>

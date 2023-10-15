@@ -1,6 +1,6 @@
-﻿using API.Response.BidRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
+using Respon.BidRes;
 
 namespace API.Mapper
 {

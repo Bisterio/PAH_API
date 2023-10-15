@@ -1,7 +1,4 @@
 ﻿using API.ErrorHandling;
-using API.Request;
-using API.Response;
-using API.Response.SellerRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
@@ -9,6 +6,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.IISIntegration;
+using Request;
+using Respon;
+using Respon.SellerRes;
 using Service;
 using System.Net;
 

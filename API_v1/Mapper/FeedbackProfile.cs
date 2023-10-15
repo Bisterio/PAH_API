@@ -1,7 +1,7 @@
-﻿using API.Request;
-using API.Response.FeedbackRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
+using Request;
+using Respon.FeedbackRes;
 
 namespace API.Mapper
 {

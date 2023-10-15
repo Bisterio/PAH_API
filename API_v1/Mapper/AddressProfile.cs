@@ -1,7 +1,7 @@
-﻿using API.Request;
-using API.Response.AddressRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
+using Request;
+using Respon.AddressRes;
 
 namespace API.Mapper {
     public class AddressProfile : Profile{

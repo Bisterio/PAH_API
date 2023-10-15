@@ -1,7 +1,4 @@
 ﻿using API.ErrorHandling;
-using API.Request;
-using API.Response;
-using API.Response.UserRes;
 using AutoMapper;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,6 +7,8 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Request;
+using Respon;
 using Service;
 using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;

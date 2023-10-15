@@ -1,17 +1,16 @@
 ﻿using API.ErrorHandling;
-using API.Response;
 using Microsoft.AspNetCore.Cors;
-using API.Response.WalletRes;
 using AutoMapper;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service;
-using Service.CustomRequest;
-using Service.ThirdParty.Zalopay;
+using Request.ThirdParty.Zalopay;
 using System.Net;
 using DataAccess;
+using Respon;
+using Respon.WalletRes;
 
 namespace API.Controllers
 {
