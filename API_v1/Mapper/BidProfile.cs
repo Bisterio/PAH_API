@@ -1,4 +1,5 @@
-﻿using API.Response.BidRes;
+﻿using API.Request;
+using API.Response.BidRes;
 using AutoMapper;
 using DataAccess.Models;
 
@@ -9,6 +10,7 @@ namespace API.Mapper
         public BidProfile() 
         { 
             CreateMap<Bid, BidResponse>();
+            CreateMap<BidRequest, Bid>();
         }
     }
 }
