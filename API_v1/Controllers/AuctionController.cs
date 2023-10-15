@@ -284,8 +284,31 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpPatch("staff/approve/{id}")]
-        public IActionResult StaffApproveAuction(int id)
+        [HttpGet("assign")]
+        public IActionResult AssignStaffToAuction(int id, int staffId)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Manager)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            _auctionService.AssignStaff(id, staffId);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Assign staff successfully",
+                Data = null
+            });
+        }
+
+        [Authorize]
+        [HttpGet("staff/approve/{id}")]
+        public IActionResult StaffApproveAuction(int id, DateTime startedAt, DateTime endedAt)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -297,7 +320,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this" 
                 });
             }
-            _auctionService.StaffApproveAuction(id);
+            _auctionService.StaffApproveAuction(id, startedAt, endedAt);
             return Ok(new BaseResponse
             { 
                 Code = (int) HttpStatusCode.OK, 
@@ -307,7 +330,7 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpPatch("staff/reject/{id}")]
+        [HttpGet("staff/reject/{id}")]
         public IActionResult StaffRejectAuction(int id)
         {
             var userId = GetUserIdFromToken();

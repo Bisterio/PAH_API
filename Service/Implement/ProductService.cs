@@ -96,10 +96,10 @@ namespace Service.Implement
             if(product.Type == (int) ProductType.Auction)
             {
                 auction.ProductId = product.Id;
-                auction.EntryFee = 0.1m * auction.StartingPrice;
                 auction.StartingPrice = product.Price;
+                auction.EntryFee = 0.1m * auction.StartingPrice;
                 auction.StaffId = null;
-                auction.Status = (int) AuctionStatus.Pending;
+                auction.Status = (int) AuctionStatus.Unassigned;
                 auction.CreatedAt = DateTime.Now;
                 auction.UpdatedAt = DateTime.Now;
                 _auctionDAO.CreateAuction(auction);
@@ -131,9 +131,8 @@ namespace Service.Implement
             if (product.Type == (int) ProductType.Auction && auction.Status == (int) AuctionStatus.Rejected) // bi reject moi cho sua lai
             {
                 Auction currentAuction = _auctionDAO.GetAuctionById(id);
-
-                currentAuction.EntryFee = 0.1m * auction.StartingPrice;
                 currentAuction.StartingPrice = product.Price;
+                currentAuction.EntryFee = 0.1m * auction.StartingPrice;
                 currentAuction.Status = (int) AuctionStatus.Pending;
                 currentAuction.UpdatedAt = DateTime.Now;
                 _auctionDAO.UpdateAuction(auction);

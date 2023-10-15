@@ -13,11 +13,13 @@ namespace Service.Implement
     {
         private readonly IAuctionDAO _auctionDAO;
         private readonly IBidDAO _bidDAO;
+        private readonly IUserDAO _userDAO;
         private readonly IBackgroundJobClient _backgroundJobClient;
 
-        public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient)
+        public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO)
         {
             _auctionDAO = auctionDAO;
+            _userDAO = userDAO;
             _backgroundJobClient = backgroundJobClient;
         }
 
@@ -115,7 +117,28 @@ namespace Service.Implement
             _auctionDAO.CreateAuction(auction);
         }
 
-        public void StaffApproveAuction(int id)
+        public void AssignStaff(int id, int staffId)
+        {
+            if (id == null)
+            {
+                throw new Exception("404: Auction not found");
+            } 
+            else if (staffId == null || _userDAO.Get(staffId).Role != (int)Role.Staff)
+            {
+                throw new Exception("404: Staff not found");
+            }
+            Auction auction = _auctionDAO.GetAuctionById(id);
+            if (auction.Status > (int)AuctionStatus.Unassigned)
+            {
+                throw new Exception("400: This auction has been assigned");
+            }
+            auction.StaffId = staffId;
+            auction.Status = (int)AuctionStatus.Pending;
+            auction.UpdatedAt = DateTime.Now;
+            _auctionDAO.UpdateAuction(auction);
+        }
+
+        public void StaffApproveAuction(int id, DateTime startedAt, DateTime endedAt)
         {
             Auction auction = GetAuctionById(id);
 
@@ -126,6 +149,8 @@ namespace Service.Implement
             else if (auction.Status == (int) AuctionStatus.Pending)
             {
                 auction.Status = (int)AuctionStatus.Approved;
+                auction.StartedAt = startedAt;
+                auction.EndedAt = endedAt;
                 auction.UpdatedAt = DateTime.Now;
                 _auctionDAO.UpdateAuction(auction);
                 //Schedule task to open/end auction

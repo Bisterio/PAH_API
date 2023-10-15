@@ -13,16 +13,18 @@ namespace Service.Implement {
         private readonly ITokenDAO _tokenDAO;
         private readonly IBuyerDAO _buyerDAO;
         private readonly IWalletDAO _walletDAO;
+        private readonly ISellerDAO _sellerDAO;
         private ITokenService _tokenService;
         private readonly int WORK_FACTOR = 13;
         private static readonly string DEFAULT_AVT = "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg";
 
-        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, ITokenService tokenService, IBuyerDAO buyerDAO, IWalletDAO walletDAO) {
+        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, ITokenService tokenService, IBuyerDAO buyerDAO, IWalletDAO walletDAO, ISellerDAO sellerDAO) {
             _userDAO = userDAO;
             _tokenDAO = tokenDAO;
             _tokenService = tokenService;
             _buyerDAO = buyerDAO;
             _walletDAO = walletDAO;
+            _sellerDAO = sellerDAO;
         }
 
         public User Get(int id) {
@@ -39,8 +41,31 @@ namespace Service.Implement {
 
         public void Deactivate(User user)
         {
+            if(user.Status == (int)Status.Unavailable)
+            {
+                throw new Exception("400: This user has already deactivated");
+            }
             user.Status = (int)Status.Unavailable;
             _userDAO.Deactivate(user);
+        }
+        public void Reactivate(User user)
+        {
+            if (user.Status == (int)Status.Available)
+            {
+                throw new Exception("400: This user hasn't been deactivated");
+            }
+            user.Status = (int)Status.Available;
+            _userDAO.Deactivate(user);
+        }
+
+        public void AcceptSeller(Seller seller)
+        {
+            if(seller.Status != (int)SellerStatus.Pending)
+            {
+                throw new Exception("400: This seller request has been approved");
+            }
+            seller.Status = (int)SellerStatus.Available;
+            _sellerDAO.UpdateSeller(seller);
         }
 
         public User Login(string email, string password) {
@@ -139,6 +164,12 @@ namespace Service.Implement {
         public List<User> GetAllStaffs()
         {
             return _userDAO.GetAll().Where(u => u.Status == (int)Status.Available && u.Role == (int)Role.Staff).ToList();
+        }
+
+        public List<User> GetAllBuyersSellers()
+        {
+            return _userDAO.GetAll().Where(u => u.Status == (int)Status.Available 
+            && (u.Role == (int)Role.Buyer || u.Role == (int)Role.Seller)).ToList();
         }
     }
 }
