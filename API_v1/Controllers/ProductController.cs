@@ -100,7 +100,14 @@ namespace API.Controllers
             foreach (var item in mappedList)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.Id);
-                item.ImageUrl = image.ImageUrl;
+                if(image == null)
+                {
+                    item.ImageUrl = null;
+                }
+                else
+                {
+                    item.ImageUrl = image.ImageUrl;
+                }
             }
 
             int count = CountAuctions(nameSearch, materialId, categoryId, type, priceMin, priceMax);
