@@ -1,7 +1,6 @@
-﻿using API.Request;
-using API.Response.OrderRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
+using Respon.OrderRes;
 
 namespace API.Mapper {
     public class OrderProfile : Profile {

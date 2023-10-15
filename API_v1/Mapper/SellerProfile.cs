@@ -1,7 +1,7 @@
-﻿using API.Request;
-using API.Response.SellerRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
+using Request;
+using Respon.SellerRes;
 
 namespace API.Mapper
 {

@@ -1,7 +1,7 @@
 ﻿using DataAccess;
 using DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
-using Service.CustomRequest;
+using Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -149,20 +149,20 @@ namespace Service.Implement {
             return requestPrice == dbPrice;
         }
 
-        public List<Order> GetAll() {
-            var a = _orderDAO.GetAllOrder().ToList();
+        public List<Order> GetAll(int status) {
+            var a = status == 0 ? _orderDAO.GetAllOrder().ToList() : _orderDAO.GetAllOrder().Where(p => p.Status == status).ToList();
             a.ForEach(p => p.OrderItems.ToList().ForEach(p => { p.Product = _productDAO.GetProductById(p.ProductId); }));
             return a;
         }
 
-        public List<Order> GetByBuyerId(int buyerId) {
-            var a = _orderDAO.GetAllByBuyerId(buyerId).ToList();
+        public List<Order> GetByBuyerId(int buyerId, int status) {
+            var a = status == 0 ? _orderDAO.GetAllByBuyerId(buyerId).ToList() : _orderDAO.GetAllByBuyerId(buyerId).Where(p => p.Status == status).ToList();
             a.ForEach(p => p.OrderItems.ToList().ForEach(p => { p.Product = _productDAO.GetProductById(p.ProductId); }));
             return a;
         }
 
-        public List<Order> GetBySellerId(int sellerId) {
-            var a = _orderDAO.GetAllBySellerId(sellerId).ToList();
+        public List<Order> GetBySellerId(int sellerId, int status) {
+            var a = status == 0 ? _orderDAO.GetAllBySellerId(sellerId).ToList() : _orderDAO.GetAllBySellerId(sellerId).Where(p => p.Status == status).ToList();
             a.ForEach(p => p.OrderItems.ToList().ForEach(p => { p.Product = _productDAO.GetProductById(p.ProductId); }));
             return a;
         }
@@ -183,6 +183,10 @@ namespace Service.Implement {
 
             order.Status = status;
             _orderDAO.UpdateOrder(order);
+            return _orderDAO.Get(orderId);
+        }
+
+        public Order Get(int orderId) {
             return _orderDAO.Get(orderId);
         }
     }

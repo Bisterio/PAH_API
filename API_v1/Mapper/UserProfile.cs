@@ -1,7 +1,7 @@
-﻿using API.Request;
-using API.Response.UserRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
+using Request;
+using Respon.UserRes;
 
 namespace API.Mapper {
     public class UserProfile : Profile{

@@ -1,9 +1,4 @@
 ﻿using API.ErrorHandling;
-using API.Request;
-using API.Response;
-using API.Response.AuctionRes;
-using API.Response.ProductRes;
-using API.Response.SellerRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
@@ -11,6 +6,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Request;
+using Request.Param;
+using Respon;
+using Respon.AuctionRes;
+using Respon.SellerRes;
 using Service;
 using Service.Implement;
 using System.Net;
@@ -207,8 +207,8 @@ namespace API.Controllers
             }
             List<Auction> auctionList = _auctionService.GetAuctionAssigned(userId)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
-            List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
-            foreach (var item in response)
+            List<AuctionListResponse> mappedList = _mapper.Map<List<AuctionListResponse>>(auctionList);
+            foreach (var item in mappedList)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
@@ -220,6 +220,11 @@ namespace API.Controllers
                     item.CurrentPrice = highestBid.BidAmount;
                 }
             }
+            AuctionListCountResponse response = new AuctionListCountResponse()
+            {
+                Count = auctionList.Count,
+                AuctionList = mappedList
+            };
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 

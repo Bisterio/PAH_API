@@ -1,8 +1,8 @@
-﻿using API.Response;
-using DataAccess.Models;
+﻿using DataAccess.Models;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Respon;
 using Service;
 using Service.Implement;
 using System.Net;

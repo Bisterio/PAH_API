@@ -1,12 +1,12 @@
 ﻿using API.ErrorHandling;
-using API.Response;
-using API.Response.UserRes;
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Respon;
+using Respon.UserRes;
 using Service;
 using System.Net;
 
@@ -94,12 +94,17 @@ namespace API.Controllers
         public IActionResult GetAllBuyerAndSeller()
         {
             List<User> userList = _userService.GetAllBuyersSellers();
-            List<UserResponse> responses = _mapper.Map<List<UserResponse>>(userList);
+            List<UserResponse> mappedList = _mapper.Map<List<UserResponse>>(userList);
+            CustomerListCountResponse response = new CustomerListCountResponse()
+            {
+                Count = userList.Count,
+                CustomerList = mappedList
+            };
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get all customers successfully",
-                Data = responses
+                Data = response
             });
         }
 

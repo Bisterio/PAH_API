@@ -1,10 +1,10 @@
-﻿using API.Request;
-using API.Response;
-using DataAccess.Models;
+﻿using DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Request.Param;
+using Respon;
 using Service;
 using System.Net;
 

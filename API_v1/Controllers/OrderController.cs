@@ -1,7 +1,4 @@
 ﻿using API.ErrorHandling;
-using API.Request;
-using API.Response;
-using API.Response.OrderRes;
 using AutoMapper;
 using AutoMapper.Configuration.Conventions;
 using DataAccess;
@@ -10,8 +7,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Request;
+using Request.Param;
+using Respon;
+using Respon.OrderRes;
 using Service;
-using Service.CustomRequest;
 using System.Net;
 
 namespace API.Controllers
@@ -32,17 +32,49 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get([FromQuery] PagingParam pagingParam) {
+        public IActionResult Get([FromQuery] PagingParam pagingParam, [FromQuery] OrderParam orderParam) {
             return Ok(new BaseResponse { 
                 Code = (int) HttpStatusCode.OK, 
                 Message = "Get order list successfully", 
-                Data = _orderService.GetAll()
+                Data = _orderService.GetAll(orderParam.Status)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList()
-                .Select(p => _mapper.Map<OrderResponse>(p)) });
+                .Select(p => _mapper.Map<OrderResponse>(p)) 
+            });
+        }
+        
+        [HttpGet("{orderId:int}")]
+        public IActionResult Get(int orderId) {
+            var id = GetUserIdFromToken();
+            var user = _userService.Get(id);
+
+            if (user == null) {
+                return Unauthorized(new ErrorDetails { 
+                    StatusCode = (int) HttpStatusCode.Unauthorized, 
+                    Message = "You are not logged in to access this" });
+            }
+
+            var order = _orderService.Get(orderId);
+            if (order == null) {
+                return NotFound(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.NotFound,
+                    Message = "Order not found"
+                });
+            }
+            if (order.BuyerId != id && order.SellerId != id) {
+                return Unauthorized(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this order"
+                });
+            }
+            return Ok(new BaseResponse { 
+                Code = (int) HttpStatusCode.OK, 
+                Message = "Get order successfully",
+                Data = _mapper.Map<OrderResponse>(order) 
+            });
         }
 
         [HttpGet("/api/buyer/order")]
-        public IActionResult GetByBuyerId([FromQuery] PagingParam pagingParam) {
+        public IActionResult GetByBuyerId([FromQuery] PagingParam pagingParam, [FromQuery] OrderParam orderParam) {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
 
@@ -50,14 +82,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
             }
 
-            var orders = _orderService.GetByBuyerId(id)
+            var orders = _orderService.GetByBuyerId(id, orderParam.Status)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             var responseOrders = orders.Select(p => _mapper.Map<OrderResponse>(p));
             return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get Buyer's order list successfully", Data = responseOrders});
         }
         
         [HttpGet("/api/seller/order")]
-        public IActionResult GetBySellerId([FromQuery] PagingParam pagingParam) {
+        public IActionResult GetBySellerId([FromQuery] PagingParam pagingParam, [FromQuery] OrderParam orderParam) {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
 
@@ -65,7 +97,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
             }
 
-            var orders = _orderService.GetBySellerId(id)
+            var orders = _orderService.GetBySellerId(id, orderParam.Status)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             var responseOrders = orders.Select(p => _mapper.Map<OrderResponse>(p));
             return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Get Seller's order list successfully", Data = responseOrders});
@@ -128,7 +160,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
             }
             
-            if (user.Role != (int) Role.Buyer) {
+            if (user.Role != (int) Role.Buyer && user.Role != (int) Role.Seller) {
                 return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
             }
 

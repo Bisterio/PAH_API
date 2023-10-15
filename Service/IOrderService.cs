@@ -1,5 +1,5 @@
 ﻿using DataAccess.Models;
-using Service.CustomRequest;
+using Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +15,9 @@ namespace Service {
         public void ApproveCancelOrderRequest(int sellerId, int orderId);
         public void SellerCancelOrder(int sellerId, int orderId, string reason);
 
-        public List<Order> GetByBuyerId(int buyerId);
-        public List<Order> GetBySellerId(int sellerId);
-        public List<Order> GetAll();
+        public List<Order> GetByBuyerId(int buyerId, int status);
+        public List<Order> GetBySellerId(int sellerId, int status);
+        public List<Order> GetAll(int status);
+        public Order Get(int orderId);
     }
 }

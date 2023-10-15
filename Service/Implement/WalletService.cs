@@ -1,13 +1,11 @@
 ﻿using DataAccess;
-using Service.CustomRequest;
-using Service.ThirdParty;
-using Service.ThirdParty.Zalopay;
 using DataAccess.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Request.ThirdParty.Zalopay;
 
 namespace Service.Implement
 {

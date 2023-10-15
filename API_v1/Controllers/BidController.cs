@@ -1,17 +1,18 @@
-﻿using API.ErrorHandling;
-using API.Request;
-using API.Response;
-using API.Response.BidRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
+using API.Request;
 using Firebase.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Request.Param;
+using Respon;
+using Respon.BidRes;
 using Service;
 using System.Net;
+using API.ErrorHandling;
 
 namespace API.Controllers
 {

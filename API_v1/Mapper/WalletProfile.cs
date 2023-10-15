@@ -1,6 +1,6 @@
-﻿using API.Response.WalletRes;
-using AutoMapper;
+﻿using AutoMapper;
 using DataAccess.Models;
+using Respon.WalletRes;
 
 namespace API.Mapper
 {
