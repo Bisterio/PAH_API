@@ -52,6 +52,28 @@ namespace API.Controllers
             });
         }
 
+        [Authorize]
+        [HttpGet("{id}")]
+        public IActionResult GetByUserId(int id)
+        {
+            var userId = GetUserIdFromToken();
+            if (userId == -1)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You must login to use this."
+                });
+            }
+            var user = _userService.Get(id);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get user successfully",
+                Data = _mapper.Map<UserDetailResponse>(user)
+            });
+        }
+
         [HttpGet]
         public IActionResult GetAll()
         {

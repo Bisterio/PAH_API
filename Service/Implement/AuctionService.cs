@@ -133,10 +133,12 @@ namespace Service.Implement
                 throw new Exception("400: This auction has been assigned");
             }
             auction.StaffId = staffId;
+            auction.Status = (int)AuctionStatus.Pending;
+            auction.UpdatedAt = DateTime.Now;
             _auctionDAO.UpdateAuction(auction);
         }
 
-        public void StaffApproveAuction(int id)
+        public void StaffApproveAuction(int id, DateTime startedAt, DateTime endedAt)
         {
             Auction auction = GetAuctionById(id);
 
@@ -147,6 +149,8 @@ namespace Service.Implement
             else if (auction.Status == (int) AuctionStatus.Pending)
             {
                 auction.Status = (int)AuctionStatus.Approved;
+                auction.StartedAt = startedAt;
+                auction.EndedAt = endedAt;
                 auction.UpdatedAt = DateTime.Now;
                 _auctionDAO.UpdateAuction(auction);
                 //Schedule task to open/end auction

@@ -308,7 +308,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpGet("staff/approve/{id}")]
-        public IActionResult StaffApproveAuction(int id)
+        public IActionResult StaffApproveAuction(int id, DateTime startedAt, DateTime endedAt)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -320,7 +320,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this" 
                 });
             }
-            _auctionService.StaffApproveAuction(id);
+            _auctionService.StaffApproveAuction(id, startedAt, endedAt);
             return Ok(new BaseResponse
             { 
                 Code = (int) HttpStatusCode.OK, 
