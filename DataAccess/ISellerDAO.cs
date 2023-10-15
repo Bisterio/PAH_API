@@ -11,5 +11,6 @@ namespace DataAccess
     {
         public Seller GetSeller(int id);
         public void CreateSeller(Seller seller);
+        public void UpdateSeller(Seller seller);
     }
 }

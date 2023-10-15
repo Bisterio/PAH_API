@@ -20,7 +20,7 @@ namespace Service.Implement
         public void CreateSeller(int id, Seller seller)
         {
             var existed = _sellerDAO.GetSeller(id);
-            if(existed != null)
+            if (existed != null)
             {
                 throw new Exception("400: You are already a seller.");
             }

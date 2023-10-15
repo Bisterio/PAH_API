@@ -14,7 +14,9 @@ namespace Service {
         public User GetByEmail(string email);
         public User Login(string email, string password);
         public void Register(User user);
+        public void Reactivate(User user);
         public void Deactivate(User user);  
+        public void AcceptSeller(Seller seller);
 
         public Tokens AddRefreshToken(int id);
         public Token GetSavedRefreshToken(int id, string refreshToken);

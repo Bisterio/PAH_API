@@ -17,6 +17,11 @@ namespace DataAccess.Implement
             Create(seller);
         }
 
+        public void UpdateSeller(Seller seller)
+        {
+            Update(seller);
+        }
+
         public Seller GetSeller(int id)
         {
             return GetAll()
