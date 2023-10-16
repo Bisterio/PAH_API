@@ -70,7 +70,7 @@ namespace Service.Implement {
             var address = _addressDAO.Get(addressId);
             if (address == null) throw new Exception("404: Address not found when checkout");
             if (address.CustomerId != buyerId) throw new Exception("401: Address does not associate with current buyer");
-            if (address.Type != (int) AddressType.Delivery) throw new Exception("401: Address type must be delivery");
+            //if (address.Type != (int) AddressType.Delivery) throw new Exception("401: Address type must be delivery");
 
             var dateNow = DateTime.Now;
             var totalWithShip = request.Total;
@@ -80,7 +80,7 @@ namespace Service.Implement {
             if (wallet == null) {
                 throw new Exception("400: Wallet not found");
             }
-            if (wallet.AvailableBalance < totalWithShip) {
+            if (wallet.AvailableBalance < totalWithShip && request.PaymentType == (int)PaymentType.Wallet) {
                 throw new Exception("400: Wallet not enough to create order");
             }
 
@@ -95,7 +95,7 @@ namespace Service.Implement {
                     RecipientPhone = address.RecipientPhone,
                     RecipientAddress = address.Street + ", " + address.Ward + ", " + address.District + ", " + address.Province,
                     OrderDate = dateNow,
-                    Status = (int) OrderStatus.Pending,
+                    Status = (int) OrderStatus.WaitingSellerConfirm,
                     ShippingCost = order.ShippingCost,
                     TotalAmount = order.Total,
                     OrderItems = new List<OrderItem>()
@@ -187,7 +187,9 @@ namespace Service.Implement {
         }
 
         public Order Get(int orderId) {
-            return _orderDAO.Get(orderId);
+            var order = _orderDAO.Get(orderId);
+            order.OrderItems.ToList().ForEach(p => { p.Product = _productDAO.GetProductById(p.ProductId); });
+            return order;
         }
     }
 }
