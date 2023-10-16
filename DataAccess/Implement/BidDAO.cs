@@ -24,10 +24,5 @@ namespace DataAccess.Implement
         {
             Create(bid);
         }
-
-        public void RetractBid(int id)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

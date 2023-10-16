@@ -79,5 +79,28 @@ namespace API.Controllers
                 Data = null
             });
         }
+
+        [Authorize]
+        [HttpGet("retract/{id}")]
+        public IActionResult RetractBid(int id)
+        {
+            var bidderId = GetUserIdFromToken();
+            var bidder = _userService.Get(bidderId);
+            if (bidder == null || bidder.Role != (int)Role.Buyer)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            _bidService.RetractBid(id, bidderId);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Retract successfully",
+                Data = null
+            });
+        }
     }
 }

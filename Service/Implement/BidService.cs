@@ -4,8 +4,10 @@ using DataAccess.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Service.Implement
 {
@@ -160,6 +162,42 @@ namespace Service.Implement
                     }                    
                 }
             }
+        }
+
+        public void RetractBid(int auctionId, int bidderId)
+        {
+            var bidList = _bidDAO.GetBidsByAuctionId(auctionId)
+                .Where(b => b.BidderId == bidderId)
+                .OrderByDescending(b => b.BidAmount)
+                .ToList();
+            foreach (var bid in bidList)
+            {
+                if (bid.Status == (int)BidStatus.Retracted)
+                {
+                    throw new Exception("400: You have retracted before");
+                }
+                bid.Status = (int)BidStatus.Retracted;
+            }
+            var bidderWallet = _walletDAO.Get(bidderId);
+            var previousBid = _bidDAO.GetBidsByAuctionId(auctionId)
+                            .Where(b => b.BidderId == bidderId)
+                            .OrderByDescending(b => b.BidAmount)
+                            .FirstOrDefault();
+            bidderWallet.AvailableBalance += previousBid.BidAmount;
+            bidderWallet.LockedBalance -= previousBid.BidAmount;
+
+            _walletDAO.Update(bidderWallet);
+            _transactionDAO.Create(new Transaction()
+            {
+                Id = 0,
+                WalletId = bidderWallet.Id,
+                PaymentMethod = (int)PaymentType.Wallet,
+                Amount = previousBid.BidAmount,
+                Type = (int)TransactionType.Refund,
+                Date = DateTime.Now,
+                Description = $"Return balance due to retracting from auction {auctionId}",
+                Status = (int)Status.Available,
+            });
         }
     }
 }

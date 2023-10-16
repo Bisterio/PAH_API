@@ -14,5 +14,6 @@ namespace Service
         public int GetNumberOfBidders(int auctionId);
         public Bid GetHighestBidFromAuction(int auctionId);
         public void PlaceBid(int id, Bid bid);
+        public void RetractBid(int auctionId, int bidderId);
     }
 }
