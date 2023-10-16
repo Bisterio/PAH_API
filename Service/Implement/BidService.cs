@@ -15,13 +15,15 @@ namespace Service.Implement
         private readonly IAuctionDAO _auctionDAO;
         private readonly IUserDAO _userDAO;
         private readonly IWalletDAO _walletDAO;
+        private readonly ITransactionDAO _transactionDAO;
 
-        public BidService(IBidDAO bidDAO, IAuctionDAO auctionDAO, IUserDAO userDAO, IWalletDAO walletDAO)
+        public BidService(IBidDAO bidDAO, IAuctionDAO auctionDAO, IUserDAO userDAO, IWalletDAO walletDAO, ITransactionDAO transactionDAO)
         {
             _bidDAO = bidDAO;
             _auctionDAO = auctionDAO;
             _userDAO = userDAO;
             _walletDAO = walletDAO;
+            _transactionDAO = transactionDAO;
         }
 
         public List<Bid> GetAllBidsFromAuction(int auctionId, int status)
@@ -52,7 +54,7 @@ namespace Service.Implement
                 .Count();
         }
 
-        public void PlaceBid(int bidderId, Bid bid)
+        public void PlaceBid(int bidderId, Bid bid) // chua tru di entry fee
         {
             if(bid.AuctionId != null)
             {
@@ -94,12 +96,29 @@ namespace Service.Implement
                             .Where(b => b.BidderId == bidderId)
                             .OrderByDescending(b => b.BidAmount)
                             .FirstOrDefault();
-                        if (bidderWallet.AvailableBalance - previousBid.BidAmount - auction.EntryFee >= bid.BidAmount)
+                        var remainder = bid.BidAmount - previousBid.BidAmount;
+                        if (bidderWallet.AvailableBalance >= remainder)
                         {
                             bid.Id = 0;
                             bid.BidderId = bidderId;
                             bid.BidDate = DateTime.Now;
                             bid.Status = (int)BidStatus.Active;
+
+                            bidderWallet.AvailableBalance -= remainder;
+                            bidderWallet.LockedBalance += remainder;
+
+                            _walletDAO.Update(bidderWallet);
+                            _transactionDAO.Create(new Transaction()
+                            {
+                                Id = 0,
+                                WalletId = bidderWallet.Id,
+                                PaymentMethod = (int)PaymentType.Wallet,
+                                Amount = remainder,
+                                Type = (int)TransactionType.Deposit,
+                                Date = DateTime.Now,
+                                Description = $"Place bid for auction {auction}",
+                                Status = (int)Status.Available,
+                            });
                             _bidDAO.CreateBid(bid);
                         }
                         else
@@ -110,12 +129,28 @@ namespace Service.Implement
                     else
                     {
                         // CASE FIRST BID                    
-                        if (bidderWallet.AvailableBalance - auction.EntryFee >= bid.BidAmount)
+                        if (bidderWallet.AvailableBalance >= bid.BidAmount)
                         {
                             bid.Id = 0;
                             bid.BidderId = bidderId;
                             bid.BidDate = DateTime.Now;
                             bid.Status = (int)BidStatus.Active;
+
+                            bidderWallet.AvailableBalance -= bid.BidAmount;
+                            bidderWallet.LockedBalance += bid.BidAmount;
+
+                            _walletDAO.Update(bidderWallet);
+                            _transactionDAO.Create(new Transaction()
+                            {
+                                Id = 0,
+                                WalletId = bidderWallet.Id,
+                                PaymentMethod = (int)PaymentType.Wallet,
+                                Amount = bid.BidAmount,
+                                Type = (int)TransactionType.Deposit,
+                                Date = DateTime.Now,
+                                Description = $"Place bid for auction {auction.Id}",
+                                Status = (int)Status.Available,
+                            });
                             _bidDAO.CreateBid(bid);
                         }
                         else
