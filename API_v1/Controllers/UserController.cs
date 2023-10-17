@@ -90,22 +90,49 @@ namespace API.Controllers
             });
         }
 
+        [Authorize]
         [HttpGet("customer")]
         public IActionResult GetAllBuyerAndSeller()
         {
+            var id = GetUserIdFromToken();
+            var user = _userService.Get(id);
+            if (user.Role != (int)Role.Manager && user.Role != (int)Role.Staff)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
             List<User> userList = _userService.GetAllBuyersSellers();
-            List<UserResponse> responses = _mapper.Map<List<UserResponse>>(userList);
+            List<UserResponse> mappedList = _mapper.Map<List<UserResponse>>(userList);
+            CustomerListCountResponse response = new CustomerListCountResponse()
+            {
+                Count = userList.Count,
+                CustomerList = mappedList
+            };
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get all customers successfully",
-                Data = responses
+                Data = response
             });
         }
 
+        [Authorize]
         [HttpGet("/api/staff")]
         public IActionResult GetAllStaffs()
         {
+            var id = GetUserIdFromToken();
+            var user = _userService.Get(id);
+            if (user.Role != (int)Role.Manager)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
             List<User> staffList = _userService.GetAllStaffs();
             List<StaffResponse> responses = _mapper.Map<List<StaffResponse>>(staffList);
             return Ok(new BaseResponse
@@ -132,12 +159,35 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet("reactivate")]
-        public IActionResult Reactivate()
+        [HttpGet("deactivate/{id}")]
+        public IActionResult Deactivate(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
-            if (user == null || user.Role != (int)Role.Staff)
+            if (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager))
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            };
+            _userService.Deactivate(_userService.Get(id));
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Deactivate successfully",
+                Data = null
+            });
+        }
+
+        [Authorize]
+        [HttpGet("reactivate/{id}")]
+        public IActionResult Reactivate(int id)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager))
             {
                 return Unauthorized(new ErrorDetails
                 {
@@ -145,11 +195,11 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }            
-            _userService.Reactivate(user);
+            _userService.Reactivate(_userService.Get(id));
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Self deactivate successfully",
+                Message = "Reactivate successfully",
                 Data = null
             });
         }
@@ -160,7 +210,7 @@ namespace API.Controllers
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
-            if (user == null || user.Role != (int)Role.Staff)
+            if (user == null || (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager)))
             {
                 return Unauthorized(new ErrorDetails
                 {
@@ -170,6 +220,30 @@ namespace API.Controllers
             }
             var seller = _sellerService.GetSeller(id);
             _userService.AcceptSeller(seller);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Approve seller successfully",
+                Data = null
+            });
+        }
+
+        [Authorize]
+        [HttpGet("seller/reject")]
+        public IActionResult RejectSeller(int id)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager)))
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            var seller = _sellerService.GetSeller(id);
+            _userService.RejectSeller(seller);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,

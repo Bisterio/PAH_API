@@ -60,12 +60,12 @@ namespace API.Controllers
                     Message = "Order not found"
                 });
             }
-            if (order.BuyerId != id && order.SellerId != id) {
-                return Unauthorized(new ErrorDetails {
-                    StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this order"
-                });
-            }
+            //if (order.BuyerId != id && order.SellerId != id) {
+            //    return Unauthorized(new ErrorDetails {
+            //        StatusCode = (int) HttpStatusCode.Unauthorized,
+            //        Message = "You are not allowed to access this order"
+            //    });
+            //}
             return Ok(new BaseResponse { 
                 Code = (int) HttpStatusCode.OK, 
                 Message = "Get order successfully",

@@ -9,6 +9,7 @@ namespace API.Mapper
         public BidProfile() 
         { 
             CreateMap<Bid, BidResponse>();
+            CreateMap<Request.BidRequest, Bid>();
         }
     }
 }

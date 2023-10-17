@@ -207,8 +207,8 @@ namespace API.Controllers
             }
             List<Auction> auctionList = _auctionService.GetAuctionAssigned(userId)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
-            List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
-            foreach (var item in response)
+            List<AuctionListResponse> mappedList = _mapper.Map<List<AuctionListResponse>>(auctionList);
+            foreach (var item in mappedList)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 item.ImageUrl = image.ImageUrl;
@@ -220,6 +220,11 @@ namespace API.Controllers
                     item.CurrentPrice = highestBid.BidAmount;
                 }
             }
+            AuctionListCountResponse response = new AuctionListCountResponse()
+            {
+                Count = auctionList.Count,
+                AuctionList = mappedList
+            };
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 
