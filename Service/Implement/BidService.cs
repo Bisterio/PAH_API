@@ -56,28 +56,29 @@ namespace Service.Implement
                 .Count();
         }
 
-        public void PlaceBid(int bidderId, Bid bid) // chua tru di entry fee
+        public void PlaceBid(int bidderId, Bid bid) 
         {
-            if(bid.AuctionId != null)
+            if (bid.AuctionId != null)
             {
                 Auction auction = _auctionDAO.GetAuctionById((int)bid.AuctionId);
+                var registrationList = _bidDAO.GetBidsByAuctionId(auction.Id).Where(b => b.Status == (int)BidStatus.Register).ToList();
+                // CHECK FOR REGISTERED
+                if (!registrationList.Any(b => b.BidderId == bidderId))
+                {
+                    throw new Exception("400: You haven't registered to join this auction");
+                }
                 var auctionStatus = auction.Status;
-                if(auctionStatus == (int)AuctionStatus.Unassigned
-                    || auctionStatus == (int)AuctionStatus.Pending
-                    || auctionStatus == (int)AuctionStatus.Approved
-                    || auctionStatus == (int)AuctionStatus.Rejected
-                    || auctionStatus == (int)AuctionStatus.Unavailable)
+                if (auctionStatus < (int)AuctionStatus.Opened && DateTime.Now < auction.StartedAt)
                 {
                     throw new Exception("400: This auction hasn't opened");
                 }
-                else if (auctionStatus == (int) AuctionStatus.Ended
-                    || auctionStatus == (int)AuctionStatus.Sold
-                    || auctionStatus == (int)AuctionStatus.Expired)
+                else if (auctionStatus > (int)AuctionStatus.Opened && DateTime.Now > auction.EndedAt)
                 {
                     throw new Exception("400: This auction has ended");
                 }
                 else
-                {                    
+                {
+                    // CHECK FOR RETRACTED
                     if (_bidDAO.GetBidsByAuctionId((int)bid.AuctionId).Where(b => b.BidderId == bidderId).Any(b => b.Status == (int)BidStatus.Retracted))
                     {
                         throw new Exception("400: You have retracted before");
@@ -122,44 +123,62 @@ namespace Service.Implement
                                 Status = (int)Status.Available,
                             });
                             _bidDAO.CreateBid(bid);
+
+                            
                         }
                         else
                         {
                             throw new Exception("400: Your balance is not sufficient.");
                         }
                     }
-                    else
+                }
+            }
+        }
+
+        public void RegisterToJoinAuction(int bidderId, int auctionId)
+        {
+            Auction auction = _auctionDAO.GetAuctionById(auctionId);
+            var bidderWallet = _walletDAO.Get(bidderId);
+            Bid bid = new Bid();
+            if(auction.Status < (int)AuctionStatus.RegistrationOpen && DateTime.Now < auction.RegistrationStart)
+            {
+                throw new Exception("400: This auction hasn't been opened for registration");
+            }
+            else if (auction.Status > (int)AuctionStatus.RegistrationOpen && DateTime.Now > auction.RegistrationEnd)
+            {
+                throw new Exception("400: This auction registration has been closed");
+            }
+            else
+            {
+                if (bidderWallet.AvailableBalance >= (auction.EntryFee + auction.StartingPrice))
+                {
+                    bid.Id = 0;
+                    bid.AuctionId = auctionId;
+                    bid.BidderId = bidderId;
+                    bid.BidAmount = auction.StartingPrice;
+                    bid.BidDate = DateTime.Now;
+                    bid.Status = (int)BidStatus.Active;
+
+                    bidderWallet.AvailableBalance -= (auction.EntryFee + auction.StartingPrice);
+                    bidderWallet.LockedBalance += auction.StartingPrice;
+
+                    _walletDAO.Update(bidderWallet);
+                    _transactionDAO.Create(new Transaction()
                     {
-                        // CASE FIRST BID                    
-                        if (bidderWallet.AvailableBalance >= bid.BidAmount)
-                        {
-                            bid.Id = 0;
-                            bid.BidderId = bidderId;
-                            bid.BidDate = DateTime.Now;
-                            bid.Status = (int)BidStatus.Active;
-
-                            bidderWallet.AvailableBalance -= bid.BidAmount;
-                            bidderWallet.LockedBalance += bid.BidAmount;
-
-                            _walletDAO.Update(bidderWallet);
-                            _transactionDAO.Create(new Transaction()
-                            {
-                                Id = 0,
-                                WalletId = bidderWallet.Id,
-                                PaymentMethod = (int)PaymentType.Wallet,
-                                Amount = bid.BidAmount,
-                                Type = (int)TransactionType.Deposit,
-                                Date = DateTime.Now,
-                                Description = $"Place bid for auction {auction.Id}",
-                                Status = (int)Status.Available,
-                            });
-                            _bidDAO.CreateBid(bid);
-                        }
-                        else
-                        {
-                            throw new Exception("400: Your balance is not sufficient.");
-                        }
-                    }                    
+                        Id = 0,
+                        WalletId = bidderWallet.Id,
+                        PaymentMethod = (int)PaymentType.Wallet,
+                        Amount = bid.BidAmount,
+                        Type = (int)TransactionType.Deposit,
+                        Date = DateTime.Now,
+                        Description = $"Register to join auction {auction.Id}",
+                        Status = (int)Status.Available,
+                    });
+                    _bidDAO.CreateBid(bid);
+                }
+                else
+                {
+                    throw new Exception("400: Your balance is not sufficient.");
                 }
             }
         }

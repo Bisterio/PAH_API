@@ -17,8 +17,9 @@ namespace Service
         public List<Auction> GetAuctionBySellerId(int sellerId);
         public void CreateAuction(Auction auction);
         public void AssignStaff(int id, int staffId);
-        public void StaffApproveAuction(int id, DateTime startedAt, DateTime endedAt);
-        public void StaffRejectAuction(int id);
+        public void ManagerApproveAuction(int id);
+        public void ManagerRejectAuction(int id);
+        public void StaffSetAuctionTime(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt);
         public void HostAuction(int auctionId, int status);
         //public void TestSchedule();
         //public void OpenAuction(int id);

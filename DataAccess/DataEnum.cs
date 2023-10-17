@@ -51,15 +51,16 @@ namespace DataAccess {
 
     public enum AuctionStatus
     {
-        Unavailable = 0,
+        Unavailable = -1,
+        Pending = 0,
         Unassigned = 1,
-        Pending = 2,
+        Assigned = 2,
         Rejected = 3,
-        Approved = 4,
-        Opened = 5,
-        Ended = 6,
-        Sold = 7,
-        Expired = 8,
+        RegistrationOpen = 4,
+        RegistrationClose = 5,
+        Opened = 6,
+        Ended = 7,
+        EndedWithoutBids = 8,
     }
 
     public enum SellerStatus
@@ -70,9 +71,11 @@ namespace DataAccess {
     }
 
     public enum BidStatus
-    {
+    {        
         Active = 1,
         Retracted = 2,
+        Register = 3,
+        Refund = 4
     }
 
     public enum PaymentType {

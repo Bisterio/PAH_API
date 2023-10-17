@@ -312,12 +312,12 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet("staff/approve/{id}")]
-        public IActionResult StaffApproveAuction(int id, DateTime startedAt, DateTime endedAt)
+        [HttpGet("manager/approve/{id}")]
+        public IActionResult ManagerApproveAuction(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
-            if (user == null || user.Role != (int) Role.Staff)
+            if (user == null || user.Role != (int) Role.Manager)
             {
                 return Unauthorized(new ErrorDetails 
                 {
@@ -325,7 +325,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this" 
                 });
             }
-            _auctionService.StaffApproveAuction(id, startedAt, endedAt);
+            _auctionService.ManagerApproveAuction(id);
             return Ok(new BaseResponse
             { 
                 Code = (int) HttpStatusCode.OK, 
@@ -335,12 +335,12 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet("staff/reject/{id}")]
-        public IActionResult StaffRejectAuction(int id)
+        [HttpGet("manager/reject/{id}")]
+        public IActionResult ManagerRejectAuction(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
-            if (user == null || user.Role != (int )Role.Staff)
+            if (user == null || user.Role != (int )Role.Manager)
             {
                 return Unauthorized(new ErrorDetails 
                 {
@@ -348,12 +348,38 @@ namespace API.Controllers
                     Message = "You are not allowed to access this" 
                 });
             }
-            _auctionService.StaffRejectAuction(id);
+            _auctionService.ManagerRejectAuction(id);
             return Ok(new BaseResponse 
             { 
                 Code = (int) HttpStatusCode.OK, 
                 Message = "Auction rejected successfully", 
                 Data = null 
+            });
+        }
+
+        [HttpPost("staff/time/{id}")]
+        public IActionResult StaffSetAuctionTime(int id, [FromBody] AuctionDateRequest request)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Staff)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            _auctionService.StaffSetAuctionTime(id, 
+                (DateTime)request.RegistrationStart, 
+                (DateTime)request.RegistrationEnd, 
+                (DateTime)request.StartedAt, 
+                (DateTime)request.EndedAt);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Set auction time successfully",
+                Data = null
             });
         }
     }

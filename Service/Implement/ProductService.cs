@@ -99,7 +99,7 @@ namespace Service.Implement
                 auction.StartingPrice = product.Price;
                 auction.EntryFee = 0.1m * auction.StartingPrice;
                 auction.StaffId = null;
-                auction.Status = (int) AuctionStatus.Unassigned;
+                auction.Status = (int) AuctionStatus.Pending;
                 auction.CreatedAt = DateTime.Now;
                 auction.UpdatedAt = DateTime.Now;
                 _auctionDAO.CreateAuction(auction);
@@ -153,9 +153,7 @@ namespace Service.Implement
 
                 foreach (Auction auction in auctionLists)
                 {
-                    if (auction.Status != (int)AuctionStatus.Unassigned 
-                        && auction.Status != (int)AuctionStatus.Sold 
-                        && auction.Status != (int)AuctionStatus.Expired)
+                    if (auction.Status != (int)AuctionStatus.Pending)
                     {
                         throw new Exception("400: This product has an active auction.");
                     }
