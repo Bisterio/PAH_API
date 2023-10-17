@@ -150,6 +150,14 @@ namespace DataAccess.Models
 
                 entity.Property(e => e.ProductId).HasColumnName("productId");
 
+                entity.Property(e => e.RegistrationEnd)
+                    .HasColumnType("datetime")
+                    .HasColumnName("registrationEnd");
+
+                entity.Property(e => e.RegistrationStart)
+                    .HasColumnType("datetime")
+                    .HasColumnName("registrationStart");
+
                 entity.Property(e => e.StaffId).HasColumnName("staffId");
 
                 entity.Property(e => e.StartedAt)
@@ -375,7 +383,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.HasKey(e => new { e.OrderId, e.ProductId })
-                    .HasName("PK__OrderIte__BAD83E4BA98A2C33");
+                    .HasName("PK__OrderIte__BAD83E4BFF86231F");
 
                 entity.ToTable("OrderItem");
 
@@ -509,7 +517,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<Response>(entity =>
             {
                 entity.HasKey(e => e.FeedbackId)
-                    .HasName("PK__Response__2613FD2468742D92");
+                    .HasName("PK__Response__2613FD2413D73BC1");
 
                 entity.ToTable("Response");
 

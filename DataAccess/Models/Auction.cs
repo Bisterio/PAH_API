@@ -22,6 +22,8 @@ namespace DataAccess.Models
         public DateTime? EndedAt { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public DateTime? RegistrationStart { get; set; }
+        public DateTime? RegistrationEnd { get; set; }
 
         public virtual Product? Product { get; set; }
         public virtual User? Staff { get; set; }
