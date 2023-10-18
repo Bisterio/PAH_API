@@ -11,6 +11,8 @@
         public decimal Step { get; set; }
         public DateTime? StartedAt { get; set; }
         public DateTime? EndedAt { get; set; }
+        public DateTime? RegistrationStart { get; set; }
+        public DateTime? RegistrationEnd { get; set; }
 
         public ProductRes.ProductResponse Product { get; set; }
     }

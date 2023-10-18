@@ -34,7 +34,8 @@ namespace Service.Implement
                     //&& a.Product.SellerId. == (int)Status.Available
                     && (string.IsNullOrEmpty(title) || a.Title.Contains(title))
                     && (materialId == 0 || a.Product.MaterialId == materialId)
-                    && (categoryId == 0 || a.Product.CategoryId == categoryId));
+                    && (categoryId == 0 || a.Product.CategoryId == categoryId)
+                    && (a.RegistrationStart < DateTime.Now && DateTime.Now < a.RegistrationEnd));
 
                 //default (0): old -> new, 1: started at asc, 2: unknown, 3: unknown
                 switch (orderBy)
@@ -133,14 +134,10 @@ namespace Service.Implement
             {
                 throw new Exception("400: This auction hasn been rejected");
             }
-            else if (auction.Status > (int)AuctionStatus.Unassigned)
+            else if (auction.Status > (int)AuctionStatus.Unassigned && auction.Status != (int)AuctionStatus.Rejected)
             {
                 throw new Exception("400: This auction has been assigned");
             } 
-            else if (auction.Status == (int)AuctionStatus.Pending)
-            {
-                throw new Exception("400: This auction hasn't been approved");
-            }
             auction.StaffId = staffId;
             auction.Status = (int)AuctionStatus.Assigned;
             auction.UpdatedAt = DateTime.Now;

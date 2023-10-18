@@ -11,6 +11,8 @@
         public decimal? CurrentPrice { get; set; }
         public DateTime? StartedAt { get; set; }
         public DateTime? EndedAt { get; set; }
+        public DateTime? RegistrationStart { get; set; }
+        public DateTime? RegistrationEnd { get; set; }
         public string ImageUrl { get; set; }
     }
 }

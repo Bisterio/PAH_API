@@ -81,6 +81,29 @@ namespace API.Controllers
         }
 
         [Authorize]
+        [HttpPost("auction/register/{id}")]
+        public IActionResult RegisterAuction(int id)
+        {
+            var bidderId = GetUserIdFromToken();
+            var bidder = _userService.Get(bidderId);
+            if (bidder == null || bidder.Role != (int)Role.Buyer)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            _bidService.RegisterToJoinAuction(bidderId, id);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Register to join auction successfully",
+                Data = null
+            });
+        }
+
+        [Authorize]
         [HttpGet("retract/{id}")]
         public IActionResult RetractBid(int id)
         {

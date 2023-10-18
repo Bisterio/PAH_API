@@ -106,6 +106,7 @@ namespace Service.Implement
                             bid.BidderId = bidderId;
                             bid.BidDate = DateTime.Now;
                             bid.Status = (int)BidStatus.Active;
+                                                     
 
                             bidderWallet.AvailableBalance -= remainder;
                             bidderWallet.LockedBalance += remainder;
@@ -124,7 +125,10 @@ namespace Service.Implement
                             });
                             _bidDAO.CreateBid(bid);
 
-                            
+                            DateTime auctionEndDate = (DateTime)auction.EndedAt;
+                            auctionEndDate.AddSeconds(30);
+                            auction.EndedAt = auctionEndDate;
+                            _auctionDAO.UpdateAuction(auction);
                         }
                         else
                         {
@@ -150,6 +154,15 @@ namespace Service.Implement
             }
             else
             {
+                var checkRegistration = _bidDAO.GetBidsByAuctionId(auctionId)
+                    .Where(b => b.BidderId == bidderId && b.Status == (int)BidStatus.Register)
+                    .Any();
+
+                if (checkRegistration)
+                {
+                    throw new Exception("400: You have already registered for this auction");
+                }
+
                 if (bidderWallet.AvailableBalance >= (auction.EntryFee + auction.StartingPrice))
                 {
                     bid.Id = 0;
@@ -157,7 +170,7 @@ namespace Service.Implement
                     bid.BidderId = bidderId;
                     bid.BidAmount = auction.StartingPrice;
                     bid.BidDate = DateTime.Now;
-                    bid.Status = (int)BidStatus.Active;
+                    bid.Status = (int)BidStatus.Register;
 
                     bidderWallet.AvailableBalance -= (auction.EntryFee + auction.StartingPrice);
                     bidderWallet.LockedBalance += auction.StartingPrice;

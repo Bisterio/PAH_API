@@ -13,6 +13,8 @@
         public int Status { get; set; }
         public DateTime? StartedAt { get; set; }
         public DateTime? EndedAt { get; set; }
+        public DateTime? RegistrationStart { get; set; }
+        public DateTime? RegistrationEnd { get; set; }
         public int NumberOfBids { get; set; }
         public int NumberOfBidders { get; set; }
         public List<string> ImageUrls { get; set; }

@@ -139,7 +139,14 @@ namespace API.Controllers
             foreach (var item in response)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.Id);
-                item.ImageUrl = image.ImageUrl;
+                if (image == null)
+                {
+                    item.ImageUrl = null;
+                }
+                else
+                {
+                    item.ImageUrl = image.ImageUrl;
+                }
             }
             return Ok(new BaseResponse
             { 

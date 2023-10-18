@@ -57,10 +57,9 @@ namespace DataAccess {
         Assigned = 2,
         Rejected = 3,
         RegistrationOpen = 4,
-        RegistrationClose = 5,
-        Opened = 6,
-        Ended = 7,
-        EndedWithoutBids = 8,
+        Opened = 5,
+        Ended = 6,
+        EndedWithoutBids = 7,
     }
 
     public enum SellerStatus
