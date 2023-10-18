@@ -100,7 +100,7 @@ namespace API.Controllers
             
             foreach (var item in mappedList)
             {
-                ProductImage image = _imageService.GetMainImageByProductId(item.Id);
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 if (image == null)
                 {
                     item.ImageUrl = null;
@@ -180,7 +180,7 @@ namespace API.Controllers
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
             {
-                ProductImage image = _imageService.GetMainImageByProductId(item.Id);
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 if (image == null)
                 {
                     item.ImageUrl = null;
@@ -224,7 +224,7 @@ namespace API.Controllers
             List<AuctionListResponse> mappedList = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in mappedList)
             {
-                ProductImage image = _imageService.GetMainImageByProductId(item.Id);
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 if (image == null)
                 {
                     item.ImageUrl = null;
@@ -269,7 +269,7 @@ namespace API.Controllers
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
             {
-                ProductImage image = _imageService.GetMainImageByProductId(item.Id);
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 if (image == null)
                 {
                     item.ImageUrl = null;
