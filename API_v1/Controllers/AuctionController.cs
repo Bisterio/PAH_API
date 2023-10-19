@@ -134,6 +134,61 @@ namespace API.Controllers
             });
         }
 
+        [Authorize]
+        [HttpGet("manager")]
+        public IActionResult ManagerGetAuctions([FromQuery] string? title,
+            [FromQuery] int status,
+            [FromQuery] int categoryId,
+            [FromQuery] int materialId,
+            [FromQuery] int orderBy,
+            [FromQuery] PagingParam pagingParam)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Manager)
+            {
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+            }
+            List<Auction> auctionList = _auctionService.GetAuctions(title, status, categoryId, materialId, orderBy)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
+            List<AuctionListResponse> mappedList = _mapper.Map<List<AuctionListResponse>>(auctionList);
+
+            foreach (var item in mappedList)
+            {
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
+                if (image == null)
+                {
+                    item.ImageUrl = null;
+                }
+                else
+                {
+                    item.ImageUrl = image.ImageUrl;
+                }
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
+            }
+
+            int count = CountAuctions(title, (int)AuctionStatus.RegistrationOpen, categoryId, materialId);
+
+            AuctionListCountResponse response = new AuctionListCountResponse()
+            {
+                Count = count,
+                AuctionList = mappedList
+            };
+
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get auctions successfully",
+                Data = response
+            });
+        }
+
         [HttpGet("{id}")]
         public IActionResult GetAuctionById(int id)
         {
@@ -173,7 +228,7 @@ namespace API.Controllers
         }
 
         [HttpGet("seller/{id}")]
-        public IActionResult GetAuctionBySellerId(int id, [FromQuery] PagingParam pagingParam)
+        public IActionResult GetAuctionBySellerId(int id, [FromQuery] int status, [FromQuery] PagingParam pagingParam)
         {
             List<Auction> auctionList = _auctionService.GetAuctionBySellerId(id)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
@@ -261,7 +316,11 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || user.Role != (int)Role.Buyer)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized, 
+                    Message = "You are not allowed to access this" 
+                });
             }
             List<Auction> auctionList = _auctionService.GetAuctionJoinedByStatus(status, userId)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
