@@ -121,7 +121,7 @@ namespace Service.Implement
 
         public void CreateAuction(Auction auction)
         {
-            auction.EntryFee = 0.1m * auction.StartingPrice;
+            auction.EntryFee = 0.05m * auction.StartingPrice;
             auction.StaffId = null;
             auction.Status = (int) AuctionStatus.Unassigned;
             auction.CreatedAt = DateTime.Now;
@@ -226,6 +226,7 @@ namespace Service.Implement
                 auction.RegistrationEnd = registrationEnd;
                 auction.StartedAt = startedAt;
                 auction.EndedAt = endedAt;
+                auction.Status = (int)AuctionStatus.RegistrationOpen;
                 auction.UpdatedAt = DateTime.Now;
                 _auctionDAO.UpdateAuction(auction);
             }
