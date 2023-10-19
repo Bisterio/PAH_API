@@ -179,6 +179,6 @@ app.UseHangfireDashboard();
 
 app.MapControllers();
 
-app.MapHub<AuctionHub>("/auctionHub")
+app.MapHub<AuctionHub>("/auctionHub");
 
 app.Run();
