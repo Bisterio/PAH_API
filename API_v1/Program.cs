@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Cors;
 using Service;
 using Service.Implement;
 using System.Text;
+using API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,9 @@ builder.Services.AddHttpClient("Zalopay", httpClient => {
 builder.Services.AddDbContext<PlatformAntiquesHandicraftsContext>(options => options.UseSqlServer("name=ConnectionStrings:dev"));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
+// Add SignalR Hubs
+builder.Services.AddSignalR();
 
 //Add authorize to swagger
 builder.Services.AddSwaggerGen(c => {
@@ -174,5 +178,7 @@ app.UseCors("AllowEverything");
 app.UseHangfireDashboard();
 
 app.MapControllers();
+
+app.MapHub<AuctionHub>("/auctionHub")
 
 app.Run();
