@@ -216,7 +216,7 @@ namespace Service.Implement
             {
                 throw new Exception("400: This auction hasn't been assigned to you");
             } 
-            else if(auction.Status > (int)AuctionStatus.Assigned)
+            else if(auction.Status > (int)AuctionStatus.RegistrationOpen)
             {
                 throw new Exception("400: You cannot edit this auction anymore");
             }
