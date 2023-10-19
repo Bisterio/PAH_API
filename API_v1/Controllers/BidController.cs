@@ -13,6 +13,7 @@ using Respon.BidRes;
 using Service;
 using System.Net;
 using API.ErrorHandling;
+using Respon.UserRes;
 
 namespace API.Controllers
 {
@@ -47,7 +48,7 @@ namespace API.Controllers
             List<BidResponse> response = _mapper.Map<List<BidResponse>>(bidList);
             foreach (var bid in response)
             {
-                bid.BidderName = _userService.Get((int)bid.BidderId).Name;
+                bid.Bidder = _mapper.Map<UserResponse>(_userService.Get((int)bid.BidderId));
             }
             return Ok(new BaseResponse 
             { 
