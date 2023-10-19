@@ -1,4 +1,6 @@
-﻿namespace Respon.BidRes
+﻿using Respon.UserRes;
+
+namespace Respon.BidRes
 {
     public class BidResponse
     {
@@ -9,5 +11,6 @@
         public decimal? BidAmount { get; set; }
         public DateTime? BidDate { get; set; }
         public int Status { get; set; }
+        public UserResponse User { get; set; }
     }
 }

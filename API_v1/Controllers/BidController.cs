@@ -63,7 +63,7 @@ namespace API.Controllers
         {
             var bidderId = GetUserIdFromToken();
             var bidder = _userService.Get(bidderId);
-            if (bidder == null || bidder.Role != (int)Role.Buyer)
+            if (bidder == null || (bidder.Role != (int)Role.Buyer && bidder.Role != (int)Role.Seller))
             {
                 return Unauthorized(new ErrorDetails
                 {
@@ -71,6 +71,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
+            
             _bidService.PlaceBid(bidderId, _mapper.Map<Bid>(request));
             return Ok(new BaseResponse
             {
@@ -86,7 +87,7 @@ namespace API.Controllers
         {
             var bidderId = GetUserIdFromToken();
             var bidder = _userService.Get(bidderId);
-            if (bidder == null || bidder.Role != (int)Role.Buyer)
+            if (bidder == null || (bidder.Role != (int)Role.Buyer && bidder.Role != (int)Role.Seller))
             {
                 return Unauthorized(new ErrorDetails
                 {
@@ -109,7 +110,7 @@ namespace API.Controllers
         {
             var bidderId = GetUserIdFromToken();
             var bidder = _userService.Get(bidderId);
-            if (bidder == null || bidder.Role != (int)Role.Buyer)
+            if (bidder == null || (bidder.Role != (int)Role.Buyer && bidder.Role != (int)Role.Seller))
             {
                 return Unauthorized(new ErrorDetails
                 {

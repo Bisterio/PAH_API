@@ -62,6 +62,10 @@ namespace Service.Implement
             {
                 Auction auction = _auctionDAO.GetAuctionById((int)bid.AuctionId);
                 var registrationList = _bidDAO.GetBidsByAuctionId(auction.Id).Where(b => b.Status == (int)BidStatus.Register).ToList();
+                if (auction.Product.SellerId == bidderId)
+                {
+                    throw new Exception("400: You cannot join your own auction");
+                }
                 // CHECK FOR REGISTERED
                 if (!registrationList.Any(b => b.BidderId == bidderId))
                 {
@@ -151,6 +155,10 @@ namespace Service.Implement
             else if (auction.Status > (int)AuctionStatus.RegistrationOpen && DateTime.Now > auction.RegistrationEnd)
             {
                 throw new Exception("400: This auction registration has been closed");
+            } 
+            if(auction.Product.SellerId == bidderId)
+            {
+                throw new Exception("400: You cannot join your own auction");
             }
             else
             {
