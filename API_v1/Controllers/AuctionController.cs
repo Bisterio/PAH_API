@@ -255,7 +255,7 @@ namespace API.Controllers
         }
 
         [HttpGet("bidder")]
-        public IActionResult GetAuctionsByBidderId([FromQuery] PagingParam pagingParam)
+        public IActionResult GetAuctionsByBidderId([FromQuery] int status, [FromQuery] PagingParam pagingParam)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -263,7 +263,7 @@ namespace API.Controllers
             {
                 return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
             }
-            List<Auction> auctionList = _auctionService.GetAuctionJoined(userId)
+            List<Auction> auctionList = _auctionService.GetAuctionJoinedByStatus(status, userId)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
 
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);

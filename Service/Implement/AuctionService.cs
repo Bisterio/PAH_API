@@ -110,6 +110,15 @@ namespace Service.Implement
             return _auctionDAO.GetAuctionJoined(bidderId).ToList();
         }
 
+        public List<Auction> GetAuctionJoinedByStatus(int status, int bidderId)
+        {
+            if (bidderId == null)
+            {
+                throw new Exception("404: Bidder not found");
+            }
+            return _auctionDAO.GetAuctionJoined(bidderId).Where(a => a.Status == status).ToList();
+        }
+
         public void CreateAuction(Auction auction)
         {
             auction.EntryFee = 0.1m * auction.StartingPrice;
