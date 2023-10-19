@@ -1,5 +1,6 @@
 ﻿using DataAccess;
 using DataAccess.Models;
+using Firebase.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Service;
@@ -38,6 +39,12 @@ namespace API.Hubs
         {
             var userId = int.Parse(Context.User?.Claims?.FirstOrDefault(p => p.Type == "UserId")?.Value);
             await Clients.All.SendAsync("ReceiveMessage", userId, message);
+        }
+
+        public async Task JoinGroup(int auctionId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, "AUCTION_" + auctionId);
+            await Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveMessage", "SYSTEM", "You have been added to group " + "AUCTION_" + auctionId);
         }
     }
 
