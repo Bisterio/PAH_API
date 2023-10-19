@@ -317,6 +317,29 @@ namespace API.Controllers
         }
 
         [Authorize]
+        [HttpGet("register/check/{id}")]
+        public IActionResult CheckAuctionRegistration(int id)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Buyer)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            bool check = _auctionService.CheckRegistration(userId, id);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Check auction registration successfully",
+                Data = check
+            });
+        }
+
+        [Authorize]
         [HttpGet("assign")]
         public IActionResult AssignStaffToAuction(int id, int staffId)
         {

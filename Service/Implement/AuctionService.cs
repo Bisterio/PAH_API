@@ -17,10 +17,11 @@ namespace Service.Implement
         private readonly IUserDAO _userDAO;
         private readonly IBackgroundJobClient _backgroundJobClient;
 
-        public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO)
+        public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO, IBidDAO bidDAO)
         {
             _auctionDAO = auctionDAO;
             _userDAO = userDAO;
+            _bidDAO = bidDAO;
             _backgroundJobClient = backgroundJobClient;
         }
 
@@ -232,6 +233,21 @@ namespace Service.Implement
             _auctionDAO.UpdateAuction(auction);
         }
 
+        public bool CheckRegistration(int bidderId, int auctionId)
+        {
+            if(bidderId == null)
+            {
+                throw new Exception("400: Bidder not found");
+            }
+            if(auctionId == null)
+            {
+                throw new Exception("400: Auction not found");
+            }
+            var checkRegistration = _bidDAO.GetBidsByAuctionId(auctionId)
+                    .Where(b => b.BidderId == bidderId && b.Status == (int)BidStatus.Register)
+                    .Any();
+            return checkRegistration;
+        }
 
 
         //public void TestSchedule() {

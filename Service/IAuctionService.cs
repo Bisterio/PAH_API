@@ -21,6 +21,7 @@ namespace Service
         public void ManagerRejectAuction(int id);
         public void StaffSetAuctionTime(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt);
         public void HostAuction(int auctionId, int status);
+        public bool CheckRegistration(int bidderId, int auctionId);
         //public void TestSchedule();
         //public void OpenAuction(int id);
         //public void EndAuction(int id);
