@@ -314,7 +314,7 @@ namespace API.Controllers
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
-            if (user == null || user.Role != (int)Role.Buyer)
+            if (user == null)
             {
                 return Unauthorized(new ErrorDetails 
                 { 
