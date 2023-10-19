@@ -18,6 +18,7 @@ namespace Service {
         public void Deactivate(User user);  
         public void AcceptSeller(Seller seller);
         public void RejectSeller(Seller seller);
+        public List<User> GetAvailableStaffs();
 
         public Tokens AddRefreshToken(int id);
         public Token GetSavedRefreshToken(int id, string refreshToken);

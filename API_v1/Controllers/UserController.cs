@@ -144,6 +144,30 @@ namespace API.Controllers
         }
 
         [Authorize]
+        [HttpGet("/api/staff/available")]
+        public IActionResult GetAllAvailableStaffs()
+        {
+            var id = GetUserIdFromToken();
+            var user = _userService.Get(id);
+            if (user.Role != (int)Role.Manager)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            List<User> staffList = _userService.GetAvailableStaffs();
+            List<StaffResponse> responses = _mapper.Map<List<StaffResponse>>(staffList);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get all staffs successfully",
+                Data = responses
+            });
+        }
+
+        [Authorize]
         [HttpGet("deactivate")]
         public IActionResult SelfDeactivate()
         {
