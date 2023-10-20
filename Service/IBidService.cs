@@ -13,7 +13,8 @@ namespace Service
         public int GetNumberOfBids(int auctionId);
         public int GetNumberOfBidders(int auctionId);
         public Bid GetHighestBidFromAuction(int auctionId);
-        public void PlaceBid(int id, Bid bid);
+        public void PlaceBid(int auctionId, Bid bid);
+        public void RegisterToJoinAuction(int bidderId, int auctionId);
         public void RetractBid(int auctionId, int bidderId);
     }
 }

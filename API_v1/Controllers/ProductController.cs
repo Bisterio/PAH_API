@@ -139,7 +139,14 @@ namespace API.Controllers
             foreach (var item in response)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.Id);
-                item.ImageUrl = image.ImageUrl;
+                if (image == null)
+                {
+                    item.ImageUrl = null;
+                }
+                else
+                {
+                    item.ImageUrl = image.ImageUrl;
+                }
             }
             return Ok(new BaseResponse
             { 
@@ -200,8 +207,6 @@ namespace API.Controllers
             {
                 Title = request.Title,
                 Step = request.Step,
-                StartedAt = request.StartedAt,
-                EndedAt = request.EndedAt,
             };
             _productService.CreateProduct(_mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));
             return Ok(new BaseResponse 
@@ -231,8 +236,6 @@ namespace API.Controllers
             {
                 Title = request.Title,
                 Step = request.Step,
-                StartedAt = request.StartedAt,
-                EndedAt = request.EndedAt,
             };
 
             Product product = _productService.UpdateProduct(id, _mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));

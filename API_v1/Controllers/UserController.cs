@@ -96,7 +96,7 @@ namespace API.Controllers
         {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
-            if (user.Role != (int)Role.Manager && user.Role != (int)Role.Staff)
+            if (user.Role != (int)Role.Manager && user.Role != (int)Role.Staff && user.Role != (int)Role.Administrator)
             {
                 return Unauthorized(new ErrorDetails
                 {
@@ -125,7 +125,7 @@ namespace API.Controllers
         {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
-            if (user.Role != (int)Role.Manager)
+            if (user.Role != (int)Role.Manager && user.Role != (int)Role.Administrator)
             {
                 return Unauthorized(new ErrorDetails
                 {
@@ -134,6 +134,30 @@ namespace API.Controllers
                 });
             }
             List<User> staffList = _userService.GetAllStaffs();
+            List<StaffResponse> responses = _mapper.Map<List<StaffResponse>>(staffList);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get all staffs successfully",
+                Data = responses
+            });
+        }
+
+        [Authorize]
+        [HttpGet("/api/staff/available")]
+        public IActionResult GetAllAvailableStaffs()
+        {
+            var id = GetUserIdFromToken();
+            var user = _userService.Get(id);
+            if (user.Role != (int)Role.Manager && user.Role != (int)Role.Administrator)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            List<User> staffList = _userService.GetAvailableStaffs();
             List<StaffResponse> responses = _mapper.Map<List<StaffResponse>>(staffList);
             return Ok(new BaseResponse
             {
@@ -164,7 +188,7 @@ namespace API.Controllers
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
-            if (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager))
+            if (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager && user.Role != (int)Role.Administrator))
             {
                 return Unauthorized(new ErrorDetails
                 {
@@ -187,7 +211,7 @@ namespace API.Controllers
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
-            if (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager))
+            if (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager && user.Role != (int)Role.Administrator))
             {
                 return Unauthorized(new ErrorDetails
                 {
@@ -210,7 +234,7 @@ namespace API.Controllers
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
-            if (user == null || (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager)))
+            if (user == null || (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager && user.Role != (int)Role.Administrator)))
             {
                 return Unauthorized(new ErrorDetails
                 {
@@ -234,7 +258,7 @@ namespace API.Controllers
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
-            if (user == null || (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager)))
+            if (user == null || (user == null || (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager && user.Role != (int)Role.Administrator)))
             {
                 return Unauthorized(new ErrorDetails
                 {

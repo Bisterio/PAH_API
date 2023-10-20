@@ -17,18 +17,18 @@ namespace Service.Implement
             _sellerDAO = sellerDAO;
         }
 
-        public void CreateSeller(int id, Seller seller)
+        public int CreateSeller(int id, Seller seller)
         {
             var existed = _sellerDAO.GetSeller(id);
-            if (existed != null)
+            if (existed == null)
             {
-                throw new Exception("400: You are already a seller.");
+                seller.RegisteredAt = DateTime.Now;
+                seller.Ratings = 0;
+                seller.Status = (int)SellerStatus.Pending;
+                _sellerDAO.CreateSeller(seller);
+                return 0;
             }
-
-            seller.RegisteredAt = DateTime.Now;
-            seller.Ratings = 0;
-            seller.Status = (int)SellerStatus.Pending;
-            _sellerDAO.CreateSeller(seller);
+            return 1;
         }
 
         public Seller GetSeller(int id)

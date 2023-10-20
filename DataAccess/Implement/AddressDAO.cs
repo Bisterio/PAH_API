@@ -27,5 +27,10 @@ namespace DataAccess.Implement {
         {
             return GetAll().Where(p => p.CustomerId == id && p.Type == (int)AddressType.Pickup);
         }
+
+        public Address GetPickupBySellerId(int id)
+        {
+            return GetAll().Where(p => p.CustomerId == id && p.Type == (int)AddressType.Pickup).FirstOrDefault();
+        }
     }
 }
