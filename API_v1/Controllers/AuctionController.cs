@@ -79,10 +79,17 @@ namespace API.Controllers
             return sellerResponse;
         }
 
-        private int CountAuctions(string? title, int status, int categoryId, int materialId)
+        private int CountOpenAuctions(string? title, int status, int categoryId, int materialId)
         {
             int count = 0;
             count = _auctionService.GetAuctions(title, status, categoryId, materialId, 0).Count();
+            return count;
+        }
+
+        private int CountAuctions(string? title, int status, int categoryId, int materialId)
+        {
+            int count = 0;
+            count = _auctionService.GetAllAuctions(title, status, categoryId, materialId, 0).Count();
             return count;
         }
 
@@ -118,7 +125,7 @@ namespace API.Controllers
                 }
             }
 
-            int count = CountAuctions(title, (int)AuctionStatus.RegistrationOpen, categoryId, materialId);
+            int count = CountOpenAuctions(title, (int)AuctionStatus.RegistrationOpen, categoryId, materialId);
 
             AuctionListCountResponse response = new AuctionListCountResponse()
             {
@@ -147,9 +154,13 @@ namespace API.Controllers
             var user = _userService.Get(userId);
             if (user == null || (user.Role != (int)Role.Manager && user.Role != (int)Role.Administrator))
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails 
+                { 
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
             }
-            List<Auction> auctionList = _auctionService.GetAuctions(title, status, categoryId, materialId, orderBy)
+            List<Auction> auctionList = _auctionService.GetAllAuctions(title, status, categoryId, materialId, orderBy)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<AuctionListResponse> mappedList = _mapper.Map<List<AuctionListResponse>>(auctionList);
 
@@ -173,7 +184,7 @@ namespace API.Controllers
                 }
             }
 
-            int count = CountAuctions(title, (int)AuctionStatus.RegistrationOpen, categoryId, materialId);
+            int count = CountAuctions(title, status, categoryId, materialId);
 
             AuctionListCountResponse response = new AuctionListCountResponse()
             {

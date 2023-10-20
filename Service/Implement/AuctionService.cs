@@ -65,6 +65,45 @@ namespace Service.Implement
             return auctionList;
         }
 
+        public List<Auction> GetAllAuctions(string? title, int status, int categoryId, int materialId, int orderBy)
+        {
+            List<Auction> auctionList;
+            try
+            {
+                var auctions = _auctionDAO.GetAuctions()
+                    .Where(a => status == -1 || a.Status == status
+                    //&& a.Product.SellerId. == (int)Status.Available
+                    && (string.IsNullOrEmpty(title) || a.Title.Contains(title))
+                    && (materialId == 0 || a.Product.MaterialId == materialId)
+                    && (categoryId == 0 || a.Product.CategoryId == categoryId));
+
+                //default (0): old -> new, 1: started at asc, 2: unknown, 3: unknown
+                switch (orderBy)
+                {
+                    case 1:
+                        auctions = auctions.OrderByDescending(a => a.StartedAt);
+                        break;
+                    case 2:
+                        auctions = auctions.OrderBy(p => p.StartingPrice);
+                        break;
+                    case 3:
+                        auctions = auctions.OrderByDescending(p => p.StartingPrice);
+                        break;
+                    default:
+                        auctions = auctions.OrderBy(a => a.StartedAt);
+                        break;
+                }
+
+                auctionList = auctions
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return auctionList;
+        }
+
         public List<Auction> GetAuctionAssigned(int staffId)
         {
             if (staffId == null)
@@ -260,7 +299,6 @@ namespace Service.Implement
                     .Any();
             return checkRegistration;
         }
-
 
         //public void TestSchedule() {
         //    var auction = _auctionDAO.GetAuctionById(3);
