@@ -35,7 +35,8 @@ namespace DataAccess.Implement
                     .Include(s => s.Seller)
                     .Where(p => p.SellerId == sellerId 
                     && p.Type == (int)ProductType.ForSale 
-                    && p.Status == (int)Status.Available);
+                    && p.Status == (int)Status.Available)
+                    .OrderByDescending(p => p.CreatedAt);
         }
 
         public void CreateProduct(Product product)

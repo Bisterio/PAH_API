@@ -42,16 +42,16 @@ namespace Service.Implement
                 switch (orderBy)
                 {
                     case 1:
-                        auctions = auctions.OrderBy(a => a.StartedAt);
-                        break;
-                    //case 2:
-                    //    auctions = auctions.OrderByDescending(p => p.StartedAt);
-                    //    break;
-                    //case 3:
-                    //    auctions = auctions.OrderBy(p => p.Price);
-                    //    break;
-                    default:
                         auctions = auctions.OrderByDescending(a => a.StartedAt);
+                        break;
+                    case 2:
+                        auctions = auctions.OrderBy(p => p.StartingPrice);
+                        break;
+                    case 3:
+                        auctions = auctions.OrderByDescending(p => p.StartingPrice);
+                        break;
+                    default:
+                        auctions = auctions.OrderBy(a => a.StartedAt);
                         break;
                 }
 

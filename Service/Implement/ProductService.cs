@@ -44,7 +44,7 @@ namespace Service.Implement
                 switch (orderBy)
                 {
                     case 1:
-                        products = products.OrderByDescending(p => p.Condition);
+                        products = products.OrderBy(p => p.CreatedAt);
                         break;
                     case 2:
                         products = products.OrderBy(p => p.Price);
@@ -53,7 +53,7 @@ namespace Service.Implement
                         products = products.OrderByDescending(p => p.Price);
                         break;
                     default:
-                        products = products.OrderBy(p => p.Condition);
+                        products = products.OrderByDescending(p => p.CreatedAt);
                         break;
                 }
 
