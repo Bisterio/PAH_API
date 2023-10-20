@@ -129,11 +129,12 @@ namespace API.Controllers
             }
             else
             {
+                _sellerService.UpdateSeller(seller);
                 _addressService.UpdateSellerAddress(address, userId);
                 return Ok(new BaseResponse
                 {
                     Code = (int)HttpStatusCode.OK,
-                    Message = "Update seller pickup address successfully",
+                    Message = "Update seller successfully",
                     Data = null
                 });
             }

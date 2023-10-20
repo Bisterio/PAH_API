@@ -271,7 +271,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Approve seller successfully",
+                Message = "Reject seller successfully",
                 Data = null
             });
         }

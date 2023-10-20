@@ -78,7 +78,7 @@ namespace API.Controllers {
                 return BadRequest(ModelState);
             }
             _userService.Register(_mapper.Map<User>(request));
-            return Ok(new BaseResponse { Code = 200, Message = "Login successfully", Data = null });
+            return Ok(new BaseResponse { Code = 200, Message = "Register successfully", Data = null });
         }
     }
 }

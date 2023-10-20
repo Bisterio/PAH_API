@@ -11,5 +11,6 @@ namespace Service
     {
         public Seller GetSeller(int id);
         public int CreateSeller(int id, Seller seller);
+        public void UpdateSeller(Seller seller);
     }
 }
