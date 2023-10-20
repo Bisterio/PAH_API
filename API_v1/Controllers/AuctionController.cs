@@ -144,11 +144,11 @@ namespace API.Controllers
         [Authorize]
         [HttpGet("manager")]
         public IActionResult ManagerGetAuctions([FromQuery] string? title,
-            [FromQuery] int status,
+            
             [FromQuery] int categoryId,
             [FromQuery] int materialId,
             [FromQuery] int orderBy,
-            [FromQuery] PagingParam pagingParam)
+            [FromQuery] PagingParam pagingParam, [FromQuery] int status = -1)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
