@@ -100,7 +100,7 @@ namespace API.Controllers
                 ProfilePicture = request.ProfilePicture,
                 Status = (int)SellerStatus.Pending
             };
-            _sellerService.CreateSeller(userId, seller);
+            int existed = _sellerService.CreateSeller(userId, seller);
 
             Address address = new Address()
             {
@@ -117,14 +117,26 @@ namespace API.Controllers
                 Type = (int)AddressType.Pickup,
                 IsDefault = true
             };
-            _addressService.Create(address);
-
-            return Ok(new BaseResponse
+            if(existed == 0)
             {
-                Code = (int)HttpStatusCode.OK,
-                Message = "Request to become seller successfully",
-                Data = null
-            });
+                _addressService.Create(address);
+                return Ok(new BaseResponse
+                {
+                    Code = (int)HttpStatusCode.OK,
+                    Message = "Request to become seller successfully",
+                    Data = null
+                });
+            }
+            else
+            {
+                _addressService.UpdateSellerAddress(address, userId);
+                return Ok(new BaseResponse
+                {
+                    Code = (int)HttpStatusCode.OK,
+                    Message = "Update seller pickup address successfully",
+                    Data = null
+                });
+            }
         }
     }
 }

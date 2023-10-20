@@ -23,14 +23,19 @@ namespace DataAccess.Implement
         {
             return GetAll().Include(c => c.Category)
                     .Include(m => m.Material)
-                    .Include(s => s.Seller).FirstOrDefault(p => p.Id == id && p.Status != 0);
+                    .Include(s => s.Seller)
+                    .FirstOrDefault(p => p.Id == id 
+                    && p.Status == (int)Status.Available);
         }
 
         public IQueryable<Product> GetProductsBySellerId(int sellerId)
         {
             return GetAll().Include(c => c.Category)
                     .Include(m => m.Material)
-                    .Include(s => s.Seller).Where(p => p.SellerId == sellerId);
+                    .Include(s => s.Seller)
+                    .Where(p => p.SellerId == sellerId 
+                    && p.Type == (int)ProductType.ForSale 
+                    && p.Status == (int)Status.Available);
         }
 
         public void CreateProduct(Product product)

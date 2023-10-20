@@ -11,6 +11,7 @@ namespace DataAccess {
         public void Update(Address address);
         public void Delete(Address address);
         public Address Get(int id);
+        public Address GetPickupBySellerId(int id);
 
         public IQueryable<Address> GetByCustomerId(int id);
         public IQueryable<Address> GetPickupByCustomerId(int id);

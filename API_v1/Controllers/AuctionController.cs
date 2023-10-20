@@ -230,7 +230,7 @@ namespace API.Controllers
         [HttpGet("seller/{id}")]
         public IActionResult GetAuctionBySellerId(int id, [FromQuery] int status, [FromQuery] PagingParam pagingParam)
         {
-            List<Auction> auctionList = _auctionService.GetAuctionBySellerId(id)
+            List<Auction> auctionList = _auctionService.GetAuctionBySellerId(id, status)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
             foreach (var item in response)
@@ -257,6 +257,50 @@ namespace API.Controllers
                 Code = (int)HttpStatusCode.OK, 
                 Message = "Get auctions successfully", 
                 Data = response 
+            });
+        }
+
+        [Authorize]
+        [HttpGet("seller/current")]
+        public IActionResult GetAuctionByCurrentSeller([FromQuery] int status, [FromQuery] PagingParam pagingParam)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Seller)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            List<Auction> auctionList = _auctionService.GetAuctionBySellerId(userId, status)
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
+            List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
+            foreach (var item in response)
+            {
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
+                if (image == null)
+                {
+                    item.ImageUrl = null;
+                }
+                else
+                {
+                    item.ImageUrl = image.ImageUrl;
+                }
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
+            }
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get auctions successfully",
+                Data = response
             });
         }
 

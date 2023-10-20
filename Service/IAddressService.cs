@@ -13,6 +13,7 @@ namespace Service {
         public Address GetDeliveryByCurrentUser(int id);
         public void Create(Address address);
         public void Update(Address address, int customerId);
+        public void UpdateSellerAddress(Address address, int customerId);
         public void Delete(int addressId, int customerId);
     }
 }

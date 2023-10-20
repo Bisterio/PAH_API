@@ -1,4 +1,5 @@
-﻿using DataAccess.Models;
+﻿using DataAccess;
+using DataAccess.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace Service
         public List<Auction> GetAuctionsByProductId(int productId);
         public List<Auction> GetAuctionJoined(int bidderId);
         public List<Auction> GetAuctionJoinedByStatus(int status, int bidderId);
-        public List<Auction> GetAuctionBySellerId(int sellerId);
+        public List<Auction> GetAuctionBySellerId(int sellerId, int status);
         public void CreateAuction(Auction auction);
         public void AssignStaff(int id, int staffId);
         public void ManagerApproveAuction(int id);

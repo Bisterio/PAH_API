@@ -92,13 +92,15 @@ namespace Service.Implement
             return _auctionDAO.GetAuctionById(id);
         }
 
-        public List<Auction> GetAuctionBySellerId(int sellerId)
+        public List<Auction> GetAuctionBySellerId(int sellerId, int status)
         {
             if (sellerId == null)
             {
                 throw new Exception("404: Seller not found");
             }
-            return _auctionDAO.GetAuctionBySellerId(sellerId).ToList();
+            return _auctionDAO.GetAuctionBySellerId(sellerId)
+                .Where(a => status == 0 || a.Status == status)
+                .ToList();
         }
 
         public List<Auction> GetAuctionJoined(int bidderId)
