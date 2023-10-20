@@ -17,5 +17,6 @@
         public int Type { get; set; }
         public string Title { get; set; } = null!;
         public decimal Step { get; set; }
+        public List<string> ImageUrlLists { get; set; }
     }
 }

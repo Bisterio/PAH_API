@@ -85,7 +85,7 @@ namespace Service.Implement
             return _productDAO.GetProductsBySellerId(sellerId).ToList();
         }
 
-        public void CreateProduct(Product product, Auction auction)
+        public int CreateProduct(Product product, Auction auction)
         {
             product.Status = (int) Status.Available;
             product.Ratings = 0;
@@ -103,7 +103,8 @@ namespace Service.Implement
                 auction.CreatedAt = DateTime.Now;
                 auction.UpdatedAt = DateTime.Now;
                 _auctionDAO.CreateAuction(auction);
-            }            
+            }          
+            return product.Id;
         }
 
         public Product UpdateProduct(int id, Product product, Auction auction)
