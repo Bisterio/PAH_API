@@ -31,7 +31,7 @@ namespace Service.Implement
             try
             {
                 var auctions = _auctionDAO.GetAuctions()
-                    .Where(a => status == 0 || a.Status == status
+                    .Where(a => status == -1 || a.Status == status
                     //&& a.Product.SellerId. == (int)Status.Available
                     && (string.IsNullOrEmpty(title) || a.Title.Contains(title))
                     && (materialId == 0 || a.Product.MaterialId == materialId)
@@ -99,7 +99,7 @@ namespace Service.Implement
                 throw new Exception("404: Seller not found");
             }
             return _auctionDAO.GetAuctionBySellerId(sellerId)
-                .Where(a => status == 0 || a.Status == status)
+                .Where(a => status == -1 || a.Status == status)
                 .ToList();
         }
 

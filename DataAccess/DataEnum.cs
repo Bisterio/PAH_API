@@ -51,7 +51,6 @@ namespace DataAccess {
 
     public enum AuctionStatus
     {
-        Unavailable = -1,
         Pending = 0,
         Unassigned = 1,
         Assigned = 2,
@@ -60,6 +59,7 @@ namespace DataAccess {
         Opened = 5,
         Ended = 6,
         EndedWithoutBids = 7,
+        Unavailable = 8,
     }
 
     public enum SellerStatus
