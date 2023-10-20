@@ -16,7 +16,7 @@ namespace DataAccess.Implement
         {
             return GetAll()
                 .Include(b => b.Auction)
-                .Include(b => b.Bidder)
+                .Include(b => b.Bidder.IdNavigation)
                 .Where(b => b.AuctionId == auctionId);
         }
 

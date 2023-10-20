@@ -1,4 +1,6 @@
-﻿using Respon.UserRes;
+﻿using DataAccess.Models;
+using Respon.BidderRes;
+using Respon.UserRes;
 
 namespace Respon.BidRes
 {
@@ -10,6 +12,6 @@ namespace Respon.BidRes
         public decimal? BidAmount { get; set; }
         public DateTime? BidDate { get; set; }
         public int Status { get; set; }
-        public UserResponse Bidder { get; set; }
+        public BidderResponse Bidder {  get; set; }
     }
 }

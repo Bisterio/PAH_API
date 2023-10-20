@@ -48,7 +48,23 @@ namespace API.Controllers
             List<BidResponse> response = _mapper.Map<List<BidResponse>>(bidList);
             foreach (var bid in response)
             {
-                bid.Bidder = _mapper.Map<UserResponse>(_userService.Get((int)bid.BidderId));
+                var bidder = _userService.Get((int)bid.BidderId);
+                if (bidder == null)
+                {
+                    bid.Bidder = null;
+                }
+                else
+                {
+                    bid.Bidder.Name = bidder.Name;
+                    bid.Bidder.Email = bidder.Email;
+                    bid.Bidder.Phone = bidder.Phone;
+                    bid.Bidder.ProfilePicture = bidder.ProfilePicture;
+                    bid.Bidder.Gender = bidder.Gender;
+                    bid.Bidder.Dob = bidder.Dob;
+                    bid.Bidder.Role = bidder.Role;
+                    bid.Bidder.Status = bidder.Status;
+                    //bid.Bidder = _mapper.Map<UserResponse>(bidder);
+                }
             }
             return Ok(new BaseResponse 
             { 
