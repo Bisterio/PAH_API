@@ -17,5 +17,6 @@
         public string? Ward { get; set; }
         public string? WardCode { get; set; }
         public string? Street { get; set; }
+        public int Status { get; set; }
     }
 }

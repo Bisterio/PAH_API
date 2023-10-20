@@ -65,6 +65,7 @@ namespace API.Controllers
                 response.ProfilePicture = seller.ProfilePicture;
                 response.RegisteredAt = seller.RegisteredAt;
                 response.Ratings = seller.Ratings;
+                response.Status = seller.Status;
                 response.RecipientName = address.RecipientName;
                 response.RecipientPhone = address.RecipientPhone;
                 response.Province = address.Province;
@@ -97,6 +98,7 @@ namespace API.Controllers
                 Name = request.Name,
                 Phone = request.Phone,
                 ProfilePicture = request.ProfilePicture,
+                Status = (int)SellerStatus.Pending
             };
             _sellerService.CreateSeller(userId, seller);
 
