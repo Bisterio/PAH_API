@@ -96,15 +96,15 @@ namespace API.Controllers
         [HttpGet]
         public IActionResult GetAuctions([FromQuery] string? title,
             //[FromQuery] int status,
-            [FromQuery] int categoryId, 
-            [FromQuery] int materialId, 
+            [FromQuery] int categoryId,
+            [FromQuery] int materialId,
             [FromQuery] int orderBy,
             [FromQuery] PagingParam pagingParam) 
         { 
             List<Auction> auctionList = _auctionService.GetAuctions(title, (int)AuctionStatus.RegistrationOpen, categoryId, materialId, orderBy)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<AuctionListResponse> mappedList = _mapper.Map<List<AuctionListResponse>>(auctionList);
-            
+
             foreach (var item in mappedList)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
@@ -130,12 +130,12 @@ namespace API.Controllers
             AuctionListCountResponse response = new AuctionListCountResponse()
             {
                 Count = count,
-                AuctionList = mappedList                
+                AuctionList = mappedList
             };
 
-            return Ok(new BaseResponse 
-            { 
-                Code = (int) HttpStatusCode.OK, 
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
                 Message = "Get auctions successfully",
                 Data = response
             });
