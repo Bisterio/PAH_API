@@ -50,5 +50,10 @@ namespace Service.Implement
         {
             return _sellerDAO.GetSeller(id);
         }
+
+        public List<Seller> GetSellerRequestList()
+        {
+            return _sellerDAO.GetSellerRequestList().ToList();
+        }
     }
 }
