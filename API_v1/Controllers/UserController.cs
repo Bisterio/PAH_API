@@ -182,20 +182,20 @@ namespace API.Controllers
             });
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpGet("reactivate/request")]
         public IActionResult GetReactivateRequestList()
         {
-            //var userId = GetUserIdFromToken();
-            //var user = _userService.Get(userId);
-            //if (user == null || (user.Role != (int)Role.Staff))
-            //{
-            //    return Unauthorized(new ErrorDetails
-            //    {
-            //        StatusCode = (int)HttpStatusCode.Unauthorized,
-            //        Message = "You are not allowed to access this"
-            //    });
-            //};
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || (user.Role != (int)Role.Staff))
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            };
             var reactivateRequests = _userService.GetReactivateRequestList();
             List<UserResponse> responses = _mapper.Map<List<UserResponse>>(reactivateRequests);    
             return Ok(new BaseResponse
