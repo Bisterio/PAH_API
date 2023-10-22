@@ -31,7 +31,7 @@ namespace Service.Implement
             try
             {
                 var auctions = _auctionDAO.GetAuctions()
-                    .Where(a => status == 0 || a.Status == status
+                    .Where(a => status == -1 || a.Status == status
                     //&& a.Product.SellerId. == (int)Status.Available
                     && (string.IsNullOrEmpty(title) || a.Title.Contains(title))
                     && (materialId == 0 || a.Product.MaterialId == materialId)
@@ -42,16 +42,55 @@ namespace Service.Implement
                 switch (orderBy)
                 {
                     case 1:
+                        auctions = auctions.OrderByDescending(a => a.StartedAt);
+                        break;
+                    case 2:
+                        auctions = auctions.OrderBy(p => p.StartingPrice);
+                        break;
+                    case 3:
+                        auctions = auctions.OrderByDescending(p => p.StartingPrice);
+                        break;
+                    default:
                         auctions = auctions.OrderBy(a => a.StartedAt);
                         break;
-                    //case 2:
-                    //    auctions = auctions.OrderByDescending(p => p.StartedAt);
-                    //    break;
-                    //case 3:
-                    //    auctions = auctions.OrderBy(p => p.Price);
-                    //    break;
-                    default:
+                }
+
+                auctionList = auctions
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return auctionList;
+        }
+
+        public List<Auction> GetAllAuctions(string? title, int status, int categoryId, int materialId, int orderBy)
+        {
+            List<Auction> auctionList;
+            try
+            {
+                var auctions = _auctionDAO.GetAuctions()
+                    .Where(a => status == -1 || a.Status == status
+                    //&& a.Product.SellerId. == (int)Status.Available
+                    && (string.IsNullOrEmpty(title) || a.Title.Contains(title))
+                    && (materialId == 0 || a.Product.MaterialId == materialId)
+                    && (categoryId == 0 || a.Product.CategoryId == categoryId));
+
+                //default (0): old -> new, 1: started at asc, 2: unknown, 3: unknown
+                switch (orderBy)
+                {
+                    case 1:
                         auctions = auctions.OrderByDescending(a => a.StartedAt);
+                        break;
+                    case 2:
+                        auctions = auctions.OrderBy(p => p.StartingPrice);
+                        break;
+                    case 3:
+                        auctions = auctions.OrderByDescending(p => p.StartingPrice);
+                        break;
+                    default:
+                        auctions = auctions.OrderBy(a => a.StartedAt);
                         break;
                 }
 
@@ -99,7 +138,7 @@ namespace Service.Implement
                 throw new Exception("404: Seller not found");
             }
             return _auctionDAO.GetAuctionBySellerId(sellerId)
-                .Where(a => status == 0 || a.Status == status)
+                .Where(a => status == -1 || a.Status == status)
                 .ToList();
         }
 
@@ -261,6 +300,21 @@ namespace Service.Implement
             return checkRegistration;
         }
 
+        public bool CheckRegistration(int bidderId, int auctionId)
+        {
+            if(bidderId == null)
+            {
+                throw new Exception("400: Bidder not found");
+            }
+            if(auctionId == null)
+            {
+                throw new Exception("400: Auction not found");
+            }
+            var checkRegistration = _bidDAO.GetBidsByAuctionId(auctionId)
+                    .Where(b => b.BidderId == bidderId && b.Status == (int)BidStatus.Register)
+                    .Any();
+            return checkRegistration;
+        }
 
         //public void TestSchedule() {
         //    var auction = _auctionDAO.GetAuctionById(3);

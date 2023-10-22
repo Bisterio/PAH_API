@@ -53,5 +53,19 @@ namespace Service.Implement {
         {
             return _productImageDAO.GetByProductId(productId).OrderBy(i => i.CreatedAt).ToList();
         }
+
+        public void SaveProductImage(int productId, string imageUrl)
+        {
+            ProductImage productImage = new ProductImage()
+            {
+                Id = 0,
+                ProductId = productId,
+                Status = (int)Status.Available,
+                ImageUrl = imageUrl,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+            };
+            _productImageDAO.Create(productImage);
+        }
     }
 }

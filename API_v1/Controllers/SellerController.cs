@@ -129,14 +129,56 @@ namespace API.Controllers
             }
             else
             {
+                _sellerService.UpdateSeller(seller);
                 _addressService.UpdateSellerAddress(address, userId);
                 return Ok(new BaseResponse
                 {
                     Code = (int)HttpStatusCode.OK,
-                    Message = "Update seller pickup address successfully",
+                    Message = "Update seller successfully",
                     Data = null
                 });
             }
+        }
+
+        [Authorize]
+        [HttpGet("request")]
+        public IActionResult GetSellerRequestList()
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || (user.Role != (int)Role.Staff))
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            List<Seller> sellerRequests = _sellerService.GetSellerRequestList();
+            List<SellerRequestResponse> responses = _mapper.Map<List<SellerRequestResponse>>(sellerRequests);
+            foreach (var item in responses)
+            {
+                var pickupAddress = _addressService.GetPickupBySellerId(item.Id);
+                item.Province = pickupAddress.Province;
+                item.DistrictId = pickupAddress.DistrictId;
+                item.District = pickupAddress.District;
+                item.WardCode = pickupAddress.WardCode;
+                item.Ward = pickupAddress.Ward;
+                item.Street = pickupAddress.Street;
+
+                var sellerUser = _userService.Get(item.Id);
+                item.UserName = sellerUser.Name;
+                item.Email = sellerUser.Email;
+                item.Phone = sellerUser.Phone;
+                item.Gender = sellerUser.Gender;
+                item.Dob = sellerUser.Dob;
+            }
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get seller requests successfully",
+                Data = responses
+            });
         }
     }
 }

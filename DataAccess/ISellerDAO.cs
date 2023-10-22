@@ -10,6 +10,7 @@ namespace DataAccess
     public interface ISellerDAO
     {
         public Seller GetSeller(int id);
+        public IQueryable<Seller> GetSellerRequestList();
         public void CreateSeller(Seller seller);
         public void UpdateSeller(Seller seller);
     }

@@ -208,7 +208,12 @@ namespace API.Controllers
                 Title = request.Title,
                 Step = request.Step,
             };
-            _productService.CreateProduct(_mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));
+            int productId = _productService.CreateProduct(_mapper.Map<Product>(request), _mapper.Map<Auction>(auctionRequest));
+            List<string> imageUrlList = request.ImageUrlLists;
+            foreach (var imageUrl in imageUrlList)
+            {
+                _imageService.SaveProductImage(productId, imageUrl);
+            }
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 

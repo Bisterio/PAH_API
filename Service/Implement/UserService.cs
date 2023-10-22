@@ -100,6 +100,11 @@ namespace Service.Implement {
             return availableStaffs;
         }
 
+        public List<User> GetReactivateRequestList()
+        {
+            return _userDAO.GetAll().Where(u => u.Status == (int)Status.Unavailable).ToList();
+        }
+
         public User Login(string email, string password) {
             var user = _userDAO.GetByEmail(email);
             if (user != null) {

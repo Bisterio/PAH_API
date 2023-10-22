@@ -183,6 +183,30 @@ namespace API.Controllers
         }
 
         [Authorize]
+        [HttpGet("reactivate/request")]
+        public IActionResult GetReactivateRequestList()
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || (user.Role != (int)Role.Staff))
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            };
+            var reactivateRequests = _userService.GetReactivateRequestList();
+            List<UserResponse> responses = _mapper.Map<List<UserResponse>>(reactivateRequests);    
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get reactivate requests successfully",
+                Data = responses
+            });
+        }
+
+        [Authorize]
         [HttpGet("deactivate/{id}")]
         public IActionResult Deactivate(int id)
         {
@@ -271,7 +295,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Approve seller successfully",
+                Message = "Reject seller successfully",
                 Data = null
             });
         }

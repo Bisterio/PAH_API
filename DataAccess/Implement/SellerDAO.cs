@@ -28,5 +28,12 @@ namespace DataAccess.Implement
                 .Include(s => s.IdNavigation)
                 .FirstOrDefault(s => s.Id == id);
         }
+
+        public IQueryable<Seller> GetSellerRequestList()
+        {
+            return GetAll()
+                .Include(s => s.IdNavigation)
+                .Where(s => s.Status == (int)SellerStatus.Pending);
+        }
     }
 }
