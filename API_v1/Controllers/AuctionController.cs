@@ -93,6 +93,13 @@ namespace API.Controllers
             return count;
         }
 
+        private int CountAssignedAuctions(int id)
+        {
+            int count = 0;
+            count = _auctionService.GetAuctionAssigned(id).Count();
+            return count;
+        }
+
         [HttpGet]
         public IActionResult GetAuctions([FromQuery] string? title,
             //[FromQuery] int status,
@@ -353,7 +360,7 @@ namespace API.Controllers
             }
             AuctionListCountResponse response = new AuctionListCountResponse()
             {
-                Count = auctionList.Count,
+                Count = CountAssignedAuctions(userId),
                 AuctionList = mappedList
             };
             return Ok(new BaseResponse 
