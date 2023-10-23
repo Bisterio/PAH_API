@@ -11,10 +11,11 @@ namespace API.Hubs
     public class AuctionHub : Hub
     {
         private readonly IAuctionService _auctionService;
-
-        public AuctionHub(IAuctionService auctionService)
+        private readonly IUserService _userService;
+        public AuctionHub(IAuctionService auctionService, IUserService userService)
         {
             _auctionService = auctionService;
+            _userService = userService;
         }
 
         [Authorize]
@@ -45,6 +46,16 @@ namespace API.Hubs
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, "AUCTION_" + auctionId);
             await Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveMessage", "SYSTEM", "You have been added to group " + "AUCTION_" + auctionId);
+        }
+
+        [Authorize]
+        public async Task PlaceBidSuccess(int auctionId)
+        {
+            var userId = int.Parse(Context.User?.Claims?.FirstOrDefault(p => p.Type == "UserId")?.Value);
+            var user = _userService.Get(userId);
+            var auction = _auctionService.GetAuctionById(auctionId);
+
+            await Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveNewBid", user.Name, auction.Title);
         }
     }
 
