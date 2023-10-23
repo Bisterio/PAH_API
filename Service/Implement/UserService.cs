@@ -1,6 +1,9 @@
 ﻿using BCrypt.Net;
 using DataAccess;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Identity;
+using Request;
+using Service.EmailService;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +17,13 @@ namespace Service.Implement {
         private readonly IBuyerDAO _buyerDAO;
         private readonly IWalletDAO _walletDAO;
         private readonly ISellerDAO _sellerDAO;
-        private ITokenService _tokenService;
+        private readonly ITokenService _tokenService;
         private readonly int WORK_FACTOR = 13;
         private static readonly string DEFAULT_AVT = "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg";
 
-        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, ITokenService tokenService, IBuyerDAO buyerDAO, IWalletDAO walletDAO, ISellerDAO sellerDAO) {
+        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, 
+            ITokenService tokenService, IBuyerDAO buyerDAO, 
+            IWalletDAO walletDAO, ISellerDAO sellerDAO) {
             _userDAO = userDAO;
             _tokenDAO = tokenDAO;
             _tokenService = tokenService;
@@ -177,10 +182,10 @@ namespace Service.Implement {
             var dbToken = _tokenDAO.Get(id);
             if (dbToken != null) {
                 dbToken.RefreshToken = token.RefreshToken;
-                dbToken.ExpiryTime = DateTime.Now.AddMinutes(1);
+                dbToken.ExpiryTime = DateTime.Now.AddDays(7);
                 _tokenDAO.UpdateToken(dbToken);
             } else {
-                _tokenDAO.Add(new Token { Id = id, RefreshToken = token.RefreshToken, ExpiryTime = DateTime.Now.AddMinutes(1) });
+                _tokenDAO.Add(new Token { Id = id, RefreshToken = token.RefreshToken, ExpiryTime = DateTime.Now.AddDays(7) });
             }
             return token;
         }
@@ -196,6 +201,36 @@ namespace Service.Implement {
                 token.ExpiryTime = null;
                 _tokenDAO.UpdateToken(token);
             }
+        }
+
+        public void AddResetToken(int id, string token) {
+            var dbToken = _tokenDAO.Get(id);
+            if (dbToken != null) {
+                dbToken.RefreshToken = token;
+                dbToken.ExpiryTime = DateTime.Now.AddMinutes(30);
+                _tokenDAO.UpdateToken(dbToken);
+            } else {
+                _tokenDAO.Add(new Token { Id = id, RefreshToken = token, ExpiryTime = DateTime.Now.AddMinutes(30) });
+            }
+        }
+
+        public void ResetPassword(ResetPasswordRequest request) {
+            var user = _userDAO.GetByEmail(request.Email);
+            if (user == null) {
+                throw new Exception("404: User not found when reset password");
+            }
+
+            var token = _tokenDAO.GetResetToken(user.Id, request.Token, DateTime.Now);
+            if (token == null) {
+                throw new Exception("401: Token not correct");
+            }
+
+            user.Password = BC.EnhancedHashPassword(request.Password, WORK_FACTOR);
+            user.UpdatedAt = DateTime.Now;
+            _userDAO.Update(user);
+
+            token.RefreshToken = null;
+            _tokenDAO.UpdateToken(token);
         }
     }
 }

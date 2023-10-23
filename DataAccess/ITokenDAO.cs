@@ -11,5 +11,7 @@ namespace DataAccess {
         public void Add(Token token);
         public Token Get(int id);
         public Token GetSavedRefreshToken(int id, string refreshToken);
+
+        public Token GetResetToken(int id, string token, DateTime date);
     }
 }

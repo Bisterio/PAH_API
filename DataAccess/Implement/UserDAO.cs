@@ -18,6 +18,10 @@ namespace DataAccess.Implement {
         public User Get(int id) {
             return GetAll().FirstOrDefault(p => p.Id == id && p.Status != (int) Status.Unavailable);
         }
+        
+        public User GetIgnoreStatus(int id) {
+            return GetAll().FirstOrDefault(p => p.Id == id);
+        }
 
         public User GetByEmail(string email) {
             return GetAll().FirstOrDefault(p => p.Email.Equals(email) && p.Status != (int) Status.Unavailable);

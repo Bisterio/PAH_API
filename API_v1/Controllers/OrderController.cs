@@ -33,12 +33,15 @@ namespace API.Controllers
 
         [HttpGet]
         public IActionResult Get([FromQuery] PagingParam pagingParam, [FromQuery] OrderParam orderParam) {
-            return Ok(new BaseResponse { 
-                Code = (int) HttpStatusCode.OK, 
-                Message = "Get order list successfully", 
-                Data = _orderService.GetAll(orderParam.Status)
-                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList()
-                .Select(p => _mapper.Map<OrderResponse>(p)) 
+            var list = _orderService.GetAll(orderParam.Status);
+            return Ok(new BaseResponse {
+                Code = (int) HttpStatusCode.OK,
+                Message = "Get order list successfully",
+                Data = new {
+                    Count = list.Count,
+                    List = list.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList()
+                            .Select(p => _mapper.Map<OrderResponse>(p))
+                }
             });
         }
         

@@ -13,11 +13,16 @@ using Microsoft.AspNetCore.Cors;
 using Service;
 using Service.Implement;
 using System.Text;
+using Service.EmailService;
 using API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+var emailConfig = builder.Configuration
+        .GetSection("EmailConfiguration")
+        .Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient("GHN", httpClient => {
@@ -109,6 +114,8 @@ builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<IWalletDAO, WalletDAO>();
 builder.Services.AddScoped<ITransactionDAO, TransactionDAO>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 //JWT authentication
 builder.Services.AddAuthentication(x => {

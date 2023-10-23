@@ -18,6 +18,10 @@ namespace DataAccess.Implement {
             return GetAll().FirstOrDefault(p => p.Id == id);
         }
 
+        public Token GetResetToken(int id, string token, DateTime date) {
+            return GetAll().FirstOrDefault(p => p.Id == id && token.Equals(p.RefreshToken) && p.ExpiryTime >= date);
+        }
+
         public Token GetSavedRefreshToken(int id, string refreshToken) {
             return GetAll().FirstOrDefault(p => p.Id == id && p.RefreshToken.Equals(refreshToken));
         }
