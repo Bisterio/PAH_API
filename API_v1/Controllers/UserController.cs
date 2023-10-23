@@ -5,6 +5,7 @@ using DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Request;
 using Respon;
 using Respon.UserRes;
 using Service;
@@ -14,6 +15,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -33,7 +35,6 @@ namespace API.Controllers
             return int.Parse(user.Claims.FirstOrDefault(p => p.Type == "UserId").Value);
         }
 
-        [Authorize]
         [HttpGet("current")]
         public IActionResult Get()
         {
@@ -55,7 +56,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("{id}")]
         public IActionResult GetByUserId(int id)
         {
@@ -78,6 +78,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public IActionResult GetAll()
         {
             List<User> userList = _userService.GetAll();
@@ -90,7 +91,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("customer")]
         public IActionResult GetAllBuyerAndSeller()
         {
@@ -119,7 +119,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("/api/staff")]
         public IActionResult GetAllStaffs()
         {
@@ -143,7 +142,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("/api/staff/available")]
         public IActionResult GetAllAvailableStaffs()
         {
@@ -167,7 +165,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("deactivate")]
         public IActionResult SelfDeactivate()
         {
@@ -182,7 +179,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("reactivate/request")]
         public IActionResult GetReactivateRequestList()
         {
@@ -206,7 +202,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("deactivate/{id}")]
         public IActionResult Deactivate(int id)
         {
@@ -229,7 +224,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("reactivate/{id}")]
         public IActionResult Reactivate(int id)
         {
@@ -252,7 +246,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("seller/approve")]
         public IActionResult AcceptSeller(int id)
         {
@@ -276,7 +269,6 @@ namespace API.Controllers
             });
         }
 
-        [Authorize]
         [HttpGet("seller/reject")]
         public IActionResult RejectSeller(int id)
         {
@@ -296,6 +288,18 @@ namespace API.Controllers
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Reject seller successfully",
+                Data = null
+            });
+        }
+
+        [HttpPatch("updateprofile")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
+        public IActionResult UpdateUser([FromBody] UpdateProfileRequest request) {
+            var userId = GetUserIdFromToken();
+            _userService.UpdateProfile(userId, request);
+            return Ok(new BaseResponse {
+                Code = (int) HttpStatusCode.OK,
+                Message = "Update profile successfully",
                 Data = null
             });
         }

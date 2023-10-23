@@ -300,22 +300,6 @@ namespace Service.Implement
             return checkRegistration;
         }
 
-        public bool CheckRegistration(int bidderId, int auctionId)
-        {
-            if(bidderId == null)
-            {
-                throw new Exception("400: Bidder not found");
-            }
-            if(auctionId == null)
-            {
-                throw new Exception("400: Auction not found");
-            }
-            var checkRegistration = _bidDAO.GetBidsByAuctionId(auctionId)
-                    .Where(b => b.BidderId == bidderId && b.Status == (int)BidStatus.Register)
-                    .Any();
-            return checkRegistration;
-        }
-
         //public void TestSchedule() {
         //    var auction = _auctionDAO.GetAuctionById(3);
 

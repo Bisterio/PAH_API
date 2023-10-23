@@ -232,5 +232,21 @@ namespace Service.Implement {
             token.RefreshToken = null;
             _tokenDAO.UpdateToken(token);
         }
+
+        public void UpdateProfile(int id, UpdateProfileRequest request) {
+            var user = _userDAO.Get(id);
+            if (user == null) {
+                throw new Exception("404: User not found");
+            }
+
+            user.Name = request.Name;
+            user.Password = BC.EnhancedHashPassword(request.Password, WORK_FACTOR);
+            user.Phone = request.Phone;
+            user.ProfilePicture = request.ProfilePicture;
+            user.Gender = request.Gender;
+            user.Dob = request.Dob;
+            user.UpdatedAt = DateTime.Now;
+            _userDAO.Update(user);
+        }
     }
 }
