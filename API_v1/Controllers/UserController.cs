@@ -5,6 +5,7 @@ using DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Request.Param;
 using Respon;
 using Respon.UserRes;
 using Service;
@@ -92,7 +93,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpGet("customer")]
-        public IActionResult GetAllBuyerAndSeller()
+        public IActionResult GetAllBuyerAndSeller([FromQuery] PagingParam pagingParam)
         {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
@@ -104,11 +105,13 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            List<User> userList = _userService.GetAllBuyersSellers();
+            List<User> userList = _userService.GetAllBuyersSellers()
+                .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList(); 
+            int count = userList.Count();
             List<UserResponse> mappedList = _mapper.Map<List<UserResponse>>(userList);
             CustomerListCountResponse response = new CustomerListCountResponse()
             {
-                Count = userList.Count,
+                Count = count,
                 CustomerList = mappedList
             };
             return Ok(new BaseResponse
