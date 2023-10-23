@@ -62,5 +62,13 @@ namespace Service.Implement {
                 throw new SecurityTokenException("Invalid token");
             return principal;
         }
+
+        public string GenerateResetToken() {
+            var randomNumber = new byte[12];
+            using (var rng = RandomNumberGenerator.Create()) {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber).Replace('+', '-').Replace('/', '_');
+            }
+        }
     }
 }

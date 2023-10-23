@@ -1,4 +1,5 @@
 ﻿using DataAccess.Models;
+using Request;
 using Respon.UserRes;
 using System;
 using System.Collections.Generic;
@@ -25,5 +26,8 @@ namespace Service {
         public Tokens AddRefreshToken(int id);
         public Token GetSavedRefreshToken(int id, string refreshToken);
         public void RemoveRefreshToken(int id);
+
+        public void AddResetToken(int id, string token);
+        public void ResetPassword(ResetPasswordRequest request);
     }
 }

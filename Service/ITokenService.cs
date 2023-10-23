@@ -9,6 +9,7 @@ namespace Service {
     public interface ITokenService {
         public string GenerateAccessToken(int id);
         public string GenerateRefreshToken();
+        public string GenerateResetToken();
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
     }
 }

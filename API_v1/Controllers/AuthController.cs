@@ -5,13 +5,16 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Request;
 using Respon;
 using Service;
+using Service.EmailService;
 using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 
@@ -26,13 +29,18 @@ namespace API.Controllers {
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
         private readonly IConfiguration _config;
+        private readonly IEmailService _emailService;
 
-        public AuthController(ILogger<AuthController> logger, IUserService userService, IMapper mapper, IConfiguration configuration, ITokenService tokenService) {
+        public AuthController(ILogger<AuthController> logger, 
+            IUserService userService, IMapper mapper, 
+            IConfiguration configuration, ITokenService tokenService,
+            IEmailService emailService) {
             _logger = logger;
             _userService = userService;
             _mapper = mapper;
             _config = configuration;
             _tokenService = tokenService;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -79,6 +87,42 @@ namespace API.Controllers {
             }
             _userService.Register(_mapper.Map<User>(request));
             return Ok(new BaseResponse { Code = 200, Message = "Register successfully", Data = null });
+        }
+
+        [HttpPost("/api/forgotpassword")]
+        [AllowAnonymous]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
+        public async Task<IActionResult> SendEmailResetPasswordAsync([FromBody] ForgotPasswordRequest request) {
+            var user = _userService.GetByEmail(request.Email);
+            if (user == null) {
+                return NotFound(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.NotFound,
+                    Message = "User not found"
+                });
+            }
+
+            var token = _tokenService.GenerateResetToken();
+            _userService.AddResetToken(user.Id, token);
+            //var callback = Url.Action(nameof(ResetPassword), nameof(AuthController), new { token, email = user.Email }, Request.Scheme);
+            var message = new Message(new string[] { user.Email }, "Reset password token", $"Token is: "+token);
+            await _emailService.SendEmail(message);
+            return Ok(new BaseResponse {
+                Code = 200,
+                Message = "Send mail successfully",
+                Data = null
+            });
+        }
+
+        [HttpPost("/api/resetpassword")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
+        [AllowAnonymous]
+        public IActionResult ResetPassword([FromBody] ResetPasswordRequest request) {
+            _userService.ResetPassword(request);
+            return Ok(new BaseResponse {
+                Code = (int) HttpStatusCode.OK,
+                Message = "Reset password successfully",
+                Data = null
+            });
         }
     }
 }
