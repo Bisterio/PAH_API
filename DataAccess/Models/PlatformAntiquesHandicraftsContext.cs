@@ -326,6 +326,10 @@ namespace DataAccess.Models
                     .HasColumnType("datetime")
                     .HasColumnName("orderDate");
 
+                entity.Property(e => e.OrderShippingCode)
+                    .HasMaxLength(20)
+                    .HasColumnName("orderShippingCode");
+
                 entity.Property(e => e.RecipientAddress).HasColumnName("recipientAddress");
 
                 entity.Property(e => e.RecipientName)
@@ -383,7 +387,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.HasKey(e => new { e.OrderId, e.ProductId })
-                    .HasName("PK__OrderIte__BAD83E4BFF86231F");
+                    .HasName("PK__OrderIte__BAD83E4B41DD6A16");
 
                 entity.ToTable("OrderItem");
 
@@ -517,7 +521,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<Response>(entity =>
             {
                 entity.HasKey(e => e.FeedbackId)
-                    .HasName("PK__Response__2613FD2413D73BC1");
+                    .HasName("PK__Response__2613FD245A7AC41A");
 
                 entity.ToTable("Response");
 

@@ -3,12 +3,14 @@ using AutoMapper;
 using AutoMapper.Configuration.Conventions;
 using DataAccess;
 using DataAccess.Models;
+using Hangfire.Annotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Request;
 using Request.Param;
+using Request.ThirdParty.GHN;
 using Respon;
 using Respon.OrderRes;
 using Service;
@@ -194,6 +196,75 @@ namespace API.Controllers
                 return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Confirm order successfully", Data = null });
             }
             return BadRequest(new ErrorDetails { StatusCode = (int) HttpStatusCode.BadRequest, Message = "Status not matching required information"});
+        }
+
+        [HttpPost("/api/seller/order/deliver/{orderId:int}")]
+        public async Task<IActionResult> DefaultShippingOrderAsync(int orderId) {
+            var id = GetUserIdFromToken();
+            var user = _userService.Get(id);
+
+            if (user == null) {
+                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+            }
+
+            if (user.Role != (int) Role.Seller) {
+                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not seller, not allowed to access this" });
+            }
+            await _orderService.DefaultShippingOrder(orderId);
+            return Ok(new BaseResponse { 
+                Code = (int) HttpStatusCode.OK, 
+                Message = "Default order shipping applied", 
+                Data = null 
+            });
+        }
+        
+        //[HttpPatch("/api/seller/order/deliver/{orderId:int}")]
+        //public IActionResult CreateShippingOrder(int orderId) {
+        //    return Ok(new BaseResponse { 
+        //        Code = (int) HttpStatusCode.OK, 
+        //        Message = "Done nothing successfully", 
+        //        Data = null 
+        //    });
+        //}
+
+        [HttpPost("/api/buyer/order/done/{orderId:int}")]
+        public IActionResult BuyerConfirmDoneOrder(int orderId) {
+            var id = GetUserIdFromToken();
+            var user = _userService.Get(id);
+
+            if (user == null) {
+                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+            }
+
+            if (user.Role != (int) Role.Seller && user.Role != (int) Role.Buyer) {
+                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not buyer, not allowed to access this" });
+            }
+
+            var order = _orderService.Get(orderId);
+            if (order == null) {
+                return NotFound(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.NotFound,
+                    Message = "Order not found"
+                });
+            }
+            if (order.BuyerId != id) {
+                return Unauthorized(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to done this order"
+                });
+            }
+            if (order.Status != (int) OrderStatus.Delivered) {
+                return Unauthorized(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to done this order"
+                });
+            }
+            _orderService.DoneOrder(orderId);
+            return Ok(new BaseResponse {
+                Code = (int) HttpStatusCode.OK,
+                Message = "Done order successfully",
+                Data = null
+            });
         }
     }
 }
