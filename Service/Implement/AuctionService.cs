@@ -273,15 +273,26 @@ namespace Service.Implement
             }
         }
 
-        public void HostAuction(int auctionId, int status) {
+        public bool HostAuction(int auctionId, int status) {
             var auction = GetAuctionById(auctionId);
 
             if (auction == null) {
-                return;
+                return false;
+            }
+
+            if(status == (int)AuctionStatus.Opened && DateTime.Now < auction.StartedAt)
+            {
+                return false;
+            }
+
+            if (status == (int)AuctionStatus.Ended && DateTime.Now < auction.EndedAt)
+            {
+                return false;
             }
 
             auction.Status = status;
             _auctionDAO.UpdateAuction(auction);
+            return true;
         }
 
         public bool CheckRegistration(int bidderId, int auctionId)

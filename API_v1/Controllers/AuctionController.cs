@@ -1,11 +1,15 @@
 ﻿using API.ErrorHandling;
+using API.Hubs;
 using AutoMapper;
 using DataAccess;
+using DataAccess.Implement;
 using DataAccess.Models;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Request;
 using Request.Param;
 using Respon;
@@ -29,9 +33,12 @@ namespace API.Controllers
         private readonly IBidService _bidService;
         private readonly ISellerService _sellerService;
         private readonly IAddressService _addressService;
+        private readonly IBackgroundJobClient _backgroundJobClient;
+        private IHubContext<AuctionHub> _hubContext { get; set; }
 
         public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService, 
-            IBidService bidService, ISellerService sellerService, IAddressService addressService)
+            IBidService bidService, ISellerService sellerService, IAddressService addressService, IBackgroundJobClient backgroundJobClient,
+            IHubContext<AuctionHub> hubcontext)
         {
             _auctionService = auctionService;
             _mapper = mapper;
@@ -40,6 +47,8 @@ namespace API.Controllers
             _bidService = bidService;
             _sellerService = sellerService;
             _addressService = addressService;
+            _backgroundJobClient = backgroundJobClient;
+            _hubContext = hubcontext;
         }
 
         private int GetUserIdFromToken()
@@ -547,12 +556,35 @@ namespace API.Controllers
                 (DateTime)request.RegistrationEnd, 
                 (DateTime)request.StartedAt, 
                 (DateTime)request.EndedAt);
+
+            _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Opened), (DateTime)request.StartedAt);
+            _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Ended), (DateTime)request.EndedAt);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Set auction time successfully",
                 Data = null
             });
+        }
+        
+        // Change Auction Status
+        public async Task HostAuction(int auctionId, int status)
+        {
+            var statusUpdated = _auctionService.HostAuction(auctionId, status);
+
+            if (status == (int)AuctionStatus.Opened && statusUpdated)
+            {
+                var auction = _auctionService.GetAuctionById(auctionId); 
+                if (auction == null) return;
+                await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionOpen", auction.Title);
+            }
+
+            if (status == (int)AuctionStatus.Ended && statusUpdated)
+            {
+                var auction = _auctionService.GetAuctionById(auctionId);
+                if (auction == null) return;
+                await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionEnd", auction.Title);
+            }
         }
     }
 }

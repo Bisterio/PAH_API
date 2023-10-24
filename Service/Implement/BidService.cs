@@ -93,7 +93,7 @@ namespace Service.Implement
                     {
                         // CASE HIGHEST BID
                         var highestBid = _bidDAO.GetBidsByAuctionId((int)bid.AuctionId).OrderByDescending(b => b.BidAmount).FirstOrDefault();
-                        if (bidderId == highestBid.BidderId)
+                        if (bidderId == highestBid.BidderId && highestBid.Status == 1)
                         {
                             throw new Exception("400: Your bid is the highest bid currently");
                         }
