@@ -19,5 +19,9 @@ namespace Service {
         public List<Order> GetBySellerId(int sellerId, int status);
         public List<Order> GetAll(int status);
         public Order Get(int orderId);
+
+        public Task DefaultShippingOrder(int orderId);
+        public void CreateShippingOrder(int orderId);
+        public void DoneOrder(int orderId);
     }
 }

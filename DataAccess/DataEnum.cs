@@ -26,7 +26,8 @@ namespace DataAccess {
         CancelApprovalPending = 10,
         CancelledBySeller = 12,
         CancelledByBuyer = 11,
-        WaitingSellerConfirm = 5
+        WaitingSellerConfirm = 5,
+        Done = 6
     }
 
     public enum AddressType {

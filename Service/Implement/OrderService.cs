@@ -1,12 +1,18 @@
 ﻿using DataAccess;
 using DataAccess.Models;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Request;
+using Request.ThirdParty.GHN;
+using Request.ThirdParty.Zalopay;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Service.Implement {
@@ -17,17 +23,24 @@ namespace Service.Implement {
         private readonly IProductImageDAO _productImageDAO;
         private readonly IOrderCancelDAO _orderCancelDAO;
         private readonly IWalletService _walletService;
+        private readonly IConfiguration _config;
+        private IHttpClientFactory _httpClientFactory;
+        private IBackgroundJobClient _backgroundJobClient;
 
         public OrderService(IOrderDAO orderDAO, 
             IProductDAO productDAO, IAddressDAO addressDAO, 
             IProductImageDAO productImageDAO, IOrderCancelDAO orderCancelDAO,
-            IWalletService walletService) {
+            IWalletService walletService, IConfiguration config,
+            IHttpClientFactory httpClientFactory, IBackgroundJobClient backgroundJobClient) {
             _orderDAO = orderDAO;
             _productDAO = productDAO;
             _addressDAO = addressDAO;
             _productImageDAO = productImageDAO;
             _orderCancelDAO = orderCancelDAO;
             _walletService = walletService;
+            _config = config;
+            _httpClientFactory = httpClientFactory;
+            _backgroundJobClient = backgroundJobClient;
         }
 
         public void SellerCancelOrder(int sellerId, int orderId, string reason) {
@@ -190,6 +203,83 @@ namespace Service.Implement {
             var order = _orderDAO.Get(orderId);
             order.OrderItems.ToList().ForEach(p => { p.Product = _productDAO.GetProductById(p.ProductId); });
             return order;
+        }
+
+        public async Task DefaultShippingOrder(int orderId) {
+            var order = _orderDAO.Get(orderId);
+            if (order == null) {
+                throw new Exception("404: Order not found when create shipping");
+            }
+
+            if (order.Status != (int) OrderStatus.ReadyForPickup) {
+                throw new Exception("401: This order cannot be assigned to be delivered");
+            }
+            string orderShippingCode = _config["API3rdParty:GHN:dev:defaultShippingCode"];
+            order.OrderShippingCode = orderShippingCode;
+            _orderDAO.UpdateOrder(order);
+            await CheckStatusShippingOrder(orderId, orderShippingCode);
+        }
+
+        public async Task CheckStatusShippingOrder(int orderId, string orderShippingCode) {
+            //Call to GHN
+            var client = _httpClientFactory.CreateClient("GHN");
+            StringContent content = new(
+                JsonSerializer.Serialize(new {
+                    order_code = orderShippingCode
+                }),
+                Encoding.UTF8,
+                "application/json");
+            var httpResponse = await client.PostAsync("v2/shipping-order/detail", content);
+            if (!httpResponse.IsSuccessStatusCode) {
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(10));
+                return;
+            }
+
+            //Get data
+            var responseData = await httpResponse.Content.ReadAsAsync<ShippingOrder.Root>();
+            var order = _orderDAO.Get(orderId);
+            if (order == null) {
+                throw new Exception("404: Order not found when updating after shipping");
+            }
+
+            //Ready for pickup => Delivering
+            if (order.Status == (int) OrderStatus.ReadyForPickup) {
+                var log = responseData.data.log.Where(p => p.status.Contains("picked"));
+                if (log.Any()) {
+                    order.Status = (int) OrderStatus.Delivering;
+                    _orderDAO.UpdateOrder(order);
+                }
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60*24));
+                return;
+            }
+            
+            //Delivering => Delivered
+            if (order.Status == (int) OrderStatus.Delivering) {
+                var log = responseData.data.log.Where(p => p.status.Contains("delivered"));
+                if (log.Any()) {
+                    order.Status = (int) OrderStatus.Delivered;
+                    _orderDAO.UpdateOrder(order);
+                    _backgroundJobClient.Schedule(() => DoneOrder(orderId), DateTime.Now.AddMinutes(60 * 24));
+                }
+                return;
+            }
+        }
+
+        public void DoneOrder(int orderId) {
+            var order = _orderDAO.Get(orderId);
+            if (order == null) {
+                throw new Exception("404: Order not found when updating to delivered");
+            }
+            if (order.Status == (int) OrderStatus.Done) {
+                return;
+            }
+            order.Status = (int) OrderStatus.Done;
+            _orderDAO.UpdateOrder(order);
+        }
+
+        public void CreateShippingOrder(int orderId) {
+            //Update Order status
+            //Create shipping order by calling ghn
         }
     }
 }
