@@ -11,6 +11,7 @@ namespace API.Mapper
         {
             CreateMap<AuctionRequest, Auction>();
             CreateMap<Auction, AuctionListResponse>();
+            CreateMap<Auction, AuctionListBidderResponse>();
             CreateMap<Auction, AuctionDetailResponse>();
             CreateMap<Auction, AuctionResponse>();
         }

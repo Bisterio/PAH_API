@@ -11,5 +11,6 @@ namespace DataAccess
     {
         public IQueryable<Bid> GetBidsByAuctionId(int auctionId);
         public void CreateBid(Bid bid);
+        public void UpdateBid(Bid bid);
     }
 }

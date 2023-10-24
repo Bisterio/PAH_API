@@ -5,6 +5,7 @@ using Hangfire.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,14 +16,19 @@ namespace Service.Implement
         private readonly IAuctionDAO _auctionDAO;
         private readonly IBidDAO _bidDAO;
         private readonly IUserDAO _userDAO;
+        private readonly IWalletDAO _walletDAO;
+        private readonly ITransactionDAO _transactionDAO;
         private readonly IBackgroundJobClient _backgroundJobClient;
 
-        public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO, IBidDAO bidDAO)
+        public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO, 
+            IBidDAO bidDAO, IWalletDAO walletDAO, ITransactionDAO transactionDAO)
         {
             _auctionDAO = auctionDAO;
             _userDAO = userDAO;
             _bidDAO = bidDAO;
             _backgroundJobClient = backgroundJobClient;
+            _walletDAO = walletDAO;
+            _transactionDAO = transactionDAO;
         }
 
         public List<Auction> GetAuctions(string? title, int status, int categoryId, int materialId, int orderBy)
@@ -81,7 +87,7 @@ namespace Service.Implement
                 switch (orderBy)
                 {
                     case 1:
-                        auctions = auctions.OrderByDescending(a => a.StartedAt);
+                        auctions = auctions.OrderBy(a => a.CreatedAt);
                         break;
                     case 2:
                         auctions = auctions.OrderBy(p => p.StartingPrice);
@@ -90,7 +96,7 @@ namespace Service.Implement
                         auctions = auctions.OrderByDescending(p => p.StartingPrice);
                         break;
                     default:
-                        auctions = auctions.OrderBy(a => a.StartedAt);
+                        auctions = auctions.OrderByDescending(a => a.CreatedAt);
                         break;
                 }
 
@@ -157,7 +163,7 @@ namespace Service.Implement
             {
                 throw new Exception("404: Bidder not found");
             }
-            return _auctionDAO.GetAuctionJoined(bidderId).Where(a => a.Status == status).ToList();
+            return _auctionDAO.GetAuctionJoined(bidderId).Where(a => status == -1 || a.Status == status).ToList();
         }
 
         public void CreateAuction(Auction auction)
@@ -295,6 +301,89 @@ namespace Service.Implement
             return true;
         }
 
+        public Bid EndAuction(int auctionId)
+        {
+            if (auctionId == null) 
+            {
+                throw new Exception("404: Auction not found");
+            }
+            Auction auction = GetAuctionById(auctionId);
+            if (auction.Status < (int)AuctionStatus.Opened)
+            {
+                throw new Exception("400: This auction hasn't opened.");
+            }
+            if (auction.Status > (int)AuctionStatus.Opened)
+            {
+                throw new Exception("400: This auction has ended.");
+            }
+            List<Bid> activeBids = _bidDAO.GetBidsByAuctionId(auctionId).Where(b => b.Status == (int)BidStatus.Active).ToList();
+            if (activeBids.Count == 0)
+            {
+                auction.Status = (int)AuctionStatus.EndedWithoutBids;
+                _auctionDAO.UpdateAuction(auction);
+
+                List<Bid> registerBidList = _bidDAO.GetBidsByAuctionId(auctionId)
+                            .Where(b => b.Status == (int)BidStatus.Register).ToList();
+
+                foreach (Bid registerBid in registerBidList)
+                {
+                    Wallet bidderWallet = _walletDAO.Get((int)registerBid.BidderId); // lay cai wallet ra
+                    bidderWallet.AvailableBalance += registerBid.BidAmount; // tra tien
+                    bidderWallet.LockedBalance -= registerBid.BidAmount;
+
+                    registerBid.Status = (int)BidStatus.Refund; // set status tra tien
+                    _bidDAO.UpdateBid(registerBid);
+                }
+
+                return null;
+            }
+            else
+            {
+                auction.Status = (int)AuctionStatus.Ended;
+                _auctionDAO.UpdateAuction(auction);
+
+                var winnerBid = activeBids.OrderByDescending(b => b.BidAmount).FirstOrDefault();
+                User winner = _userDAO.Get((int)winnerBid.BidderId);
+
+                var highestBidOfEachBidder = _bidDAO.GetBidsByAuctionId(auctionId).GroupBy(b => b.BidderId) // lay het tat ca bid cao nhat cua tung thang
+                    .Select(s => s.OrderByDescending(b => b.BidAmount).First())
+                    .ToList();
+
+                foreach (var bid in highestBidOfEachBidder)
+                {
+                    if (bid.BidderId != winner.Id)
+                    {
+                        Wallet bidderWallet = _walletDAO.Get((int)bid.BidderId); // lay cai wallet ra
+                        bidderWallet.AvailableBalance += bid.BidAmount; // tra tien
+                        bidderWallet.LockedBalance -= bid.BidAmount;
+
+                        List<Bid> previousBidList = _bidDAO.GetBidsByAuctionId(auctionId)
+                            .Where(b => b.BidderId == bid.BidderId && b.Status == (int)BidStatus.Active).ToList();
+
+                        foreach(Bid previousBid in previousBidList)
+                        {
+                            previousBid.Status = (int)BidStatus.Refund; // set status tra tien
+                            _bidDAO.UpdateBid(previousBid);
+                        }                        
+
+                        _walletDAO.Update(bidderWallet);
+                        _transactionDAO.Create(new Transaction()
+                        {
+                            Id = 0,
+                            WalletId = bidderWallet.Id,
+                            PaymentMethod = (int)PaymentType.Wallet,
+                            Amount = bid.BidAmount,
+                            Type = (int)TransactionType.Refund,
+                            Date = DateTime.Now,
+                            Description = $"Return balance due to ending auction {auctionId}",
+                            Status = (int)Status.Available,
+                        });
+                    }    
+                }
+                return winnerBid;
+            }
+        }
+
         public bool CheckRegistration(int bidderId, int auctionId)
         {
             if(bidderId == null)
@@ -309,6 +398,30 @@ namespace Service.Implement
                     .Where(b => b.BidderId == bidderId && b.Status == (int)BidStatus.Register)
                     .Any();
             return checkRegistration;
+        }
+
+        public bool CheckWinner(int bidderId, int auctionId)
+        {
+            Auction auction = _auctionDAO.GetAuctionById(auctionId);
+            if(!CheckRegistration(bidderId, auctionId))
+            {
+                throw new Exception("400: You haven't registered to join this auction");
+            }
+            List<Bid> activeBids = _bidDAO.GetBidsByAuctionId(auctionId)
+                .Where(b => b.Status == (int)BidStatus.Active).ToList();
+            if (activeBids.Count == 0)
+            {
+                throw new Exception("400: You haven't placed a bid in this auction");
+            }
+            Bid winnerBid = activeBids.OrderByDescending(b => b.BidAmount).FirstOrDefault();
+            if(winnerBid.BidderId == bidderId)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         //public void TestSchedule() {

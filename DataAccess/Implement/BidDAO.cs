@@ -24,5 +24,9 @@ namespace DataAccess.Implement
         {
             Create(bid);
         }
+        public void UpdateBid(Bid bid)
+        {
+            Update(bid);
+        }
     }
 }

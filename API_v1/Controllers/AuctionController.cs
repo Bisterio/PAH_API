@@ -15,6 +15,7 @@ using Request.Param;
 using Respon;
 using Respon.AuctionRes;
 using Respon.SellerRes;
+using Respon.UserRes;
 using Service;
 using Service.Implement;
 using System.Net;
@@ -381,7 +382,7 @@ namespace API.Controllers
         }
 
         [HttpGet("bidder")]
-        public IActionResult GetAuctionsByBidderId([FromQuery] int status, [FromQuery] PagingParam pagingParam)
+        public IActionResult GetAuctionsByBidderId([FromQuery] PagingParam pagingParam, [FromQuery] int status = -1)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -396,7 +397,7 @@ namespace API.Controllers
             List<Auction> auctionList = _auctionService.GetAuctionJoinedByStatus(status, userId)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
 
-            List<AuctionListResponse> response = _mapper.Map<List<AuctionListResponse>>(auctionList);
+            List<AuctionListBidderResponse> response = _mapper.Map<List<AuctionListBidderResponse>>(auctionList);
             foreach (var item in response)
             {
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
@@ -415,11 +416,12 @@ namespace API.Controllers
                 {
                     item.CurrentPrice = highestBid.BidAmount;
                 }
+                item.IsWon = _auctionService.CheckWinner(userId, item.Id);
             }
             return Ok(new BaseResponse 
             {
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Get auctions successfully",
+                Message = "Get auctions joined successfully",
                 Data = response 
             });
         }
@@ -466,6 +468,87 @@ namespace API.Controllers
                 Code = (int)HttpStatusCode.OK,
                 Message = "Check auction registration successfully",
                 Data = check
+            });
+        }
+
+        [Authorize]
+        [HttpGet("win/check/current/{id}")]
+        public IActionResult CheckCurrentUserWinAuction(int id)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            bool check = _auctionService.CheckWinner(userId, id);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Check current user win successfully",
+                Data = check
+            });
+        }
+
+        [Authorize]
+        [HttpGet("win/check/{id}")]
+        public IActionResult CheckUserWinAuction(int id, [FromQuery] int userId)
+        {
+            //var userId = GetUserIdFromToken();
+            //var user = _userService.Get(userId);
+            //if (user == null)
+            //{
+            //    return Unauthorized(new ErrorDetails
+            //    {
+            //        StatusCode = (int)HttpStatusCode.Unauthorized,
+            //        Message = "You are not allowed to access this"
+            //    });
+            //}
+            bool check = _auctionService.CheckWinner(userId, id);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Check user win successfully",
+                Data = check
+            });
+        }
+
+        [Authorize]
+        [HttpGet("end/{id}")]
+        public IActionResult EndAuction(int id)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Staff)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            var winnerBid = _auctionService.EndAuction(id);
+            User winner;
+            WinnerResponse mappedWinner;
+            if (winnerBid != null)
+            {
+                winner = _userService.Get((int)winnerBid.BidderId);
+                mappedWinner = _mapper.Map<WinnerResponse>(winner);
+                mappedWinner.FinalBid = winnerBid.BidAmount;
+            }
+            else
+            {
+                mappedWinner = null;
+            }            
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "End auction successfully",
+                Data = mappedWinner
             });
         }
 

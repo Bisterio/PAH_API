@@ -217,6 +217,7 @@ namespace Service.Implement
                     throw new Exception("400: You have retracted before");
                 }
                 bid.Status = (int)BidStatus.Retracted;
+                _bidDAO.UpdateBid(bid);
             }
             var bidderWallet = _walletDAO.Get(bidderId);
             var previousBid = _bidDAO.GetBidsByAuctionId(auctionId)
