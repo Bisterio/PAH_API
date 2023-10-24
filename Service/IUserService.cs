@@ -15,11 +15,14 @@ namespace Service {
         public List<User> GetAllStaffs();
         public User GetByEmail(string email);
         public User Login(string email, string password);
+
         public void Register(User user);
+        public void UpdateProfile(int id, UpdateProfileRequest request);
         public void Reactivate(User user);
         public void Deactivate(User user);  
         public void AcceptSeller(Seller seller);
         public void RejectSeller(Seller seller);
+
         public List<User> GetAvailableStaffs();
         public List<User> GetReactivateRequestList();
 
