@@ -19,6 +19,7 @@ using Respon.UserRes;
 using Service;
 using Service.Implement;
 using System.Net;
+using System.Reflection;
 
 namespace API.Controllers
 {
@@ -247,6 +248,21 @@ namespace API.Controllers
             }
 
             response.Seller = GetSellerResponse((int)auction.Product.SellerId);
+
+            Bid winnerBid = _bidService.GetHighestBidFromAuction(id);
+            if(winnerBid != null)
+            {
+                WinnerResponse winner = _mapper.Map<WinnerResponse>(_userService.Get((int)winnerBid.BidderId));
+                winner.FinalBid = winnerBid.BidAmount;
+
+                response.Winner = winner;
+            }
+            else
+            {
+                WinnerResponse winner = new WinnerResponse();
+                response.Winner = winner;
+            }
+            
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,

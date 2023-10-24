@@ -97,7 +97,26 @@ namespace Service.Implement
             {
                 auction.ProductId = product.Id;
                 auction.StartingPrice = product.Price;
-                auction.EntryFee = 0.1m * auction.StartingPrice;
+                if (0 < auction.StartingPrice && auction.StartingPrice <= 20000000)
+                {
+                    auction.EntryFee = 50000;
+                }
+                else if (20000000 < auction.StartingPrice && auction.StartingPrice <= 50000000)
+                {
+                    auction.EntryFee = 100000;
+                } 
+                else if (50000000 < auction.StartingPrice && auction.StartingPrice <= 100000000)
+                {
+                    auction.EntryFee = 150000;
+                }
+                else if(100000000 < auction.StartingPrice && auction.StartingPrice <= 500000000)
+                {
+                    auction.EntryFee = 200000;
+                }
+                else 
+                {
+                    auction.EntryFee = 500000;
+                }
                 auction.StaffId = null;
                 auction.Status = (int) AuctionStatus.Pending;
                 auction.CreatedAt = DateTime.Now;

@@ -13,10 +13,6 @@ namespace Respon.UserRes
         public string Email { get; set; } = null!;
         public string? Phone { get; set; }
         public string? ProfilePicture { get; set; }
-        public int? Gender { get; set; }
-        public DateTime? Dob { get; set; }
-        public int Role { get; set; }
-        public int Status { get; set; }
         public decimal? FinalBid { get; set; }
     }
 }

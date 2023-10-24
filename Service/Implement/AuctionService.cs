@@ -18,16 +18,18 @@ namespace Service.Implement
         private readonly IUserDAO _userDAO;
         private readonly IWalletDAO _walletDAO;
         private readonly ITransactionDAO _transactionDAO;
+        private readonly IOrderDAO _orderDAO;
         private readonly IBackgroundJobClient _backgroundJobClient;
 
         public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO, 
-            IBidDAO bidDAO, IWalletDAO walletDAO, ITransactionDAO transactionDAO)
+            IBidDAO bidDAO, IWalletDAO walletDAO, ITransactionDAO transactionDAO, IOrderDAO orderDAO)
         {
             _auctionDAO = auctionDAO;
             _userDAO = userDAO;
             _bidDAO = bidDAO;
             _backgroundJobClient = backgroundJobClient;
             _walletDAO = walletDAO;
+            _orderDAO = orderDAO;
             _transactionDAO = transactionDAO;
         }
 
@@ -398,6 +400,8 @@ namespace Service.Implement
         public bool CheckWinner(int bidderId, int auctionId)
         {
             Auction auction = _auctionDAO.GetAuctionById(auctionId);
+            Product product = auction.Product;
+            var checkOrderExist = _orderDAO.GetAllOrder().Where(o => o.OrderItems.Any(i => i.ProductId == product.Id)).ToList();
             if(!CheckRegistration(bidderId, auctionId))
             {
                 return false;
@@ -405,6 +409,10 @@ namespace Service.Implement
             List<Bid> activeBids = _bidDAO.GetBidsByAuctionId(auctionId)
                 .Where(b => b.Status == (int)BidStatus.Active).ToList();
             if (activeBids.Count == 0)
+            {
+                return false;
+            }
+            if (checkOrderExist.Count > 0)
             {
                 return false;
             }
