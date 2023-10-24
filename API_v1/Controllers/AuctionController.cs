@@ -641,7 +641,7 @@ namespace API.Controllers
                 (DateTime)request.EndedAt);
 
             _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Opened), (DateTime)request.StartedAt);
-            _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Ended), (DateTime)request.EndedAt);
+            _backgroundJobClient.Schedule(() => EndAuction(id), (DateTime)request.EndedAt);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
