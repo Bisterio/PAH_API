@@ -291,11 +291,6 @@ namespace Service.Implement
                 return false;
             }
 
-            if (status == (int)AuctionStatus.Ended && DateTime.Now < auction.EndedAt)
-            {
-                return false;
-            }
-
             auction.Status = status;
             _auctionDAO.UpdateAuction(auction);
             return true;
@@ -405,13 +400,13 @@ namespace Service.Implement
             Auction auction = _auctionDAO.GetAuctionById(auctionId);
             if(!CheckRegistration(bidderId, auctionId))
             {
-                throw new Exception("400: You haven't registered to join this auction");
+                return false;
             }
             List<Bid> activeBids = _bidDAO.GetBidsByAuctionId(auctionId)
                 .Where(b => b.Status == (int)BidStatus.Active).ToList();
             if (activeBids.Count == 0)
             {
-                throw new Exception("400: You haven't placed a bid in this auction");
+                return false;
             }
             Bid winnerBid = activeBids.OrderByDescending(b => b.BidAmount).FirstOrDefault();
             if(winnerBid.BidderId == bidderId)

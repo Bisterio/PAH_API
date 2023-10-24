@@ -129,10 +129,10 @@ namespace Service.Implement
                             });
                             _bidDAO.CreateBid(bid);
 
-                            DateTime auctionEndDate = (DateTime)auction.EndedAt;
-                            auctionEndDate.AddSeconds(30);
-                            auction.EndedAt = auctionEndDate;
-                            _auctionDAO.UpdateAuction(auction);
+                            //DateTime auctionEndDate = (DateTime)auction.EndedAt;
+                            //auctionEndDate.AddSeconds(30);
+                            //auction.EndedAt = auctionEndDate;
+                            //_auctionDAO.UpdateAuction(auction);
                         }
                         else
                         {
