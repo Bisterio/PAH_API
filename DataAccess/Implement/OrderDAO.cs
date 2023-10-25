@@ -35,5 +35,9 @@ namespace DataAccess.Implement {
         public IQueryable<Order> GetAllByBuyerIdAfterCheckout(int buyerId, DateTime now) {
             return GetAll().Where(p => p.BuyerId == buyerId && p.OrderDate == now).Include(p => p.OrderItems).Where(p => p.Status != (int) Status.Unavailable);
         }
+
+        public Order GetByProductId(int productId) {
+            return GetAll().Include(p => p.OrderItems).Where(p => p.OrderItems.Where(o => o.ProductId == productId).Any()).FirstOrDefault();
+        }
     }
 }
