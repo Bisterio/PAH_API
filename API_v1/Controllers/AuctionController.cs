@@ -572,6 +572,10 @@ namespace API.Controllers
                 });
             }
             _auctionService.AssignStaff(id, staffId);
+            var auction = _auctionService.GetAuctionById(id);
+
+            // Notify staff of assigned auction
+            _hubContext.Clients.Group("STAFF_" + staffId).SendAsync("ReceiveAuctionAssigned", auction.Id, auction.Title);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
