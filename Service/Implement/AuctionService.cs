@@ -384,6 +384,23 @@ namespace Service.Implement
                             Status = (int)Status.Available,
                         });
                     }    
+                    else
+                    {
+                        Wallet winnerWallet = _walletDAO.Get((int)bid.BidderId); // lay cai wallet cua thang thang ra
+                        winnerWallet.LockedBalance -= bid.BidAmount;
+                        _walletDAO.Update(winnerWallet);
+                        _transactionDAO.Create(new Transaction()
+                        {
+                            Id = 0,
+                            WalletId = winnerWallet.Id,
+                            PaymentMethod = (int)PaymentType.Wallet,
+                            Amount = bid.BidAmount,
+                            Type = (int)TransactionType.Payment,
+                            Date = DateTime.Now,
+                            Description = $"Payment after winning auction {auctionId}",
+                            Status = (int)Status.Available,
+                        });
+                    }
                 }
                 return winnerBid;
             }
