@@ -107,7 +107,7 @@ namespace API.Controllers
             }
             List<User> userList = _userService.GetAllBuyersSellers()
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList(); 
-            int count = userList.Count();
+            int count = _userService.GetAllBuyersSellers().Count();
             List<UserResponse> mappedList = _mapper.Map<List<UserResponse>>(userList);
             CustomerListCountResponse response = new CustomerListCountResponse()
             {
