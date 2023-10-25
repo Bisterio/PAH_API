@@ -18,13 +18,15 @@ namespace Service
         public List<Auction> GetAuctionJoined(int bidderId);
         public List<Auction> GetAuctionJoinedByStatus(int status, int bidderId);
         public List<Auction> GetAuctionBySellerId(int sellerId, int status);
+        public Bid EndAuction(int auctionId);
         public void CreateAuction(Auction auction);
         public void AssignStaff(int id, int staffId);
         public void ManagerApproveAuction(int id);
         public void ManagerRejectAuction(int id);
         public void StaffSetAuctionTime(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt);
-        public void HostAuction(int auctionId, int status);
+        public bool HostAuction(int auctionId, int status);
         public bool CheckRegistration(int bidderId, int auctionId);
+        public bool CheckWinner(int bidderId, int auctionId);
         //public void TestSchedule();
         //public void OpenAuction(int id);
         //public void EndAuction(int id);

@@ -1,4 +1,6 @@
-﻿namespace Respon.AuctionRes
+﻿using Respon.UserRes;
+
+namespace Respon.AuctionRes
 {
     public class AuctionDetailResponse
     {
@@ -18,6 +20,7 @@
         public int NumberOfBids { get; set; }
         public int NumberOfBidders { get; set; }
         public List<string> ImageUrls { get; set; }
+        public WinnerResponse Winner { get; set; }
 
         public ProductRes.ProductResponse Product { get; set; }
         public SellerRes.SellerWithAddressResponse Seller { get; set; }
