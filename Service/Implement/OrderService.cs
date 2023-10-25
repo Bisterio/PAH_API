@@ -150,7 +150,7 @@ namespace Service.Implement {
         private void CheckoutWallet(decimal total, int buyerId, DateTime now) {
             var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(buyerId, now).ToList();
             orderList.ForEach(order => {
-                _walletService.CheckoutWallet(buyerId, order.Id);
+                _walletService.CheckoutWallet(buyerId, order.Id, (int) OrderStatus.WaitingSellerConfirm);
             });
         }
 

@@ -659,6 +659,30 @@ namespace API.Controllers
             });
         }
 
+        [HttpPost("order/create")]
+        public IActionResult CreateAuctionOrder([FromBody] AuctionOrderRequest request) {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null) {
+                return Unauthorized(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            
+            if (user.Role != (int) Role.Buyer && user.Role != (int) Role.Seller) {
+                return Unauthorized(new ErrorDetails {
+                    StatusCode = (int) HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            _auctionService.CreateAuctionOrder(userId, request);
+            return Ok(new BaseResponse {
+                Code = (int) HttpStatusCode.OK,
+                Message = "Create auction order successfully",
+                Data = null
+            });
+        }
         // Change Auction Status
         [NonAction]
         public async Task HostAuction(int auctionId, int status)

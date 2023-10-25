@@ -10,7 +10,7 @@ namespace Service
 {
     public interface IWalletService {
         public Task Topup(int userId, TopupRequest orderRequest);
-        public void CheckoutWallet(int userId, int orderId);
+        public void CheckoutWallet(int userId, int orderId, int orderStatus);
         public Wallet GetByCurrentUser(int id);
         //public void CheckoutZalopay(int userId, int orderId, TopupRequest orderRequest);
         public void AddLockedBalance(int userId, decimal balance);

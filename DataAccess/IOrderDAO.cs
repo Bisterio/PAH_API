@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 namespace DataAccess {
     public interface IOrderDAO {
         public Order Get(int id);
+        public Order GetByProductId(int productId);
         public IQueryable<Order> GetAllOrder();
 
         public IQueryable<Order> GetAllByBuyerId(int id);

@@ -83,7 +83,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            _walletService.CheckoutWallet(userId, orderId);
+            _walletService.CheckoutWallet(userId, orderId, (int) OrderStatus.WaitingSellerConfirm);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = $"Pay for order {orderId} successfully",

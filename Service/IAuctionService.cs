@@ -1,5 +1,6 @@
 ﻿using DataAccess;
 using DataAccess.Models;
+using Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,5 +31,7 @@ namespace Service
         //public void TestSchedule();
         //public void OpenAuction(int id);
         //public void EndAuction(int id);
+
+        public void CreateAuctionOrder(int userId, AuctionOrderRequest request);
     }
 }

@@ -32,7 +32,7 @@ namespace Service.Implement
             //Check transaction from zalopay in committed in db
             if (!_transactionDAO.IsZalopayOrderValid(topupRequest.AppTransId, topupRequest.Mac)) {
                 throw new Exception("409: Order from zalopay is invalid");
-        }
+            }
 
             //Uncomment when zalopay fix their api
 
@@ -83,7 +83,7 @@ namespace Service.Implement
             throw new NotImplementedException();
         }
 
-        public void CheckoutWallet(int userId, int orderId) {
+        public void CheckoutWallet(int userId, int orderId, int orderStatus) {
             var wallet = _walletDAO.Get(userId);
             if (wallet == null) {
                 throw new Exception("404: Wallet not found");
@@ -94,7 +94,7 @@ namespace Service.Implement
                 throw new Exception("404: Order not found when checkout");
             }
 
-            if (wallet.AvailableBalance < order.TotalAmount) {
+            if (wallet.AvailableBalance < order.TotalAmount + order.ShippingCost) {
                 throw new Exception($"400: Not enough balance in wallet to confirm order: {orderId}");
             }
 
@@ -105,14 +105,14 @@ namespace Service.Implement
                 Id = 0,
                 WalletId = wallet.Id,
                 PaymentMethod = (int) PaymentType.Wallet,
-                Amount = order.TotalAmount,
+                Amount = order.TotalAmount + order.ShippingCost,
                 Type = (int) TransactionType.Payment,
                 Date = DateTime.Now,
                 Description = $"Payment for order: {orderId}",
                 Status = (int) Status.Available
             });
             //Update order status to Waiting for Seller Confirm
-            order.Status = (int) OrderStatus.WaitingSellerConfirm;
+            order.Status = orderStatus;
             _orderDAO.UpdateOrder(order);
         }
 
