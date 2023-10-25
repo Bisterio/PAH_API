@@ -23,10 +23,11 @@ namespace Service.Implement
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IAddressDAO _addressDAO;
         private readonly IWalletService _walletService;
+        private readonly IProductImageDAO _productImageDAO;
 
         public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO, 
             IBidDAO bidDAO, IWalletDAO walletDAO, ITransactionDAO transactionDAO, IOrderDAO orderDAO, 
-            IAddressDAO addressDAO, IWalletService walletService)
+            IAddressDAO addressDAO, IWalletService walletService, IProductImageDAO productImageDAO)
         {
             _auctionDAO = auctionDAO;
             _userDAO = userDAO;
@@ -37,6 +38,7 @@ namespace Service.Implement
             _walletService = walletService;
             _walletDAO = walletDAO;
             _transactionDAO = transactionDAO;
+            _productImageDAO = productImageDAO;
         }
 
         public List<Auction> GetAuctions(string? title, int status, int categoryId, int materialId, int orderBy)
@@ -445,11 +447,12 @@ namespace Service.Implement
                 Status = (int) OrderStatus.Pending,
                 OrderItems = new List<OrderItem>()
             };
+
             order.OrderItems.Add(new OrderItem {
                 ProductId = auction.ProductId.Value,
                 Price = 0m,
-                Quantity = 1
-                //ImageUrl = auction.Product.ProductImages.FirstOrDefault().ImageUrl
+                Quantity = 1,
+                ImageUrl = _productImageDAO.GetByProductId((int)auction.ProductId).FirstOrDefault().ImageUrl
             });
             _orderDAO.Create(order);
             var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(userId, now).ToList();
