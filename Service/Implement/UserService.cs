@@ -131,6 +131,50 @@ namespace Service.Implement {
             return user;
         }
 
+        public User LoginWithGoogle(string email, string name, string profileUrl)
+        {
+            var user = _userDAO.GetByEmail(email);
+            if (user != null)
+            {
+                //Create buyer
+                var buyer = _buyerDAO.Get(user.Id);
+                if (buyer == null)
+                {
+                    _buyerDAO.Create(new Buyer { Id = user.Id, JoinedAt = DateTime.Now });
+                }
+
+                //Create wallet
+                var wallet = _walletDAO.GetWithoutStatus(user.Id);
+                if (wallet == null)
+                {
+                    _walletDAO.Create(new Wallet { Id = user.Id, AvailableBalance = 0, LockedBalance = 0, Status = (int)Status.Available });
+                }
+            }
+            else
+            {
+                var newUser = new User
+                {
+                    Id = 0,
+                    Name = name,
+                    Email = email,
+                    Password = BC.EnhancedHashPassword("12345678", WORK_FACTOR),
+                    Phone = null,
+                    ProfilePicture = profileUrl,
+                    Gender = null,
+                    Dob = null,
+                    Role = (int)Role.Buyer,
+                    Status = (int)Status.Available,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                };
+                _userDAO.Register(newUser);
+                _buyerDAO.Create(new Buyer { Id = newUser.Id, JoinedAt = DateTime.Now });
+                _walletDAO.Create(new Wallet { Id = newUser.Id, AvailableBalance = 0, LockedBalance = 0, Status = (int)Status.Available });
+                return newUser;
+            }
+            return user;
+        }
+
         public void Register(User user) {
             var dbUser = _userDAO.GetByEmail(user.Email);
             if (dbUser != null) {

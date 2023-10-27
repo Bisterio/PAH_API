@@ -63,6 +63,20 @@ namespace API.Controllers {
 
         [HttpPost]
         [AllowAnonymous]
+        [Route("/api/login/google")]
+        public IActionResult LoginWithGoogle([FromBody] LoginGoogleRequest request)
+        {
+            var user = _userService.LoginWithGoogle(request.Email, request.Name, request.ProfilePicture);
+            if (user == null)
+            {
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Email or password is incorrect" });
+            }
+            var token = _userService.AddRefreshToken(user.Id);
+            return Ok(new BaseResponse { Code = 200, Message = "Login successfully", Data = token });
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
         [Route("/api/refresh")]
         public IActionResult Refresh([FromBody] Tokens token) {
             var a = token.AccessToken;

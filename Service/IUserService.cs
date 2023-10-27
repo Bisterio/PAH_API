@@ -15,6 +15,7 @@ namespace Service {
         public List<User> GetAllStaffs();
         public User GetByEmail(string email);
         public User Login(string email, string password);
+        public User LoginWithGoogle(string email, string name, string profileUrl);
 
         public void Register(User user);
         public void UpdateProfile(int id, UpdateProfileRequest request);
