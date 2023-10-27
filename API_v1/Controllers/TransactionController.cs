@@ -63,7 +63,7 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet("current")]
+        [HttpGet()]
         public IActionResult GetAllTransactions([FromQuery] PagingParam pagingParam)
         {
             var userId = GetUserIdFromToken();
