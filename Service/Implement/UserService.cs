@@ -160,8 +160,6 @@ namespace Service.Implement {
                     Password = BC.EnhancedHashPassword("12345678", WORK_FACTOR),
                     Phone = null,
                     ProfilePicture = profileUrl,
-                    Gender = null,
-                    Dob = null,
                     Role = (int)Role.Buyer,
                     Status = (int)Status.Available,
                     CreatedAt = DateTime.Now,
