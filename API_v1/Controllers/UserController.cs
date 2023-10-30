@@ -123,7 +123,7 @@ namespace API.Controllers
         }
 
         [HttpGet("/api/staff")]
-        public IActionResult GetAllStaffs()
+        public IActionResult GetAllStaffs([FromQuery] PagingParam pagingParam)
         {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
@@ -135,7 +135,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            List<User> staffList = _userService.GetAllStaffs();
+            List<User> staffList = _userService.GetAllStaffs().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<StaffResponse> responses = _mapper.Map<List<StaffResponse>>(staffList);
             return Ok(new BaseResponse
             {
