@@ -262,7 +262,8 @@ namespace Service.Implement
             }
         }
 
-        public void StaffSetAuctionTime(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt)
+        public void StaffSetAuctionTime(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt,
+            decimal step)
         {
             if (id == null)
             {
@@ -285,6 +286,7 @@ namespace Service.Implement
                 auction.EndedAt = endedAt;
                 auction.Status = (int)AuctionStatus.RegistrationOpen;
                 auction.UpdatedAt = DateTime.Now;
+                auction.Step = step;
                 _auctionDAO.UpdateAuction(auction);
             }
         }

@@ -647,7 +647,8 @@ namespace API.Controllers
                 (DateTime)request.RegistrationStart,
                 (DateTime)request.RegistrationEnd,
                 (DateTime)request.StartedAt,
-                (DateTime)request.EndedAt);
+                (DateTime)request.EndedAt,
+                request.Step);
 
             DateTime endTime = (DateTime)request.EndedAt;
 
