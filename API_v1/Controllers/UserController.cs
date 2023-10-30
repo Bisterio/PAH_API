@@ -80,9 +80,9 @@ namespace API.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult GetAll()
+        public IActionResult GetAll([FromQuery] PagingParam pagingParam)
         {
-            List<User> userList = _userService.GetAll();
+            List<User> userList = _userService.GetAll().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             List<UserResponse> responses = _mapper.Map<List<UserResponse>>(userList);
             return Ok(new BaseResponse 
             {
