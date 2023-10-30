@@ -22,6 +22,11 @@ namespace Service.Implement
             return _transactionDAO.GetAll().ToList();
         }
 
+        public Transaction GetTransactionById(int id)
+        {
+            return _transactionDAO.GetById(id);
+        }
+
         public List<Transaction> GetTransactionsByUserId(int userId, int type, int orderBy)
         {
             var transactionList = _transactionDAO.GetByUserId(userId).Where(t => type == 0 || t.Type == type);

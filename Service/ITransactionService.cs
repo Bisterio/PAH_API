@@ -11,5 +11,6 @@ namespace Service
     {
         public List<Transaction> GetTransactionsByUserId(int userId, int type, int orderBy);
         public List<Transaction> GetAllTransactions();
+        public Transaction GetTransactionById(int id);
     }
 }

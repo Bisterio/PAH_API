@@ -10,6 +10,7 @@ namespace DataAccess {
         public void Create(Transaction transaction);
         public IQueryable<Transaction> GetByUserId(int userId);
         public IQueryable<Transaction> GetAll();
+        public Transaction GetById(int id);
         public bool IsZalopayOrderValid(string appTransId, string mac);
     }
 }

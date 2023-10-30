@@ -63,7 +63,7 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet()]
+        [HttpGet]
         public IActionResult GetAllTransactions([FromQuery] PagingParam pagingParam)
         {
             var userId = GetUserIdFromToken();
@@ -87,6 +87,32 @@ namespace API.Controllers
                 Message = "Get transactions successfully",
                 Data = responses
             });
-        } 
+        }
+
+        [Authorize]
+        [HttpGet("{id}")]
+        public IActionResult GetTransactionById(int id)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            Transaction transaction = _transactionService.GetTransactionById(id);
+
+            TransactionResponse response = _mapper.Map<TransactionResponse>(transaction);
+
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get transactions successfully",
+                Data = response
+            });
+        }
     }
 }

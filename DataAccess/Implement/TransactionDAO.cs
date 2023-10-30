@@ -22,5 +22,10 @@ namespace DataAccess.Implement {
         public IQueryable<Transaction> GetAllTransactions() {
             return GetAll();
         }
+
+        public Transaction GetById(int id)
+        {
+            return GetAll().Where(t => t.Id == id).FirstOrDefault();
+        }
     }
 }
