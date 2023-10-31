@@ -474,10 +474,10 @@ namespace Service.Implement
                 ImageUrl = _productImageDAO.GetByProductId((int)auction.ProductId).FirstOrDefault().ImageUrl
             });
             _orderDAO.Create(order);
-            var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(userId, now).ToList();
-            foreach(var item in orderList) {
-                _walletService.CheckoutWallet(userId, item.Id, (int) OrderStatus.ReadyForPickup);
-            }
+            //var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(userId, now).ToList();
+            //foreach(var item in orderList) {
+            //    _walletService.CheckoutWallet(userId, item.Id, (int) OrderStatus.ReadyForPickup);
+            //}
         }
         public bool CheckWinner(int bidderId, int auctionId)
         {
