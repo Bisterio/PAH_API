@@ -400,7 +400,7 @@ namespace Service.Implement
                             Type = (int)TransactionType.Payment,
                             Date = DateTime.Now,
                             Description = $"Thanh toán cuộc đấu giá '{auction.Title}'",
-                            Status = (int)TransactionType.Payment,
+                            Status = (int)Status.Available,
                         });
                     }
                 }
