@@ -451,8 +451,8 @@ namespace Service.Implement
                 throw new Exception("401: Your wallet does not have enough balance to create order");
             }
 
-
             var now = DateTime.Now;
+            var highestBid = _bidDAO.GetBidsByAuctionId(request.AuctionId).OrderByDescending(b => b.BidAmount).FirstOrDefault();
 
             var order = new Order {
                 BuyerId = userId,
@@ -461,7 +461,7 @@ namespace Service.Implement
                 RecipientPhone = address.RecipientPhone,
                 RecipientAddress = address.Street + ", " + address.Ward + ", " + address.District + ", " + address.Province,
                 OrderDate = now,
-                TotalAmount = 0m,
+                TotalAmount = highestBid.BidAmount,
                 ShippingCost = request.ShippingPrice,
                 Status = (int) OrderStatus.ReadyForPickup,
                 OrderItems = new List<OrderItem>()
@@ -469,7 +469,7 @@ namespace Service.Implement
 
             order.OrderItems.Add(new OrderItem {
                 ProductId = auction.ProductId.Value,
-                Price = 0m,
+                Price = highestBid.BidAmount,
                 Quantity = 1,
                 ImageUrl = _productImageDAO.GetByProductId((int)auction.ProductId).FirstOrDefault().ImageUrl
             });
