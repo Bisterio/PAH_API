@@ -463,7 +463,7 @@ namespace Service.Implement
                 OrderDate = now,
                 TotalAmount = 0m,
                 ShippingCost = request.ShippingPrice,
-                Status = (int) OrderStatus.Pending,
+                Status = (int) OrderStatus.ReadyForPickup,
                 OrderItems = new List<OrderItem>()
             };
 
