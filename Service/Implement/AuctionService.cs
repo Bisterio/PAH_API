@@ -374,17 +374,17 @@ namespace Service.Implement
                         }                        
 
                         _walletDAO.Update(bidderWallet);
-                        _transactionDAO.Create(new Transaction()
-                        {
-                            Id = 0,
-                            WalletId = bidderWallet.Id,
-                            PaymentMethod = (int)PaymentType.Wallet,
-                            Amount = bid.BidAmount,
-                            Type = (int)TransactionType.Refund,
-                            Date = DateTime.Now,
-                            Description = $"Return balance due to ending auction {auctionId}",
-                            Status = (int)Status.Available,
-                        });
+                        //_transactionDAO.Create(new Transaction()
+                        //{
+                        //    Id = 0,
+                        //    WalletId = bidderWallet.Id,
+                        //    PaymentMethod = (int)PaymentType.Wallet,
+                        //    Amount = bid.BidAmount,
+                        //    Type = (int)TransactionType.Refund,
+                        //    Date = DateTime.Now,
+                        //    Description = $"Return balance due to ending auction {auctionId}",
+                        //    Status = (int)Status.Available,
+                        //});
                     }    
                     else
                     {
@@ -399,8 +399,8 @@ namespace Service.Implement
                             Amount = bid.BidAmount,
                             Type = (int)TransactionType.Payment,
                             Date = DateTime.Now,
-                            Description = $"Payment after winning auction {auctionId}",
-                            Status = (int)Status.Available,
+                            Description = $"Thanh toán cuộc đấu giá '{auction.Title}'",
+                            Status = (int)TransactionType.Payment,
                         });
                     }
                 }

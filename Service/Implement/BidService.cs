@@ -129,17 +129,17 @@ namespace Service.Implement
             bidderWallet.LockedBalance += remainder;
 
             _walletDAO.Update(bidderWallet);
-            _transactionDAO.Create(new Transaction()
-            {
-                Id = 0,
-                WalletId = bidderWallet.Id,
-                PaymentMethod = (int)PaymentType.Wallet,
-                Amount = remainder,
-                Type = (int)TransactionType.Deposit,
-                Date = DateTime.Now,
-                Description = $"Place bid for auction {auction}",
-                Status = (int)Status.Available,
-            });
+            //_transactionDAO.Create(new Transaction()
+            //{
+            //    Id = 0,
+            //    WalletId = bidderWallet.Id,
+            //    PaymentMethod = (int)PaymentType.Wallet,
+            //    Amount = remainder,
+            //    Type = (int)TransactionType.Deposit,
+            //    Date = DateTime.Now,
+            //    Description = $"Place bid for auction {auction}",
+            //    Status = (int)TransactionType.Payment,
+            //});
             _bidDAO.CreateBid(bid);
 
             DateTime auctionEndDate = (DateTime)auction.EndedAt;
@@ -196,17 +196,17 @@ namespace Service.Implement
                     bidderWallet.LockedBalance += auction.StartingPrice;
 
                     _walletDAO.Update(bidderWallet);
-                    _transactionDAO.Create(new Transaction()
-                    {
-                        Id = 0,
-                        WalletId = bidderWallet.Id,
-                        PaymentMethod = (int)PaymentType.Wallet,
-                        Amount = bid.BidAmount,
-                        Type = (int)TransactionType.Deposit,
-                        Date = DateTime.Now,
-                        Description = $"Register to join auction {auction.Id}",
-                        Status = (int)Status.Available,
-                    });
+                    //_transactionDAO.Create(new Transaction()
+                    //{
+                    //    Id = 0,
+                    //    WalletId = bidderWallet.Id,
+                    //    PaymentMethod = (int)PaymentType.Wallet,
+                    //    Amount = bid.BidAmount,
+                    //    Type = (int)TransactionType.Deposit,
+                    //    Date = DateTime.Now,
+                    //    Description = $"Register to join auction {auction.Id}",
+                    //    Status = (int)TransactionType.Payment,
+                    //});
                     _bidDAO.CreateBid(bid);
                 }
                 else
@@ -240,17 +240,17 @@ namespace Service.Implement
             bidderWallet.LockedBalance -= previousBid.BidAmount;
 
             _walletDAO.Update(bidderWallet);
-            _transactionDAO.Create(new Transaction()
-            {
-                Id = 0,
-                WalletId = bidderWallet.Id,
-                PaymentMethod = (int)PaymentType.Wallet,
-                Amount = previousBid.BidAmount,
-                Type = (int)TransactionType.Refund,
-                Date = DateTime.Now,
-                Description = $"Return balance due to retracting from auction {auctionId}",
-                Status = (int)Status.Available,
-            });
+            //_transactionDAO.Create(new Transaction()
+            //{
+            //    Id = 0,
+            //    WalletId = bidderWallet.Id,
+            //    PaymentMethod = (int)PaymentType.Wallet,
+            //    Amount = previousBid.BidAmount,
+            //    Type = (int)TransactionType.Refund,
+            //    Date = DateTime.Now,
+            //    Description = $"Return balance due to retracting from auction {auctionId}",
+            //    Status = (int)Status.Available,
+            //});
         }
     }
 }
