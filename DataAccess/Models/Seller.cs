@@ -19,6 +19,7 @@ namespace DataAccess.Models
         public DateTime? RegisteredAt { get; set; }
         public decimal? Ratings { get; set; }
         public int Status { get; set; }
+        public string ShopId { get; set; } = null!;
 
         public virtual User IdNavigation { get; set; } = null!;
         public virtual ICollection<Order> Orders { get; set; }

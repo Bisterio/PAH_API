@@ -21,7 +21,7 @@ namespace Service {
         public Order Get(int orderId);
 
         public Task DefaultShippingOrder(int orderId);
-        public void CreateShippingOrder(int orderId);
+        public Task CreateShippingOrder(int orderId);
         public void DoneOrder(int orderId);
     }
 }

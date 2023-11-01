@@ -23,11 +23,12 @@ namespace Service.Implement
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IAddressDAO _addressDAO;
         private readonly IWalletService _walletService;
-        private readonly IProductImageDAO _productImageDAO;
+        private readonly IOrderService _orderService;
+        private readonly IProductImageDAO _productImageDAO;     
 
         public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO, 
             IBidDAO bidDAO, IWalletDAO walletDAO, ITransactionDAO transactionDAO, IOrderDAO orderDAO, 
-            IAddressDAO addressDAO, IWalletService walletService, IProductImageDAO productImageDAO)
+            IAddressDAO addressDAO, IWalletService walletService, IProductImageDAO productImageDAO, IOrderService orderService)
         {
             _auctionDAO = auctionDAO;
             _userDAO = userDAO;
@@ -38,6 +39,7 @@ namespace Service.Implement
             _walletService = walletService;
             _walletDAO = walletDAO;
             _transactionDAO = transactionDAO;
+            _orderService = orderService;
             _productImageDAO = productImageDAO;
         }
 
@@ -474,10 +476,11 @@ namespace Service.Implement
                 ImageUrl = _productImageDAO.GetByProductId((int)auction.ProductId).FirstOrDefault().ImageUrl
             });
             _orderDAO.Create(order);
-            //var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(userId, now).ToList();
-            //foreach(var item in orderList) {
-            //    _walletService.CheckoutWallet(userId, item.Id, (int) OrderStatus.ReadyForPickup);
-            //}
+            var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(userId, now).ToList();
+            foreach(var item in orderList) {
+                //_walletService.CheckoutWallet(userId, item.Id, (int) OrderStatus.ReadyForPickup);
+                _orderService.CreateShippingOrder(item.Id);
+            }
         }
         public bool CheckWinner(int bidderId, int auctionId)
         {

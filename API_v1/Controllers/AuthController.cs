@@ -1,5 +1,6 @@
 ﻿using API.ErrorHandling;
 using AutoMapper;
+using DataAccess;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using Request;
 using Respon;
 using Service;
@@ -57,6 +59,11 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Email or password is incorrect" });
             }
+            if (user.Status == (int) Status.Unverified) {
+                return Unauthorized(new ErrorDetails { 
+                    StatusCode = 401, 
+                    Message = "This account need to be verified first" });
+            }
             var token = _userService.AddRefreshToken(user.Id);
             return Ok(new BaseResponse { Code = 200, Message = "Login successfully", Data = token});
         }
@@ -95,12 +102,19 @@ namespace API.Controllers {
         [HttpPost]
         [AllowAnonymous]
         [Route("/api/register")]
-        public IActionResult Register([FromBody] RegisterRequest request) {
+        public async Task<IActionResult> RegisterAsync([FromBody] RegisterRequest request) {
             if (!ModelState.IsValid) {
                 return BadRequest(ModelState);
             }
             _userService.Register(_mapper.Map<User>(request));
-            return Ok(new BaseResponse { Code = 200, Message = "Register successfully", Data = null });
+            var code = _userService.CreateVerificationCode(request.Email);
+            var link = Url.Link("Verify account", new { email = request.Email, code = code });
+            var message = new Message(new string[] { request.Email }, "PAH email verification", $"Click on this link to verify your account: " + link);
+            await _emailService.SendEmail(message);
+            return Ok(new BaseResponse { 
+                Code = 200, Message = 
+                "Register successfully, please check your email for link", 
+                Data = null });
         }
 
         [HttpPost("/api/forgotpassword")]
@@ -135,6 +149,24 @@ namespace API.Controllers {
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = "Reset password successfully",
+                Data = null
+            });
+        }
+
+        [HttpGet("/api/verifyaccount/{email}/{code}", Name = "Verify account")]
+        [AllowAnonymous]
+        public IActionResult Verify([FromRoute] VerificationRequest request) {
+            _userService.VerifyAccount(request.Email, request.Code);
+            return Redirect("/mvc/verify");
+        }
+        
+        [HttpGet("/api/verifyaccount/{email}/resend")]
+        [AllowAnonymous]
+        public IActionResult ResendVerificationCode(string email) {
+            _userService.CreateVerificationCode(email);
+            return Ok(new BaseResponse {
+                Code = (int) HttpStatusCode.OK,
+                Message = "Verification code sent successfully",
                 Data = null
             });
         }

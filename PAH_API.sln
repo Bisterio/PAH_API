@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "API", "API_v1\API.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Service", "Service\Service.csproj", "{768925EF-3CB1-4E57-AF1B-8AF39D76BDE3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Request", "Request\Request.csproj", "{FC49F1E1-9CC5-46F6-9431-ED3015A267FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Request", "Request\Request.csproj", "{FC49F1E1-9CC5-46F6-9431-ED3015A267FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Respon", "Response\Respon.csproj", "{54AB18C1-81C1-41DC-BF35-88C09CE10649}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Respon", "Response\Respon.csproj", "{54AB18C1-81C1-41DC-BF35-88C09CE10649}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

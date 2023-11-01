@@ -87,10 +87,11 @@ namespace API.Controllers
 
         [Authorize]
         [HttpPost]
-        public IActionResult SellerRequest([FromBody] SellerRequest request)
+        public async Task<IActionResult> SellerRequest([FromBody] SellerRequest request)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
+            var shopId = await _sellerService.CreateShopIdAsync(request);
 
             Seller seller = new Seller()
             {
@@ -98,7 +99,8 @@ namespace API.Controllers
                 Name = request.Name,
                 Phone = request.Phone,
                 ProfilePicture = request.ProfilePicture,
-                Status = (int)SellerStatus.Pending
+                Status = (int)SellerStatus.Pending,
+                ShopId = shopId.ToString()
             };
             int existed = _sellerService.CreateSeller(userId, seller);
 

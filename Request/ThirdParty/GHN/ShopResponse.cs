@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Request.ThirdParty.GHN {
-    public class CreateShippingOrderRequest {
+    public class ShopResponse {
+        public int shop_id {  get; set; }
     }
 }

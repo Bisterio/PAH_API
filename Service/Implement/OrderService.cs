@@ -1,6 +1,7 @@
 ﻿using DataAccess;
 using DataAccess.Models;
 using Hangfire;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Request;
@@ -23,6 +24,7 @@ namespace Service.Implement {
         private readonly IProductImageDAO _productImageDAO;
         private readonly IOrderCancelDAO _orderCancelDAO;
         private readonly IWalletService _walletService;
+        private readonly ISellerDAO _sellerDAO;
         private readonly IConfiguration _config;
         private IHttpClientFactory _httpClientFactory;
         private IBackgroundJobClient _backgroundJobClient;
@@ -31,7 +33,8 @@ namespace Service.Implement {
             IProductDAO productDAO, IAddressDAO addressDAO, 
             IProductImageDAO productImageDAO, IOrderCancelDAO orderCancelDAO,
             IWalletService walletService, IConfiguration config,
-            IHttpClientFactory httpClientFactory, IBackgroundJobClient backgroundJobClient) {
+            IHttpClientFactory httpClientFactory, IBackgroundJobClient backgroundJobClient,
+            ISellerDAO sellerDAO) {
             _orderDAO = orderDAO;
             _productDAO = productDAO;
             _addressDAO = addressDAO;
@@ -41,6 +44,7 @@ namespace Service.Implement {
             _config = config;
             _httpClientFactory = httpClientFactory;
             _backgroundJobClient = backgroundJobClient;
+            _sellerDAO = sellerDAO;
         }
 
         public void SellerCancelOrder(int sellerId, int orderId, string reason) {
@@ -51,6 +55,7 @@ namespace Service.Implement {
 
             order.Status = (int) OrderStatus.CancelledBySeller;
             _orderDAO.UpdateOrder(order);
+            _walletService.RefundOrder(order.Id);
             _orderCancelDAO.Create(new OrderCancellation { Id = order.Id, Reason = reason });
         }
 
@@ -62,6 +67,7 @@ namespace Service.Implement {
 
             order.Status = (int) OrderStatus.CancelledByBuyer;
             _orderDAO.UpdateOrder(order);
+            _walletService.RefundOrder(order.Id);
             _orderCancelDAO.Create(new OrderCancellation { Id = order.Id, Reason = "Buyer cancelled" });
         }
 
@@ -242,17 +248,22 @@ namespace Service.Implement {
                 throw new Exception("404: Order not found when updating after shipping");
             }
 
-            //Ready for pickup => Delivering
-            if (order.Status == (int) OrderStatus.ReadyForPickup) {
-                var log = responseData.data.log.Where(p => p.status.Contains("picked"));
-                if (log.Any()) {
-                    order.Status = (int) OrderStatus.Delivering;
-                    _orderDAO.UpdateOrder(order);
-                }
-                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60*24));
+            if (responseData.data.log == null) {
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
                 return;
             }
-            
+
+            //Ready for pickup => Delivering
+            //if (order.Status == (int) OrderStatus.ReadyForPickup) {
+            //    var log = responseData.data.log.Where(p => p.status.Contains("picked"));
+            //    if (log.Any()) {
+            //        order.Status = (int) OrderStatus.Delivering;
+            //        _orderDAO.UpdateOrder(order);
+            //    }
+            //    _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
+            //    return;
+            //}
+
             //Delivering => Delivered
             if (order.Status == (int) OrderStatus.Delivering) {
                 var log = responseData.data.log.Where(p => p.status.Contains("delivered"));
@@ -268,18 +279,85 @@ namespace Service.Implement {
         public void DoneOrder(int orderId) {
             var order = _orderDAO.Get(orderId);
             if (order == null) {
-                throw new Exception("404: Order not found when updating to delivered");
+                throw new Exception("404: Order not found when updating to done");
             }
             if (order.Status == (int) OrderStatus.Done) {
                 return;
             }
+
             order.Status = (int) OrderStatus.Done;
             _orderDAO.UpdateOrder(order);
+            _walletService.AddSellerBalance(orderId);
         }
 
-        public void CreateShippingOrder(int orderId) {
-            //Update Order status
-            //Create shipping order by calling ghn
+        public async Task CreateShippingOrder(int orderId) {
+            //Get order, address info
+            var order = _orderDAO.Get(orderId);
+            if (order == null) {
+                throw new Exception("404: Order not found when creating shipping order");
+            }
+            if (order.Status != (int) OrderStatus.ReadyForPickup) {
+                throw new Exception("401: Cannot create shipping order with this order");
+            }
+
+            var seller = _sellerDAO.GetSeller(order.SellerId.Value);
+            if (seller == null) {
+                throw new Exception("404: Seller not found when creating shipping order");
+            }
+            
+            var sellerAddress = _addressDAO.GetPickupBySellerId(order.SellerId.Value);
+            if (sellerAddress == null) {
+                throw new Exception("404: Seller address not found when creating shipping order");
+            }
+            if (sellerAddress.Type != (int) AddressType.Pickup) {
+                throw new Exception("401: Address is not pick up when creating shipping order");
+            }
+
+            var buyerAddress = _addressDAO.GetBuyerAddressInOrder(order.BuyerId.Value, order.RecipientAddress);
+            if (buyerAddress == null) {
+                throw new Exception("404: Address not found when creating shipping order");
+            }
+
+            //Call to GHN to create shipping order
+            var client = _httpClientFactory.CreateClient("GHN");
+            client.DefaultRequestHeaders.Add("shop_id", seller.ShopId);
+            var request = new ShippingOrderRequest {
+                note = $"Order for customer {buyerAddress.RecipientName}",
+                return_name = sellerAddress.RecipientName,
+                return_address = sellerAddress.Street,
+                return_ward_code = sellerAddress.WardCode,
+                return_district_id = sellerAddress.DistrictId.Value,
+                return_phone = sellerAddress.RecipientPhone,
+                to_name = buyerAddress.RecipientName,
+                to_phone = buyerAddress.RecipientPhone,
+                to_address = buyerAddress.Street,
+                to_district_id = buyerAddress.DistrictId.Value,
+                to_ward_code = buyerAddress.WardCode,
+                weight = 0,
+                items = new List<ShippingOrderItem>()
+            };
+            order.OrderItems.ToList().ForEach(p => {
+                var product = _productDAO.GetProductById(p.ProductId);
+                request.items.Add(new ShippingOrderItem {
+                    name = product.Name,
+                    code = product.Id.ToString(),
+                    quantity = p.Quantity.Value,
+                    weight = (int) product.Weight.Value
+                });
+                request.weight += (int) product.Weight.Value;
+            });
+            
+            var responseMessage = await client.PostAsync("v2/shipping-order/create", Utils.ConvertForPost<ShippingOrderRequest>(request));
+            if (!responseMessage.IsSuccessStatusCode) {
+                throw new Exception($"500: {responseMessage.Content}");
+            }
+            var data = await responseMessage.Content.ReadAsAsync<BaseGHNResponse<ShippingOrderResponse>>();
+            order.OrderShippingCode = data.data.order_code;
+            order.Status = (int) OrderStatus.Delivering;
+            _orderDAO.UpdateOrder(order);
+
+            //Check order status
+            await CheckStatusShippingOrder(orderId, data.data.order_code);
         }
     }
 }
