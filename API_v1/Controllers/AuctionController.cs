@@ -647,10 +647,15 @@ namespace API.Controllers
                 (DateTime)request.RegistrationStart,
                 (DateTime)request.RegistrationEnd,
                 (DateTime)request.StartedAt,
-                (DateTime)request.EndedAt);
+                (DateTime)request.EndedAt,
+                request.Step);
+
+            DateTime endTime = (DateTime)request.EndedAt;
 
             _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Opened), (DateTime)request.StartedAt);
-            _backgroundJobClient.Schedule(() => EndAuction(id, true), (DateTime)request.EndedAt);
+            _backgroundJobClient.Schedule(() => EndAuction(id, true), endTime);
+            _backgroundJobClient.Schedule(() => NotifyEndAuction(id), endTime.AddSeconds(-30));
+
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
@@ -683,7 +688,7 @@ namespace API.Controllers
                 Data = null
             });
         }
-        // Change Auction Status
+        // Start auction automatically
         [NonAction]
         public async Task HostAuction(int auctionId, int status)
         {
@@ -697,15 +702,15 @@ namespace API.Controllers
             }
         }
 
-        // Change Auction Status
+        // End Auction automatically
         [NonAction]
         public async Task<WinnerResponse?> EndAuction(int auctionId, bool scheduled = true)
         {
             var auction = _auctionService.GetAuctionById(auctionId);
-            //if (scheduled && DateTime.Now < auction.EndedAt)
-            //{
-            //    throw new Exception("404: EndedDate Changed");
-            //}
+            if (scheduled && DateTime.Now < auction.EndedAt)
+            {
+                throw new Exception("404: EndedDate Changed");
+            }
 
             var winnerBid = _auctionService.EndAuction(auctionId);
             User winner;
@@ -723,6 +728,19 @@ namespace API.Controllers
 
             await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionEnd", auction.Title);
             return mappedWinner;
+        }
+
+        // Notify end time
+        [NonAction]
+        public async Task NotifyEndAuction(int auctionId)
+        {
+            var auction = _auctionService.GetAuctionById(auctionId);
+            DateTime endTime = (DateTime)auction.EndedAt;
+            if (DateTime.Now < endTime.AddSeconds(-30))
+            {
+                throw new Exception("404: EndedDate Changed");
+            }
+            await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionAboutToEnd", auction.Title);
         }
     }
 }

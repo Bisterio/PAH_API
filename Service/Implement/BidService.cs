@@ -56,96 +56,103 @@ namespace Service.Implement
                 .Count();
         }
 
-        public void PlaceBid(int bidderId, Bid bid) 
+        public bool PlaceBid(int bidderId, Bid bid)
         {
-            if (bid.AuctionId != null)
+            if (bid.AuctionId == null)
             {
-                Auction auction = _auctionDAO.GetAuctionById((int)bid.AuctionId);
-                var registrationList = _bidDAO.GetBidsByAuctionId(auction.Id).Where(b => b.Status == (int)BidStatus.Register).ToList();
-                if (auction.Product.SellerId == bidderId)
-                {
-                    throw new Exception("400: Bạn không được tham dự cuộc đấu giá của mình");
-                }
-                // CHECK FOR REGISTERED
-                if (!registrationList.Any(b => b.BidderId == bidderId))
-                {
-                    throw new Exception("400: Bạn chưa đăng ký tham gia cuộc đấu giá này");
-                }
-                var auctionStatus = auction.Status;
-                if (auctionStatus < (int)AuctionStatus.Opened && DateTime.Now < auction.StartedAt)
-                {
-                    throw new Exception("400: Cuộc đấu giá này chưa mở");
-                }
-                else if (auctionStatus > (int)AuctionStatus.Opened && DateTime.Now > auction.EndedAt)
-                {
-                    throw new Exception("400: Cuộc đấu giá này đã kết thúc");
-                }
-                else
-                {
-                    // CHECK FOR RETRACTED
-                    if (_bidDAO.GetBidsByAuctionId((int)bid.AuctionId).Where(b => b.BidderId == bidderId).Any(b => b.Status == (int)BidStatus.Retracted))
-                    {
-                        throw new Exception("400: You have retracted before");
-                    }
-                    var bidderWallet = _walletDAO.Get(bidderId);
-                    var check = _bidDAO.GetBidsByAuctionId((int)bid.AuctionId).Where(b => b.BidderId == bidderId);
-                    if (check.Any())
-                    {
-                        // CASE HIGHEST BID
-                        var highestBid = _bidDAO.GetBidsByAuctionId((int)bid.AuctionId).OrderByDescending(b => b.BidAmount).FirstOrDefault();
-                        if (bidderId == highestBid.BidderId && highestBid.Status == 1)
-                        {
-                            throw new Exception("400: Giá của bạn đang là cao nhất");
-                        }
-
-                        if(bid.BidAmount <= highestBid.BidAmount)
-                        {
-                            throw new Exception("400: Bạn cần phải đưa giá cao hơn giá hiện tại");
-                        }
-
-                        // CASE SECOND BID ONWARD
-                        var previousBid = _bidDAO.GetBidsByAuctionId((int)bid.AuctionId)
-                            .Where(b => b.BidderId == bidderId)
-                            .OrderByDescending(b => b.BidAmount)
-                            .FirstOrDefault();
-                        var remainder = bid.BidAmount - previousBid.BidAmount;
-                        if (bidderWallet.AvailableBalance >= remainder)
-                        {
-                            bid.Id = 0;
-                            bid.BidderId = bidderId;
-                            bid.BidDate = DateTime.Now;
-                            bid.Status = (int)BidStatus.Active;
-                                                     
-
-                            bidderWallet.AvailableBalance -= remainder;
-                            bidderWallet.LockedBalance += remainder;
-
-                            _walletDAO.Update(bidderWallet);
-                            _transactionDAO.Create(new Transaction()
-                            {
-                                Id = 0,
-                                WalletId = bidderWallet.Id,
-                                PaymentMethod = (int)PaymentType.Wallet,
-                                Amount = remainder,
-                                Type = (int)TransactionType.Deposit,
-                                Date = DateTime.Now,
-                                Description = $"Place bid for auction {auction}",
-                                Status = (int)Status.Available,
-                            });
-                            _bidDAO.CreateBid(bid);
-
-                            //DateTime auctionEndDate = (DateTime)auction.EndedAt;
-                            //auctionEndDate.AddSeconds(30);
-                            //auction.EndedAt = auctionEndDate;
-                            //_auctionDAO.UpdateAuction(auction);
-                        }
-                        else
-                        {
-                            throw new Exception("400: Your balance is not sufficient.");
-                        }
-                    }
-                }
+                throw new Exception("400: Cuộc đấu giá không hợp lệ");
             }
+
+            Auction auction = _auctionDAO.GetAuctionById((int)bid.AuctionId);
+            var registrationList = _bidDAO.GetBidsByAuctionId(auction.Id).Where(b => b.Status == (int)BidStatus.Register).ToList();
+            if (auction.Product.SellerId == bidderId)
+            {
+                throw new Exception("400: Bạn không được tham dự cuộc đấu giá của mình");
+            }
+            // CHECK FOR REGISTERED
+            if (!registrationList.Any(b => b.BidderId == bidderId))
+            {
+                throw new Exception("400: Bạn chưa đăng ký tham gia cuộc đấu giá này");
+            }
+            var auctionStatus = auction.Status;
+            if (auctionStatus < (int)AuctionStatus.Opened && DateTime.Now < auction.StartedAt)
+            {
+                throw new Exception("400: Cuộc đấu giá này chưa mở");
+            }
+            if (auctionStatus > (int)AuctionStatus.Opened && DateTime.Now > auction.EndedAt)
+            {
+                throw new Exception("400: Cuộc đấu giá này đã kết thúc");
+            }
+            // CHECK FOR RETRACTED
+            if (_bidDAO.GetBidsByAuctionId((int)bid.AuctionId).Where(b => b.BidderId == bidderId).Any(b => b.Status == (int)BidStatus.Retracted))
+            {
+                throw new Exception("400: Bạn đã rút khỏi cuộc đấu giá này");
+            }
+            var bidderWallet = _walletDAO.Get(bidderId);
+            var check = _bidDAO.GetBidsByAuctionId((int)bid.AuctionId).Where(b => b.BidderId == bidderId);
+            if (!check.Any())
+            {
+                throw new Exception("400: Bạn chưa đăng ký tham gia cuộc đấu giá này");
+            }
+
+            // CASE HIGHEST BID
+            var highestBid = _bidDAO.GetBidsByAuctionId((int)bid.AuctionId).OrderByDescending(b => b.BidAmount).FirstOrDefault();
+            if (bidderId == highestBid.BidderId && highestBid.Status == 1)
+            {
+                throw new Exception("400: Giá của bạn đang là cao nhất");
+            }
+
+            if (bid.BidAmount <= highestBid.BidAmount)
+            {
+                throw new Exception("400: Bạn cần phải đưa giá cao hơn giá hiện tại");
+            }
+
+            // CASE SECOND BID ONWARD
+            var previousBid = _bidDAO.GetBidsByAuctionId((int)bid.AuctionId)
+                .Where(b => b.BidderId == bidderId)
+                .OrderByDescending(b => b.BidAmount)
+                .FirstOrDefault();
+            var remainder = bid.BidAmount - previousBid.BidAmount;
+
+            if (bidderWallet.AvailableBalance < remainder)
+            {
+                throw new Exception("400: Ví của bạn không đủ số dư.");
+            }
+
+            bid.Id = 0;
+            bid.BidderId = bidderId;
+            bid.BidDate = DateTime.Now;
+            bid.Status = (int)BidStatus.Active;
+
+
+            bidderWallet.AvailableBalance -= remainder;
+            bidderWallet.LockedBalance += remainder;
+
+            _walletDAO.Update(bidderWallet);
+            //_transactionDAO.Create(new Transaction()
+            //{
+            //    Id = 0,
+            //    WalletId = bidderWallet.Id,
+            //    PaymentMethod = (int)PaymentType.Wallet,
+            //    Amount = remainder,
+            //    Type = (int)TransactionType.Deposit,
+            //    Date = DateTime.Now,
+            //    Description = $"Place bid for auction {auction}",
+            //    Status = (int)TransactionType.Payment,
+            //});
+            _bidDAO.CreateBid(bid);
+
+            DateTime auctionEndDate = (DateTime)auction.EndedAt;
+            if (auctionEndDate.Subtract(DateTime.Now).TotalSeconds < 30)
+            {
+                DateTime newEndDate = auctionEndDate.AddSeconds(30);
+                auction.EndedAt = newEndDate;
+                _auctionDAO.UpdateAuction(auction);
+
+                // If return true => endTime is changed
+                return true;
+            }
+            return false;
         }
 
         public void RegisterToJoinAuction(int bidderId, int auctionId)
@@ -153,15 +160,15 @@ namespace Service.Implement
             Auction auction = _auctionDAO.GetAuctionById(auctionId);
             var bidderWallet = _walletDAO.Get(bidderId);
             Bid bid = new Bid();
-            if(auction.Status < (int)AuctionStatus.RegistrationOpen && DateTime.Now < auction.RegistrationStart)
+            if (auction.Status < (int)AuctionStatus.RegistrationOpen && DateTime.Now < auction.RegistrationStart)
             {
                 throw new Exception("400: This auction hasn't been opened for registration");
             }
             else if (auction.Status > (int)AuctionStatus.RegistrationOpen && DateTime.Now > auction.RegistrationEnd)
             {
                 throw new Exception("400: This auction registration has been closed");
-            } 
-            if(auction.Product.SellerId == bidderId)
+            }
+            if (auction.Product.SellerId == bidderId)
             {
                 throw new Exception("400: You cannot join your own auction");
             }
@@ -189,17 +196,17 @@ namespace Service.Implement
                     bidderWallet.LockedBalance += auction.StartingPrice;
 
                     _walletDAO.Update(bidderWallet);
-                    _transactionDAO.Create(new Transaction()
-                    {
-                        Id = 0,
-                        WalletId = bidderWallet.Id,
-                        PaymentMethod = (int)PaymentType.Wallet,
-                        Amount = bid.BidAmount,
-                        Type = (int)TransactionType.Deposit,
-                        Date = DateTime.Now,
-                        Description = $"Register to join auction {auction.Id}",
-                        Status = (int)Status.Available,
-                    });
+                    //_transactionDAO.Create(new Transaction()
+                    //{
+                    //    Id = 0,
+                    //    WalletId = bidderWallet.Id,
+                    //    PaymentMethod = (int)PaymentType.Wallet,
+                    //    Amount = bid.BidAmount,
+                    //    Type = (int)TransactionType.Deposit,
+                    //    Date = DateTime.Now,
+                    //    Description = $"Register to join auction {auction.Id}",
+                    //    Status = (int)TransactionType.Payment,
+                    //});
                     _bidDAO.CreateBid(bid);
                 }
                 else
@@ -233,17 +240,17 @@ namespace Service.Implement
             bidderWallet.LockedBalance -= previousBid.BidAmount;
 
             _walletDAO.Update(bidderWallet);
-            _transactionDAO.Create(new Transaction()
-            {
-                Id = 0,
-                WalletId = bidderWallet.Id,
-                PaymentMethod = (int)PaymentType.Wallet,
-                Amount = previousBid.BidAmount,
-                Type = (int)TransactionType.Refund,
-                Date = DateTime.Now,
-                Description = $"Return balance due to retracting from auction {auctionId}",
-                Status = (int)Status.Available,
-            });
+            //_transactionDAO.Create(new Transaction()
+            //{
+            //    Id = 0,
+            //    WalletId = bidderWallet.Id,
+            //    PaymentMethod = (int)PaymentType.Wallet,
+            //    Amount = previousBid.BidAmount,
+            //    Type = (int)TransactionType.Refund,
+            //    Date = DateTime.Now,
+            //    Description = $"Return balance due to retracting from auction {auctionId}",
+            //    Status = (int)Status.Available,
+            //});
         }
     }
 }

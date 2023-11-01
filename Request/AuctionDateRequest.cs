@@ -12,5 +12,6 @@ namespace Request
         public DateTime? EndedAt { get; set; }
         public DateTime? RegistrationStart { get; set; }
         public DateTime? RegistrationEnd { get; set; }
+        public decimal Step { get; set; } = 50000;
     }
 }

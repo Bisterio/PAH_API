@@ -14,6 +14,9 @@ using Service;
 using System.Net;
 using API.ErrorHandling;
 using Respon.UserRes;
+using API.Hubs;
+using Hangfire;
+using Microsoft.AspNetCore.SignalR;
 
 namespace API.Controllers
 {
@@ -25,12 +28,20 @@ namespace API.Controllers
         private readonly IBidService _bidService;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
+        private readonly IAuctionService _auctionService;
+        private readonly IBackgroundJobClient _backgroundJobClient;
+        private IHubContext<AuctionHub> _hubContext { get; set; }
 
-        public BidController(IBidService bidService, IMapper mapper, IUserService userService)
+        public BidController(IBidService bidService, IMapper mapper, IUserService userService,
+            IAuctionService auctionService, IBackgroundJobClient backgroundJobClient,
+            IHubContext<AuctionHub> hubcontext)
         {
             _bidService = bidService;
             _mapper = mapper;
             _userService = userService;
+            _auctionService = auctionService;
+            _backgroundJobClient = backgroundJobClient;
+            _hubContext = hubcontext;
         }
 
         private int GetUserIdFromToken()
@@ -88,8 +99,18 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            
-            _bidService.PlaceBid(bidderId, _mapper.Map<Bid>(request));
+
+            bool endTimeChanged = _bidService.PlaceBid(bidderId, _mapper.Map<Bid>(request));
+
+            if (endTimeChanged)
+            {
+                var auction = _auctionService.GetAuctionById((int)request.AuctionId);
+                DateTime endTime = (DateTime)auction.EndedAt;
+
+                // Set new schedule for auction end
+                _backgroundJobClient.Schedule(() => EndAuction(auction.Id, true), endTime);
+                _backgroundJobClient.Schedule(() => NotifyEndAuction(auction.Id), endTime.AddSeconds(-40));
+            }
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
@@ -142,6 +163,47 @@ namespace API.Controllers
                 Message = "Retract successfully",
                 Data = null
             });
+        }
+
+        // End Auction automatically
+        [NonAction]
+        public async Task<WinnerResponse?> EndAuction(int auctionId, bool scheduled = true)
+        {
+            var auction = _auctionService.GetAuctionById(auctionId);
+            if (scheduled && DateTime.Now < auction.EndedAt)
+            {
+                throw new Exception("404: EndedDate Changed");
+            }
+
+            var winnerBid = _auctionService.EndAuction(auctionId);
+            DataAccess.Models.User winner;
+            WinnerResponse mappedWinner;
+            if (winnerBid != null)
+            {
+                winner = _userService.Get((int)winnerBid.BidderId);
+                mappedWinner = _mapper.Map<WinnerResponse>(winner);
+                mappedWinner.FinalBid = winnerBid.BidAmount;
+            }
+            else
+            {
+                mappedWinner = null;
+            }
+
+            await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionEnd", auction.Title);
+            return mappedWinner;
+        }
+
+        // Notify end time
+        [NonAction]
+        public async Task NotifyEndAuction(int auctionId)
+        {
+            var auction = _auctionService.GetAuctionById(auctionId);
+            DateTime endTime = (DateTime)auction.EndedAt;
+            if (DateTime.Now < endTime.AddSeconds(-40))
+            {
+                throw new Exception("404: EndedDate Changed");
+            }
+            await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionAboutToEnd", auction.Title);
         }
     }
 }

@@ -80,10 +80,15 @@ namespace API.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult GetAll()
+        public IActionResult GetAll([FromQuery] PagingParam pagingParam)
         {
-            List<User> userList = _userService.GetAll();
-            List<UserResponse> responses = _mapper.Map<List<UserResponse>>(userList);
+            List<User> userList = _userService.GetAll().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
+            List<UserResponse> mappedList = _mapper.Map<List<UserResponse>>(userList);
+            UserListCountResponse responses = new UserListCountResponse()
+            {
+                Count = _userService.GetAll().Count(),
+                UserList = mappedList
+            };
             return Ok(new BaseResponse 
             {
                 Code = (int)HttpStatusCode.OK,
@@ -123,7 +128,7 @@ namespace API.Controllers
         }
 
         [HttpGet("/api/staff")]
-        public IActionResult GetAllStaffs()
+        public IActionResult GetAllStaffs([FromQuery] PagingParam pagingParam)
         {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
@@ -135,13 +140,18 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            List<User> staffList = _userService.GetAllStaffs();
-            List<StaffResponse> responses = _mapper.Map<List<StaffResponse>>(staffList);
+            List<User> staffList = _userService.GetAllStaffs().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
+            List<StaffResponse> mappedList = _mapper.Map<List<StaffResponse>>(staffList);
+            StaffListCountResponse response = new StaffListCountResponse()
+            {
+                Count = _userService.GetAllStaffs().Count(),
+                StaffList = mappedList
+            };
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get all staffs successfully",
-                Data = responses
+                Data = response
             });
         }
 
