@@ -1,6 +1,9 @@
 ﻿using DataAccess;
 using DataAccess.Models;
 using Firebase.Auth;
+using Request;
+using Request.ThirdParty.GHN;
+using Respon;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +17,12 @@ namespace Service.Implement
     public class SellerService : ISellerService
     {
         private readonly ISellerDAO _sellerDAO;
+        private IHttpClientFactory _httpClientFactory;
 
-        public SellerService(ISellerDAO sellerDAO)
+        public SellerService(ISellerDAO sellerDAO, IHttpClientFactory httpClientFactory)
         {
             _sellerDAO = sellerDAO;
+            _httpClientFactory = httpClientFactory;
         }
 
         public int CreateSeller(int id, Seller seller)
@@ -54,6 +59,24 @@ namespace Service.Implement
         public List<Seller> GetSellerRequestList()
         {
             return _sellerDAO.GetSellerRequestList().ToList();
+        }
+
+        public async Task<int> CreateShopIdAsync(SellerRequest request) {
+            var client = _httpClientFactory.CreateClient("GHN");
+            var data = new ShopRequest {
+                district_id = request.DistrictId,
+                ward_code = request.WardCode,
+                name = request.Name,
+                phone = request.Phone,
+                address = request.Street
+            };
+            var responseMessage = await client.PostAsync("v2/shop/register", Utils.ConvertForPost<ShopRequest>(data));
+            if (!responseMessage.IsSuccessStatusCode) {
+                var temp = await responseMessage.Content.ReadAsAsync<BaseGHNResponse<string>>();
+                throw new Exception("409: " + temp.message);
+            }
+            var responseData = await responseMessage.Content.ReadAsAsync<BaseGHNResponse<ShopResponse>>();
+            return responseData.data.shop_id;
         }
     }
 }

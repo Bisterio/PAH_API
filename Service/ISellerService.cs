@@ -1,4 +1,5 @@
 ﻿using DataAccess.Models;
+using Request;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +14,7 @@ namespace Service
         public List<Seller> GetSellerRequestList();
         public int CreateSeller(int id, Seller seller);
         public void UpdateSeller(Seller seller);
+
+        public Task<int> CreateShopIdAsync(SellerRequest sellerRequest);
     }
 }

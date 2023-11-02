@@ -2,11 +2,13 @@
 using DataAccess;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
+using Newtonsoft.Json.Linq;
 using Request;
 using Service.EmailService;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,18 +20,23 @@ namespace Service.Implement {
         private readonly IWalletDAO _walletDAO;
         private readonly ISellerDAO _sellerDAO;
         private readonly ITokenService _tokenService;
+        private readonly IVerifyTokenDAO _verifyTokenDAO;
+        private readonly IEmailService _emailService;
         private readonly int WORK_FACTOR = 13;
         private static readonly string DEFAULT_AVT = "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg";
 
         public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, 
             ITokenService tokenService, IBuyerDAO buyerDAO, 
-            IWalletDAO walletDAO, ISellerDAO sellerDAO) {
+            IWalletDAO walletDAO, ISellerDAO sellerDAO, IVerifyTokenDAO verifyTokenDAO,
+            IEmailService emailService) {
             _userDAO = userDAO;
             _tokenDAO = tokenDAO;
             _tokenService = tokenService;
             _buyerDAO = buyerDAO;
             _walletDAO = walletDAO;
             _sellerDAO = sellerDAO;
+            _verifyTokenDAO = verifyTokenDAO;
+            _emailService = emailService;
         }
 
         public User Get(int id) {
@@ -181,20 +188,14 @@ namespace Service.Implement {
 
             user.Password = BC.EnhancedHashPassword(user.Password, WORK_FACTOR);
             user.Role = (int) Role.Buyer;
-            user.Status = (int) Status.Available;
+            user.Status = (int) Status.Unverified;
             user.CreatedAt = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
             user.ProfilePicture = DEFAULT_AVT;
             _userDAO.Register(user);
             var newUser = _userDAO.GetByEmail(user.Email);
-
             if (newUser == null) throw new Exception("500: Cannot insert new user");
-
-            //Create buyer
-            CreateBuyer(newUser.Id);
-
-            //Create Wallet
-            CreateWallet(newUser.Id);
+            //CreateVerificationCode(newUser.Email);
         }
 
         private void CreateBuyer(int userId) {
@@ -289,6 +290,64 @@ namespace Service.Implement {
             user.Dob = request.Dob;
             user.UpdatedAt = DateTime.Now;
             _userDAO.Update(user);
+        }
+
+        public void VerifyAccount(string email, string code) {
+            var user = _userDAO.GetByEmail(email);
+            if (user == null) {
+                throw new Exception("404: This email does not exist");
+            }
+            if (user.Status != (int) Status.Unverified) {
+                throw new Exception("401: This account cannot be verified");
+            }
+            var verifyToken = _verifyTokenDAO.Get(user.Id);
+            if (verifyToken == null) {
+                throw new Exception("404: This account does not have verification token");
+            }
+
+            if (verifyToken.ExpirationDate < DateTime.Now || !verifyToken.Code.Equals(code)) {
+                throw new Exception("401: Verification token is invalid, please send another verification code");
+            }
+
+            //Update user and token
+            user.Status = (int) Status.Available;
+            user.UpdatedAt = DateTime.Now;
+            _userDAO.Update(user);
+            verifyToken.Status = (int) Status.Unavailable;
+            _verifyTokenDAO.Update(verifyToken);
+
+            //Create buyer
+            CreateBuyer(user.Id);
+
+            //Create Wallet
+            CreateWallet(user.Id);
+        }
+
+        public string CreateVerificationCode(string email) {
+            var user = _userDAO.GetByEmail(email);
+            if (user == null) {
+                throw new Exception($"404: User with {email} not found");
+            }
+            var verifyToken = _verifyTokenDAO.Get(user.Id);
+            if (verifyToken != null) {
+                verifyToken.Code = _tokenService.GenerateVerifyToken(40);
+                verifyToken.ExpirationDate = DateTime.Now.AddDays(3);
+                verifyToken.Status = (int) Status.Available;
+                _verifyTokenDAO.Update(verifyToken);
+            } else {
+                _verifyTokenDAO.Create(new VerifyToken {
+                    Id = user.Id,
+                    Code = _tokenService.GenerateVerifyToken(40),
+                    ExpirationDate = DateTime.Now.AddDays(3),
+                    Status = (int) Status.Available
+                });
+            }
+
+            var newToken = _verifyTokenDAO.Get(user.Id);
+            if (newToken == null) {
+                throw new Exception($"500: Token creation unsuccessful");
+            }
+            return newToken.Code;
         }
     }
 }

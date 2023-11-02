@@ -27,6 +27,7 @@ namespace DataAccess.Models
         public virtual Buyer? Buyer { get; set; }
         public virtual Seller? Seller { get; set; }
         public virtual Token? Token { get; set; }
+        public virtual VerifyToken? VerifyToken { get; set; }
         public virtual Wallet? Wallet { get; set; }
         public virtual ICollection<Address> Addresses { get; set; }
         public virtual ICollection<Auction> Auctions { get; set; }

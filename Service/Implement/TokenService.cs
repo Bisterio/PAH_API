@@ -70,5 +70,36 @@ namespace Service.Implement {
                 return Convert.ToBase64String(randomNumber).Replace('+', '-').Replace('/', '_');
             }
         }
+
+        public string GenerateVerifyToken(int length) {
+            const string alphanumericCharacters =
+                //"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                "abcdefghijklmnopqrstuvwxyz" +
+                "0123456789";
+            return GetRandomString(length, alphanumericCharacters);
+        }
+
+        private string GetRandomString(int length, IEnumerable<char> characterSet) {
+            if (length < 0)
+                throw new ArgumentException("500: Length must not be negative");
+            if (length > 100) // 250 million chars ought to be enough for anybody
+                throw new ArgumentException("500: Length is too big");
+            if (characterSet == null)
+                throw new ArgumentException("500: characterSet must not be null");
+            var characterArray = characterSet.Distinct().ToArray();
+            if (characterArray.Length == 0)
+                throw new ArgumentException("500: characterSet must not be empty");
+
+            var bytes = new byte[length * 8];
+            var result = new char[length];
+            using (var cryptoProvider = new RNGCryptoServiceProvider()) {
+                cryptoProvider.GetBytes(bytes);
+            }
+            for (int i = 0; i < length; i++) {
+                ulong value = BitConverter.ToUInt64(bytes, i * 8);
+                result[i] = characterArray[value % (uint) characterArray.Length];
+            }
+            return new string(result);
+        }
     }
 }

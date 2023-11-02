@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 namespace DataAccess {
     public enum Status {
         Available = 1,
-        Unavailable = 0
+        Unavailable = 0,
+        Unverified = 2
     }
 
     public enum Role {
@@ -87,6 +88,7 @@ namespace DataAccess {
         Deposit = 1,
         Withdraw = 2,
         Payment = 3,
-        Refund = 4
+        Refund = 4,
+        DoneOrder = 5
     }
 }

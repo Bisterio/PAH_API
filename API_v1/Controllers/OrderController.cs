@@ -174,7 +174,7 @@ namespace API.Controllers
         }
         
         [HttpPost("/api/seller/order/{orderId:int}")]
-        public IActionResult ConfirmOrder(int orderId, [FromBody] ConfirmOrderRequest request) {
+        public async Task<IActionResult> ConfirmOrderAsync(int orderId, [FromBody] ConfirmOrderRequest request) {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
 
@@ -193,36 +193,28 @@ namespace API.Controllers
 
             if (request.Status == (int) OrderStatus.ReadyForPickup) {
                 _orderService.UpdateOrderStatus(id, request.Status, orderId);
+                await _orderService.CreateShippingOrder(orderId);
                 return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Confirm order successfully", Data = null });
             }
             return BadRequest(new ErrorDetails { StatusCode = (int) HttpStatusCode.BadRequest, Message = "Status not matching required information"});
         }
 
-        [HttpPost("/api/seller/order/deliver/{orderId:int}")]
-        public async Task<IActionResult> DefaultShippingOrderAsync(int orderId) {
-            var id = GetUserIdFromToken();
-            var user = _userService.Get(id);
+        //[HttpPost("/api/seller/order/deliver/{orderId:int}")]
+        //public async Task<IActionResult> DefaultShippingOrderAsync(int orderId) {
+        //    var id = GetUserIdFromToken();
+        //    var user = _userService.Get(id);
 
-            if (user == null) {
-                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
-            }
+        //    if (user == null) {
+        //        return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+        //    }
 
-            if (user.Role != (int) Role.Seller) {
-                return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not seller, not allowed to access this" });
-            }
-            await _orderService.DefaultShippingOrder(orderId);
-            return Ok(new BaseResponse { 
-                Code = (int) HttpStatusCode.OK, 
-                Message = "Default order shipping applied", 
-                Data = null 
-            });
-        }
-        
-        //[HttpPatch("/api/seller/order/deliver/{orderId:int}")]
-        //public IActionResult CreateShippingOrder(int orderId) {
+        //    if (user.Role != (int) Role.Seller) {
+        //        return Unauthorized(new ErrorDetails { StatusCode = (int) HttpStatusCode.Unauthorized, Message = "You are not seller, not allowed to access this" });
+        //    }
+        //    await _orderService.DefaultShippingOrder(orderId);
         //    return Ok(new BaseResponse { 
         //        Code = (int) HttpStatusCode.OK, 
-        //        Message = "Done nothing successfully", 
+        //        Message = "Default order shipping applied", 
         //        Data = null 
         //    });
         //}

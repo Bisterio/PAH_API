@@ -15,5 +15,8 @@ namespace Service
         //public void CheckoutZalopay(int userId, int orderId, TopupRequest orderRequest);
         public void AddLockedBalance(int userId, decimal balance);
         public void SubtractLockedBalance(int userId, decimal balance);
+
+        public void RefundOrder(int orderId);
+        public void AddSellerBalance(int orderId);
     }
 }

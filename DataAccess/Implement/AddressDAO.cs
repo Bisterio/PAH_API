@@ -14,6 +14,10 @@ namespace DataAccess.Implement {
             return GetAll().FirstOrDefault(p => p.Id == id);
         }
 
+        public Address GetBuyerAddressInOrder(int buyerId, string address) {
+            return GetAll().FirstOrDefault(p => p.CustomerId == buyerId && address.Contains(p.Street));
+        }
+
         public IQueryable<Address> GetByCustomerId(int id) {
             return GetAll().Where(p => p.CustomerId == id);
         }

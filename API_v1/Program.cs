@@ -25,9 +25,10 @@ var emailConfig = builder.Configuration
 builder.Services.AddSingleton(emailConfig);
 
 builder.Services.AddControllers();
+builder.Services.AddMvc();
 builder.Services.AddHttpClient("GHN", httpClient => {
     httpClient.BaseAddress = new Uri(builder.Configuration["API3rdParty:GHN:dev:url"]);
-    httpClient.DefaultRequestHeaders.Add("token", builder.Configuration["API3rdParty:GHN:token"]);
+    httpClient.DefaultRequestHeaders.Add("token", builder.Configuration["API3rdParty:GHN:dev:token"]);
 });
 builder.Services.AddHttpClient("Zalopay", httpClient => {
     httpClient.BaseAddress = new Uri(builder.Configuration["API3rdParty:Zalopay:dev"]);
@@ -118,6 +119,7 @@ builder.Services.AddScoped<ITransactionDAO, TransactionDAO>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IVerifyTokenDAO, VerifyTokenDAO>();
 
 //JWT authentication
 builder.Services.AddAuthentication(x => {
