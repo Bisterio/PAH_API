@@ -305,7 +305,7 @@ namespace API.Controllers
             });
         }
 
-        [HttpPatch("updateprofile")]
+        [HttpGet("updateprofile")]
         [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult UpdateUser([FromBody] UpdateProfileRequest request) {
             var userId = GetUserIdFromToken();
