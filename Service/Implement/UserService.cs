@@ -283,7 +283,7 @@ namespace Service.Implement {
             }
 
             user.Name = request.Name;
-            user.Password = BC.EnhancedHashPassword(request.Password, WORK_FACTOR);
+            //user.Password = BC.EnhancedHashPassword(request.Password, WORK_FACTOR);
             user.Phone = request.Phone;
             user.ProfilePicture = request.ProfilePicture;
             user.Gender = request.Gender;
