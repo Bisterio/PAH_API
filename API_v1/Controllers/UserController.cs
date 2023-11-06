@@ -305,7 +305,7 @@ namespace API.Controllers
             });
         }
 
-        [HttpGet("updateprofile")]
+        [HttpPost("profile")]
         [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult UpdateUser([FromBody] UpdateProfileRequest request) {
             var userId = GetUserIdFromToken();
@@ -313,6 +313,30 @@ namespace API.Controllers
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = "Update profile successfully",
+                Data = null
+            });
+        }
+
+
+        [HttpPost("password")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
+        public IActionResult ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            _userService.ChangePassword(request, user.Email);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Change password successfully",
                 Data = null
             });
         }

@@ -264,7 +264,7 @@ namespace Service.Implement
             }
         }
 
-        public void StaffSetAuctionTime(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt,
+        public void StaffSetAuctionInfo(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt,
             decimal step)
         {
             if (id == null)

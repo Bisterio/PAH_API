@@ -630,8 +630,8 @@ namespace API.Controllers
             });
         }
 
-        [HttpPost("staff/time/{id}")]
-        public IActionResult StaffSetAuctionTime(int id, [FromBody] AuctionDateRequest request)
+        [HttpPost("staff/info/{id}")] // cai api nay can sua lai endpoint
+        public IActionResult StaffSetAuctionInfo(int id, [FromBody] AuctionDateRequest request)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -643,7 +643,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            _auctionService.StaffSetAuctionTime(id,
+            _auctionService.StaffSetAuctionInfo(id,
                 (DateTime)request.RegistrationStart,
                 (DateTime)request.RegistrationEnd,
                 (DateTime)request.StartedAt,

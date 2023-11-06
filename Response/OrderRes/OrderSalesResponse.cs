@@ -1,7 +1,13 @@
-﻿using Respon.UserRes;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Respon.OrderRes {
-    public class OrderResponse {
+namespace Respon.OrderRes
+{
+    public class OrderSalesResponse
+    {
         public int Id { get; set; }
         public int? BuyerId { get; set; }
         public int? SellerId { get; set; }
@@ -13,8 +19,5 @@ namespace Respon.OrderRes {
         public decimal? ShippingCost { get; set; }
         public string? OrderShippingCode { get; set; }
         public int Status { get; set; }
-
-        public virtual SellerResponse? Seller { get; set; }
-        public virtual ICollection<OrderItemResponse> OrderItems { get; set; }
     }
 }

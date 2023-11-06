@@ -32,6 +32,7 @@ namespace Service {
         public void RemoveRefreshToken(int id);
 
         public void AddResetToken(int id, string token);
+        public void ChangePassword(ChangePasswordRequest request, string email);
         public void ResetPassword(ResetPasswordRequest request);
         public void VerifyAccount(string email, string code);
         public string CreateVerificationCode(string email);

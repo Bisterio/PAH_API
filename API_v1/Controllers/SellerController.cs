@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.IISIntegration;
 using Request;
 using Respon;
+using Respon.OrderRes;
 using Respon.SellerRes;
 using Service;
 using System.Net;
@@ -180,6 +181,37 @@ namespace API.Controllers
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get seller requests successfully",
                 Data = responses
+            });
+        }
+
+        [Authorize]
+        [HttpGet("sales")]
+        public IActionResult GetSalesFromCurrentSeller()
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || (user.Role != (int)Role.Seller))
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            var sales = _sellerService.GetSalesCurrentSeller(userId);
+            var orderList = _sellerService.GetOrdersThreeMonthsCurrentSeller(userId);
+            List<OrderSalesResponse> mappedList = _mapper.Map<List<OrderSalesResponse>>(orderList);
+            SellerSalesResponse response = new SellerSalesResponse()
+            {
+                TotalSales = sales,
+                OrderList = mappedList
+            };
+
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get sales of current seller successfully",
+                Data = response
             });
         }
     }

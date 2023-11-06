@@ -53,11 +53,15 @@ namespace API.Controllers {
 
         [HttpPost]
         [AllowAnonymous]
-        [Route("/api/login")]
-        public IActionResult Login([FromBody] LoginRequest request) {
+        [Route("/api/customer/login")]
+        public IActionResult LoginCustomer([FromBody] LoginRequest request) {
             var user = _userService.Login(request.Email, request.Password);
             if (user == null) {
-                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Email or password is incorrect" });
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Email hoặc mật khẩu không chính xác" });
+            }
+            else if (user.Role != (int)Role.Buyer && user.Role != (int)Role.Seller)
+            {
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Nhân viên PAH hãy đăng nhập bằng trang hệ thống" });
             }
             if (user.Status == (int) Status.Unverified) {
                 return Unauthorized(new ErrorDetails { 
@@ -70,13 +74,43 @@ namespace API.Controllers {
 
         [HttpPost]
         [AllowAnonymous]
+        [Route("/api/staff/login")]
+        public IActionResult LoginStaff([FromBody] LoginRequest request)
+        {
+            var user = _userService.Login(request.Email, request.Password);
+            if (user == null)
+            {
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Email hoặc mật khẩu không chính xác" });
+            }
+            else if (user.Role != (int)Role.Staff && user.Role != (int)Role.Manager && user.Role != (int)Role.Administrator)
+            {
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Quý khách vui lòng đăng nhập bằng trang dành cho khách hàng" });
+            }
+            if (user.Status == (int)Status.Unverified)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = 401,
+                    Message = "This account need to be verified first"
+                });
+            }
+            var token = _userService.AddRefreshToken(user.Id);
+            return Ok(new BaseResponse { Code = 200, Message = "Login successfully", Data = token });
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
         [Route("/api/login/google")]
         public IActionResult LoginWithGoogle([FromBody] LoginGoogleRequest request)
         {
             var user = _userService.LoginWithGoogle(request.Email, request.Name, request.ProfilePicture);
             if (user == null)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Email or password is incorrect" });
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Email hoặc mật khẩu không chính xác" });
+            }
+            else if(user.Role != (int)Role.Buyer && user.Role != (int)Role.Seller)
+            {
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Nhân viên PAH hãy đăng nhập bằng trang hệ thống" });
             }
             var token = _userService.AddRefreshToken(user.Id);
             return Ok(new BaseResponse { Code = 200, Message = "Login successfully", Data = token });
@@ -117,7 +151,7 @@ namespace API.Controllers {
                 Data = null });
         }
 
-        [HttpPost("/api/forgotpassword")]
+        [HttpPost("/api/password/forgot")]
         [AllowAnonymous]
         [ServiceFilter(typeof(ValidateModelAttribute))]
         public async Task<IActionResult> SendEmailResetPasswordAsync([FromBody] ForgotPasswordRequest request) {
@@ -141,7 +175,7 @@ namespace API.Controllers {
             });
         }
 
-        [HttpPost("/api/resetpassword")]
+        [HttpPost("/api/password/reset")]
         [ServiceFilter(typeof(ValidateModelAttribute))]
         [AllowAnonymous]
         public IActionResult ResetPassword([FromBody] ResetPasswordRequest request) {
@@ -153,14 +187,14 @@ namespace API.Controllers {
             });
         }
 
-        [HttpGet("/api/verifyaccount/{email}/{code}", Name = "Verify account")]
+        [HttpGet("/api/verify/{email}/{code}", Name = "Verify account")]
         [AllowAnonymous]
         public IActionResult Verify([FromRoute] VerificationRequest request) {
             _userService.VerifyAccount(request.Email, request.Code);
             return Redirect("/mvc/verify");
         }
         
-        [HttpGet("/api/verifyaccount/{email}/resend")]
+        [HttpGet("/api/verify/{email}/resend")]
         [AllowAnonymous]
         public IActionResult ResendVerificationCode(string email) {
             _userService.CreateVerificationCode(email);

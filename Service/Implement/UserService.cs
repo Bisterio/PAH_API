@@ -257,6 +257,29 @@ namespace Service.Implement {
             }
         }
 
+        public void ChangePassword(ChangePasswordRequest request, string email)
+        {
+            if (request.NewPassword.Equals(request.OldPassword))
+            {
+                throw new Exception("400: New password must be different from old password");
+            }
+
+            var user = _userDAO.GetByEmail(email);
+            if (user != null)
+            {
+                var verifyPassword = BC.EnhancedVerify(request.OldPassword, user.Password);
+                if (!verifyPassword) throw new Exception("400: Old password is not correct");
+            }
+            else
+            {
+                throw new Exception("404: User not found when change password");
+            }
+
+            user.Password = BC.EnhancedHashPassword(request.NewPassword, WORK_FACTOR);
+            user.UpdatedAt = DateTime.Now;
+            _userDAO.Update(user);
+        }
+
         public void ResetPassword(ResetPasswordRequest request) {
             var user = _userDAO.GetByEmail(request.Email);
             if (user == null) {
