@@ -12,8 +12,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service.Implement {
-    public class UserService : IUserService {
+namespace Service.Implement
+{
+    public class UserService : IUserService
+    {
         private readonly IUserDAO _userDAO;
         private readonly ITokenDAO _tokenDAO;
         private readonly IBuyerDAO _buyerDAO;
@@ -25,10 +27,11 @@ namespace Service.Implement {
         private readonly int WORK_FACTOR = 13;
         private static readonly string DEFAULT_AVT = "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg";
 
-        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO, 
-            ITokenService tokenService, IBuyerDAO buyerDAO, 
+        public UserService(IUserDAO userDAO, ITokenDAO tokenDAO,
+            ITokenService tokenService, IBuyerDAO buyerDAO,
             IWalletDAO walletDAO, ISellerDAO sellerDAO, IVerifyTokenDAO verifyTokenDAO,
-            IEmailService emailService) {
+            IEmailService emailService)
+        {
             _userDAO = userDAO;
             _tokenDAO = tokenDAO;
             _tokenService = tokenService;
@@ -39,15 +42,18 @@ namespace Service.Implement {
             _emailService = emailService;
         }
 
-        public User Get(int id) {
+        public User Get(int id)
+        {
             return _userDAO.Get(id);
         }
 
-        public List<User> GetAll() {
+        public List<User> GetAll()
+        {
             return _userDAO.GetAll().ToList();
         }
 
-        public User GetByEmail(string email) {
+        public User GetByEmail(string email)
+        {
             return _userDAO.GetByEmail(email);
         }
 
@@ -64,7 +70,7 @@ namespace Service.Implement {
 
         public void Deactivate(User user)
         {
-            if(user.Status == (int)Status.Unavailable)
+            if (user.Status == (int)Status.Unavailable)
             {
                 throw new Exception("400: This user has already deactivated");
             }
@@ -83,7 +89,7 @@ namespace Service.Implement {
 
         public void AcceptSeller(Seller seller)
         {
-            if(seller.Status != (int)SellerStatus.Pending)
+            if (seller.Status != (int)SellerStatus.Pending)
             {
                 throw new Exception("400: This seller request has been approved");
             }
@@ -104,9 +110,9 @@ namespace Service.Implement {
         public List<User> GetAvailableStaffs()
         {
             var availableStaffs = _userDAO.GetAll()
-                .Where(u => u.Role == (int)Role.Staff 
-                && u.Auctions.All(a => a.Status != (int)AuctionStatus.Assigned 
-                && a.Status != (int)AuctionStatus.RegistrationOpen 
+                .Where(u => u.Role == (int)Role.Staff
+                && u.Auctions.All(a => a.Status != (int)AuctionStatus.Assigned
+                && a.Status != (int)AuctionStatus.RegistrationOpen
                 && a.Status != (int)AuctionStatus.Opened))
                 .ToList();
             return availableStaffs;
@@ -117,22 +123,26 @@ namespace Service.Implement {
             return _userDAO.GetAll().Where(u => u.Status == (int)Status.Unavailable).ToList();
         }
 
-        public User Login(string email, string password) {
+        public User Login(string email, string password)
+        {
             var user = _userDAO.GetByEmail(email);
-            if (user != null) {
+            if (user != null)
+            {
                 var verifyPassword = BC.EnhancedVerify(password, user.Password);
                 if (!verifyPassword) return null;
 
                 //Create buyer
                 var buyer = _buyerDAO.Get(user.Id);
-                if (buyer == null) {
+                if (buyer == null)
+                {
                     _buyerDAO.Create(new Buyer { Id = user.Id, JoinedAt = DateTime.Now });
                 }
 
                 //Create wallet
                 var wallet = _walletDAO.GetWithoutStatus(user.Id);
-                if (wallet == null) {
-                    _walletDAO.Create(new Wallet { Id = user.Id, AvailableBalance = 0, LockedBalance = 0, Status = (int) Status.Available });
+                if (wallet == null)
+                {
+                    _walletDAO.Create(new Wallet { Id = user.Id, AvailableBalance = 0, LockedBalance = 0, Status = (int)Status.Available });
                 }
             }
             return user;
@@ -180,15 +190,17 @@ namespace Service.Implement {
             return user;
         }
 
-        public void Register(User user) {
+        public void Register(User user)
+        {
             var dbUser = _userDAO.GetByEmail(user.Email);
-            if (dbUser != null) {
+            if (dbUser != null)
+            {
                 throw new Exception("409: Email already exists");
             }
 
             user.Password = BC.EnhancedHashPassword(user.Password, WORK_FACTOR);
-            user.Role = (int) Role.Buyer;
-            user.Status = (int) Status.Unverified;
+            user.Role = (int)Role.Buyer;
+            user.Status = (int)Status.Unverified;
             user.CreatedAt = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
             user.ProfilePicture = DEFAULT_AVT;
@@ -198,61 +210,80 @@ namespace Service.Implement {
             //CreateVerificationCode(newUser.Email);
         }
 
-        private void CreateBuyer(int userId) {
+        private void CreateBuyer(int userId)
+        {
             var buyer = _buyerDAO.Get(userId);
-            if (buyer == null) {
+            if (buyer == null)
+            {
                 _buyerDAO.Create(new Buyer { Id = userId, JoinedAt = DateTime.Now });
-            } else {
+            }
+            else
+            {
                 buyer.JoinedAt = DateTime.Now;
                 _buyerDAO.Update(buyer);
             }
         }
 
-        private void CreateWallet(int userId) {
+        private void CreateWallet(int userId)
+        {
             var wallet = _walletDAO.GetWithoutStatus(userId);
-            if (wallet == null) {
-                _walletDAO.Create(new Wallet { Id = userId, AvailableBalance = 0, LockedBalance = 0, Status = (int) Status.Available });
-            } else {
+            if (wallet == null)
+            {
+                _walletDAO.Create(new Wallet { Id = userId, AvailableBalance = 0, LockedBalance = 0, Status = (int)Status.Available });
+            }
+            else
+            {
                 wallet.AvailableBalance = 0;
                 wallet.LockedBalance = 0;
-                wallet.Status = (int) Status.Available;
+                wallet.Status = (int)Status.Available;
                 _walletDAO.Update(wallet);
             }
         }
 
-        public Tokens AddRefreshToken(int id) {
+        public Tokens AddRefreshToken(int id)
+        {
             var token = new Tokens { AccessToken = _tokenService.GenerateAccessToken(id), RefreshToken = _tokenService.GenerateRefreshToken() };
             var dbToken = _tokenDAO.Get(id);
-            if (dbToken != null) {
+            if (dbToken != null)
+            {
                 dbToken.RefreshToken = token.RefreshToken;
                 dbToken.ExpiryTime = DateTime.Now.AddDays(7);
                 _tokenDAO.UpdateToken(dbToken);
-            } else {
+            }
+            else
+            {
                 _tokenDAO.Add(new Token { Id = id, RefreshToken = token.RefreshToken, ExpiryTime = DateTime.Now.AddDays(7) });
             }
             return token;
         }
 
-        public Token GetSavedRefreshToken(int id, string refreshToken) {
+        public Token GetSavedRefreshToken(int id, string refreshToken)
+        {
             return _tokenDAO.GetSavedRefreshToken(id, refreshToken);
         }
 
-        public void RemoveRefreshToken(int id) {
+        public void RemoveRefreshToken(int id)
+        {
             var token = _tokenDAO.Get(id);
-            if (token != null) {
+            if (token != null)
+            {
                 token.RefreshToken = null;
                 token.ExpiryTime = null;
                 _tokenDAO.UpdateToken(token);
             }
         }
 
-        public void AddResetToken(int id, string token) {
+        public void AddResetToken(int id, string token)
+        {
             var dbToken = _tokenDAO.Get(id);
-            if (dbToken != null) {
+            if (dbToken != null)
+            {
                 dbToken.RefreshToken = token;
                 dbToken.ExpiryTime = DateTime.Now.AddMinutes(30);
                 _tokenDAO.UpdateToken(dbToken);
-            } else {
+            }
+            else
+            {
                 _tokenDAO.Add(new Token { Id = id, RefreshToken = token, ExpiryTime = DateTime.Now.AddMinutes(30) });
             }
         }
@@ -280,14 +311,17 @@ namespace Service.Implement {
             _userDAO.Update(user);
         }
 
-        public void ResetPassword(ResetPasswordRequest request) {
+        public void ResetPassword(ResetPasswordRequest request)
+        {
             var user = _userDAO.GetByEmail(request.Email);
-            if (user == null) {
+            if (user == null)
+            {
                 throw new Exception("404: User not found when reset password");
             }
 
             var token = _tokenDAO.GetResetToken(user.Id, request.Token, DateTime.Now);
-            if (token == null) {
+            if (token == null)
+            {
                 throw new Exception("401: Token not correct");
             }
 
@@ -299,9 +333,11 @@ namespace Service.Implement {
             _tokenDAO.UpdateToken(token);
         }
 
-        public void UpdateProfile(int id, UpdateProfileRequest request) {
+        public void UpdateProfile(int id, UpdateProfileRequest request)
+        {
             var user = _userDAO.Get(id);
-            if (user == null) {
+            if (user == null)
+            {
                 throw new Exception("404: User not found");
             }
 
@@ -315,28 +351,33 @@ namespace Service.Implement {
             _userDAO.Update(user);
         }
 
-        public void VerifyAccount(string email, string code) {
+        public void VerifyAccount(string email, string code)
+        {
             var user = _userDAO.GetByEmail(email);
-            if (user == null) {
+            if (user == null)
+            {
                 throw new Exception("404: This email does not exist");
             }
-            if (user.Status != (int) Status.Unverified) {
+            if (user.Status != (int)Status.Unverified)
+            {
                 throw new Exception("401: This account cannot be verified");
             }
             var verifyToken = _verifyTokenDAO.Get(user.Id);
-            if (verifyToken == null) {
+            if (verifyToken == null)
+            {
                 throw new Exception("404: This account does not have verification token");
             }
 
-            if (verifyToken.ExpirationDate < DateTime.Now || !verifyToken.Code.Equals(code)) {
+            if (verifyToken.ExpirationDate < DateTime.Now || !verifyToken.Code.Equals(code))
+            {
                 throw new Exception("401: Verification token is invalid, please send another verification code");
             }
 
             //Update user and token
-            user.Status = (int) Status.Available;
+            user.Status = (int)Status.Available;
             user.UpdatedAt = DateTime.Now;
             _userDAO.Update(user);
-            verifyToken.Status = (int) Status.Unavailable;
+            verifyToken.Status = (int)Status.Unavailable;
             _verifyTokenDAO.Update(verifyToken);
 
             //Create buyer
@@ -346,33 +387,40 @@ namespace Service.Implement {
             CreateWallet(user.Id);
         }
 
-        public string CreateVerificationCode(string email) {
+        public string CreateVerificationCode(string email)
+        {
             var user = _userDAO.GetByEmail(email);
-            if (user == null) {
+            if (user == null)
+            {
                 throw new Exception($"404: User with {email} not found");
             }
             var verifyToken = _verifyTokenDAO.Get(user.Id);
-            if(verifyToken.Status != (int)Status.Available)
-            {
-                throw new Exception($"400: Email này đã được xác nhận rồi");
-            }
 
-            if (verifyToken != null) {
+            if (verifyToken != null)
+            {
+                if (verifyToken.Status != (int)Status.Available)
+                {
+                    throw new Exception($"400: Email này đã được xác nhận rồi");
+                }
                 verifyToken.Code = _tokenService.GenerateVerifyToken(40);
                 verifyToken.ExpirationDate = DateTime.Now.AddDays(3);
-                verifyToken.Status = (int) Status.Available;
+                verifyToken.Status = (int)Status.Available;
                 _verifyTokenDAO.Update(verifyToken);
-            } else {
-                _verifyTokenDAO.Create(new VerifyToken {
+            }
+            else
+            {
+                _verifyTokenDAO.Create(new VerifyToken
+                {
                     Id = user.Id,
                     Code = _tokenService.GenerateVerifyToken(40),
                     ExpirationDate = DateTime.Now.AddDays(3),
-                    Status = (int) Status.Available
+                    Status = (int)Status.Available
                 });
             }
 
             var newToken = _verifyTokenDAO.Get(user.Id);
-            if (newToken == null) {
+            if (newToken == null)
+            {
                 throw new Exception($"500: Token creation unsuccessful");
             }
             return newToken.Code;
