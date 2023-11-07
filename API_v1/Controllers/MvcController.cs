@@ -6,5 +6,11 @@ namespace API.Controllers {
         public IActionResult Index() {
             return View("/View/Mvc/Index.cshtml");
         }
+
+        [HttpGet("/mvc/error")]
+        public IActionResult Error()
+        {
+            return View("/View/Mvc/Error.cshtml");
+        }
     }
 }

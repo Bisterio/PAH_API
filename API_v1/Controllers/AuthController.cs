@@ -190,14 +190,25 @@ namespace API.Controllers {
         [HttpGet("/api/verify/{email}/{code}", Name = "Verify account")]
         [AllowAnonymous]
         public IActionResult Verify([FromRoute] VerificationRequest request) {
-            _userService.VerifyAccount(request.Email, request.Code);
+            try
+            {
+                _userService.VerifyAccount(request.Email, request.Code);
+            }
+            catch
+            {
+               return Redirect("/mvc/error");
+            }
+            
             return Redirect("/mvc/verify");
         }
         
         [HttpGet("/api/verify/{email}/resend")]
         [AllowAnonymous]
-        public IActionResult ResendVerificationCode(string email) {
-            _userService.CreateVerificationCode(email);
+        public async Task<IActionResult> ResendVerificationCode(string email) {
+            var code = _userService.CreateVerificationCode(email);
+            var link = Url.Link("Verify account", new { email = email, code = code });
+            var message = new Message(new string[] { email }, "PAH email verification", $"Click on this link to verify your account: " + link);
+            await _emailService.SendEmail(message);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = "Verification code sent successfully",

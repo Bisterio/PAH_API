@@ -352,6 +352,11 @@ namespace Service.Implement {
                 throw new Exception($"404: User with {email} not found");
             }
             var verifyToken = _verifyTokenDAO.Get(user.Id);
+            if(verifyToken.Status != (int)Status.Available)
+            {
+                throw new Exception($"400: Email này đã được xác nhận rồi");
+            }
+
             if (verifyToken != null) {
                 verifyToken.Code = _tokenService.GenerateVerifyToken(40);
                 verifyToken.ExpirationDate = DateTime.Now.AddDays(3);

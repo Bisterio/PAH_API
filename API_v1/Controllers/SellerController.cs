@@ -199,12 +199,12 @@ namespace API.Controllers
                 });
             }
             var sales = _sellerService.GetSalesCurrentSeller(userId);
-            var orderList = _sellerService.GetOrdersThreeMonthsCurrentSeller(userId);
-            List<OrderSalesResponse> mappedList = _mapper.Map<List<OrderSalesResponse>>(orderList);
+            //var orderList = _sellerService.GetOrdersThreeMonthsCurrentSeller(userId);
+            //List<OrderSalesResponse> mappedList = _mapper.Map<List<OrderSalesResponse>>(orderList);
             SellerSalesResponse response = new SellerSalesResponse()
             {
                 TotalSales = sales,
-                OrderList = mappedList
+                //OrderList = mappedList
             };
 
             return Ok(new BaseResponse

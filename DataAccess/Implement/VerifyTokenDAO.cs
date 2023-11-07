@@ -11,7 +11,7 @@ namespace DataAccess.Implement {
         }
 
         public VerifyToken Get(int id) {
-            return GetAll().FirstOrDefault(p => p.Id == id && p.Status == (int) Status.Available);
+            return GetAll().FirstOrDefault(p => p.Id == id);
         }
     }
 }
