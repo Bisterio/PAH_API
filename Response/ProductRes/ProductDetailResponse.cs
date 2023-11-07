@@ -14,6 +14,8 @@
         public int Condition { get; set; }
         public int Type { get; set; }
         public decimal? Ratings { get; set; }
+        public int? CategoryId { get; set; }
+        public int? MaterialId { get; set; }
         public string CategoryName { get; set; }
         public string MaterialName { get; set; }
         public string SellerName { get; set; }
