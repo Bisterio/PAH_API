@@ -10,6 +10,10 @@ namespace Respon.SellerRes
     public class SellerSalesResponse
     {
         public decimal TotalSales { get; set; }
-        public List<OrderSalesResponse> OrderList { get; set; }
+        public int SellingProduct {  get; set; }
+        public int ProcessingOrders { get; set; }
+        public int DoneOrders { get; set; }
+        public int TotalOrders { get; set; }
+        public int TotalAuctions { get; set; }
     }
 }

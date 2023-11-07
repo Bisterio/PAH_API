@@ -186,6 +186,10 @@ namespace Service.Implement {
             return a;
         }
 
+        public List<Order> GetProcessingBySellerId(int sellerId)
+        {
+            return _orderDAO.GetAllBySellerId(sellerId).Where(o => o.Status < (int)OrderStatus.Done || o.Status == (int)OrderStatus.CancelApprovalPending).ToList();
+        }
 
         public Order UpdateOrderStatus(int sellerId, int status, int orderId) {
             var order = _orderDAO.Get(orderId);

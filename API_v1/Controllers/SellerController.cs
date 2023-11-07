@@ -22,14 +22,21 @@ namespace API.Controllers
         private readonly IUserService _userService;
         private readonly ISellerService _sellerService;
         private readonly IAddressService _addressService;
+        private readonly IProductService _productService;
+        private readonly IOrderService _orderService;
+        private readonly IAuctionService _auctionService;
         private readonly IMapper _mapper;
 
-        public SellerController(IUserService userService, ISellerService sellerService, IMapper mapper, IAddressService addressService)
+        public SellerController(IUserService userService, ISellerService sellerService, IMapper mapper, IAddressService addressService, 
+            IProductService productService, IOrderService orderService, IAuctionService auctionService)
         {
             _userService = userService;
             _sellerService = sellerService;
             _mapper = mapper;
             _addressService = addressService;
+            _productService = productService;
+            _orderService = orderService;
+            _auctionService = auctionService;
         }
 
         private int GetUserIdFromToken()
@@ -185,8 +192,8 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet("sales")]
-        public IActionResult GetSalesFromCurrentSeller()
+        [HttpGet("dashboard")]
+        public IActionResult GetDashboardFromCurrentSeller()
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -199,12 +206,20 @@ namespace API.Controllers
                 });
             }
             var sales = _sellerService.GetSalesCurrentSeller(userId);
-            //var orderList = _sellerService.GetOrdersThreeMonthsCurrentSeller(userId);
-            //List<OrderSalesResponse> mappedList = _mapper.Map<List<OrderSalesResponse>>(orderList);
+            var sellingProducts = _productService.GetProductsBySellerId(userId)
+                .Where(p => p.Status == (int)Status.Available && p.Type == (int)ProductType.ForSale).Count();
+            var doneOrders = _orderService.GetBySellerId(userId, (int)OrderStatus.Done).Count();
+            var processingOrders = _orderService.GetProcessingBySellerId(userId).Count();
+            var totalOrders = _orderService.GetBySellerId(userId, 0).Count();
+            var totalAuctions = _auctionService.GetAuctionBySellerId(userId, -1).Count();
             SellerSalesResponse response = new SellerSalesResponse()
             {
                 TotalSales = sales,
-                //OrderList = mappedList
+                SellingProduct = sellingProducts,
+                ProcessingOrders = processingOrders,
+                DoneOrders = doneOrders,
+                TotalOrders = totalOrders,
+                TotalAuctions = totalAuctions,
             };
 
             return Ok(new BaseResponse

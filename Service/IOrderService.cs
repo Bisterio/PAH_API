@@ -17,6 +17,7 @@ namespace Service {
 
         public List<Order> GetByBuyerId(int buyerId, int status);
         public List<Order> GetBySellerId(int sellerId, int status);
+        public List<Order> GetProcessingBySellerId(int sellerId);
         public List<Order> GetAll(int status);
         public Order Get(int orderId);
 
