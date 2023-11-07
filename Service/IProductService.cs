@@ -14,6 +14,6 @@ namespace Service
         public List<Product> GetProductsBySellerId(int sellerId);
         public int CreateProduct(Product product, Auction auction);
         public Product UpdateProduct(int id, Product product, Auction auction);
-        public Product DeleteProduct(int id);
+        public Product DeleteProduct(int id, int sellerId);
     }
 }

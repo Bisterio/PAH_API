@@ -93,6 +93,42 @@ namespace API.Controllers
             });
         }
 
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            var seller = _sellerService.GetSeller(id);
+            var address = _addressService.GetPickupBySellerId(id);
+
+            SellerDetailResponse response = _mapper.Map<SellerDetailResponse>(new Seller());
+
+            if (seller != null)
+            {
+                response.Id = seller.Id;
+                response.Name = seller.Name;
+                response.Phone = seller.Phone;
+                response.ProfilePicture = seller.ProfilePicture;
+                response.RegisteredAt = seller.RegisteredAt;
+                response.Ratings = seller.Ratings;
+                response.Status = seller.Status;
+                response.RecipientName = address.RecipientName;
+                response.RecipientPhone = address.RecipientPhone;
+                response.Province = address.Province;
+                response.ProvinceId = address.ProvinceId;
+                response.District = address.District;
+                response.DistrictId = address.DistrictId;
+                response.Ward = address.Ward;
+                response.WardCode = address.WardCode;
+                response.Street = address.Street;
+            }
+
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get seller successfully",
+                Data = response
+            });
+        }
+
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> SellerRequest([FromBody] SellerRequest request)

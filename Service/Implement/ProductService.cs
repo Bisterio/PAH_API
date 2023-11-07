@@ -161,11 +161,15 @@ namespace Service.Implement
             return currentProduct;
         }
 
-        public Product DeleteProduct(int id)
+        public Product DeleteProduct(int id, int sellerId)
         {
             if (id == null) throw new Exception("404: Product not found");
 
             Product currentProduct = _productDAO.GetProductById(id);
+            if(currentProduct.SellerId != sellerId)
+            {
+                throw new Exception("400: This product is not your product.");
+            }
 
             if (currentProduct.Type == (int)ProductType.Auction)
             {
