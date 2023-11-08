@@ -456,9 +456,37 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            List<Auction> auctionList = _auctionService.GetAuctionDoneAssignedByMonths(userId, month);
+            List<Auction> auctionList = _auctionService.GetAuctionsDoneAssignedByMonths(userId, month);
             List<AuctionListEndedResponse> mappedList = _mapper.Map<List<AuctionListEndedResponse>>(auctionList);
             foreach(var item in mappedList)
+            {
+                item.NumberOfBidders = _bidService.GetNumberOfBids(item.Id);
+            }
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get auctions ended successfully",
+                Data = mappedList
+            });
+        }
+
+        [Authorize]
+        [HttpGet("manager/ended")]
+        public IActionResult GetAuctionsEndedAllStaff([FromBody] int month)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Manager)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            List<Auction> auctionList = _auctionService.GetAuctionsDoneByMonths(month);
+            List<AuctionListEndedResponse> mappedList = _mapper.Map<List<AuctionListEndedResponse>>(auctionList);
+            foreach (var item in mappedList)
             {
                 item.NumberOfBidders = _bidService.GetNumberOfBids(item.Id);
             }

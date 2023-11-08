@@ -19,7 +19,8 @@ namespace Service
         public List<Auction> GetAuctionJoined(int bidderId);
         public List<Auction> GetAuctionJoinedByStatus(int status, int bidderId);
         public List<Auction> GetAuctionBySellerId(int sellerId, int status);
-        public List<Auction> GetAuctionDoneAssignedByMonths(int staffId, int month);
+        public List<Auction> GetAuctionsDoneAssignedByMonths(int staffId, int month);
+        public List<Auction> GetAuctionsDoneByMonths(int month);
         public Bid EndAuction(int auctionId);
         public void CreateAuction(Auction auction);
         public void AssignStaff(int id, int staffId);
