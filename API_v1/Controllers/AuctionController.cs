@@ -443,8 +443,8 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet("staff/ended")]
-        public IActionResult GetAuctionsEndedCurrentStaff([FromBody] int month)
+        [HttpGet("staff/ended/{month}")]
+        public IActionResult GetAuctionsEndedCurrentStaff([FromQuery] int month)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -471,8 +471,8 @@ namespace API.Controllers
         }
 
         [Authorize]
-        [HttpGet("manager/ended")]
-        public IActionResult GetAuctionsEndedAllStaff([FromBody] int month)
+        [HttpGet("manager/ended/{month}")]
+        public IActionResult GetAuctionsEndedAllStaff([FromQuery] int month)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
