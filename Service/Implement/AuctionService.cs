@@ -131,6 +131,20 @@ namespace Service.Implement
             return _auctionDAO.GetAuctionAssigned(staffId).ToList();
         }
 
+        public List<Auction> GetAuctionDoneAssignedByMonths(int staffId, int month)
+        {
+            if (staffId == null)
+            {
+                throw new Exception("404: Staff not found");
+            }
+            DateTime filterMonth = DateTime.Now.AddMonths(-month);
+            return _auctionDAO.GetAuctionAssigned(staffId)
+                .Where(a => (a.Status == (int)AuctionStatus.Ended 
+                || a.Status == (int)AuctionStatus.EndedWithoutBids)
+                && a.StartedAt >= filterMonth)
+                .ToList();
+        }
+
         public List<Auction> GetAuctionsByProductId(int productId)
         {
             if (productId == null)

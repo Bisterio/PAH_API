@@ -442,6 +442,34 @@ namespace API.Controllers
             });
         }
 
+        [Authorize]
+        [HttpGet("staff/ended")]
+        public IActionResult GetAuctionsEndedCurrentStaff([FromBody] int month)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Staff)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            List<Auction> auctionList = _auctionService.GetAuctionDoneAssignedByMonths(userId, month);
+            List<AuctionListEndedResponse> mappedList = _mapper.Map<List<AuctionListEndedResponse>>(auctionList);
+            foreach(var item in mappedList)
+            {
+                item.NumberOfBidders = _bidService.GetNumberOfBids(item.Id);
+            }
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get auctions ended successfully",
+                Data = mappedList
+            });
+        }
+
         [HttpPost]
         public IActionResult CreateAuction([FromBody] AuctionRequest request)
         {
