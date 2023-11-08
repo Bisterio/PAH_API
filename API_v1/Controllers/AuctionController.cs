@@ -444,7 +444,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpGet("staff/ended/{month}")]
-        public IActionResult GetAuctionsEndedCurrentStaff([FromQuery] int month)
+        public IActionResult GetAuctionsEndedCurrentStaff(int month)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -472,7 +472,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpGet("manager/ended/{month}")]
-        public IActionResult GetAuctionsEndedAllStaff([FromQuery] int month)
+        public IActionResult GetAuctionsEndedAllStaff(int month)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
