@@ -171,24 +171,26 @@ namespace Service.Implement
                 throw new Exception("400: This product is not your product.");
             }
 
-            if (currentProduct.Type == (int)ProductType.Auction)
-            {
-                List<Auction> auctionLists = _auctionDAO.GetAuctionsByProductId(id).ToList();
+            //if (currentProduct.Type == (int)ProductType.Auction)
+            //{
+            //    List<Auction> auctionLists = _auctionDAO.GetAuctionsByProductId(id).ToList();
 
-                foreach (Auction auction in auctionLists)
-                {
-                    if (auction.Status != (int)AuctionStatus.Pending)
-                    {
-                        throw new Exception("400: This product has an active auction.");
-                    }
-                    auction.Status = (int)AuctionStatus.Unavailable;
-                    auction.UpdatedAt = DateTime.Now;
-                    _auctionDAO.UpdateAuction(auction);
-                }
-                currentProduct.Status = (int)Status.Unavailable;
-                currentProduct.UpdatedAt = DateTime.Now;
-                _productDAO.UpdateProduct(currentProduct);
-            }
+            //    foreach (Auction auction in auctionLists)
+            //    {
+            //        if (auction.Status != (int)AuctionStatus.Pending)
+            //        {
+            //            throw new Exception("400: This product has an active auction.");
+            //        }
+            //        auction.Status = (int)AuctionStatus.Unavailable;
+            //        auction.UpdatedAt = DateTime.Now;
+            //        _auctionDAO.UpdateAuction(auction);
+            //    }
+            //}
+
+            currentProduct.Status = (int)Status.Unavailable;
+            currentProduct.UpdatedAt = DateTime.Now;
+            _productDAO.UpdateProduct(currentProduct);
+
             return currentProduct;
         }
     }
