@@ -260,6 +260,7 @@ namespace API.Controllers
             });
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public IActionResult RemoveProduct(int id)
         {
