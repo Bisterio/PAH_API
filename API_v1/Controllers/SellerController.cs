@@ -244,9 +244,9 @@ namespace API.Controllers
             var sales = _sellerService.GetSalesCurrentSeller(userId);
             var sellingProducts = _productService.GetProductsBySellerId(userId)
                 .Where(p => p.Status == (int)Status.Available && p.Type == (int)ProductType.ForSale).Count();
-            var doneOrders = _orderService.GetBySellerId(userId, (int)OrderStatus.Done).Count();
+            var doneOrders = _orderService.GetBySellerId(userId, new List<int>() { (int)OrderStatus.Done }).Count();
             var processingOrders = _orderService.GetProcessingBySellerId(userId).Count();
-            var totalOrders = _orderService.GetBySellerId(userId, 0).Count();
+            var totalOrders = _orderService.GetBySellerId(userId, new List<int>()).Count();
             var totalAuctions = _auctionService.GetAuctionBySellerId(userId, -1).Count();
             SellerSalesResponse response = new SellerSalesResponse()
             {
