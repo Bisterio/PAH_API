@@ -389,7 +389,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.HasKey(e => new { e.OrderId, e.ProductId })
-                    .HasName("PK__OrderIte__BAD83E4B5FA09F7E");
+                    .HasName("PK__OrderIte__BAD83E4B2DB0C8BE");
 
                 entity.ToTable("OrderItem");
 
@@ -523,7 +523,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<Response>(entity =>
             {
                 entity.HasKey(e => e.FeedbackId)
-                    .HasName("PK__Response__2613FD245838BD06");
+                    .HasName("PK__Response__2613FD24BD775A80");
 
                 entity.ToTable("Response");
 
@@ -756,6 +756,10 @@ namespace DataAccess.Models
                 entity.ToTable("Withdrawal");
 
                 entity.Property(e => e.Amount).HasColumnType("decimal(12, 1)");
+
+                entity.Property(e => e.Bank)
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.BankNumber)
                     .HasMaxLength(20)
