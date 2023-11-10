@@ -91,4 +91,10 @@ namespace DataAccess {
         Refund = 4,
         DoneOrder = 5
     }
+
+    public enum WithdrawalStatus {
+        Pending = 1,
+        Done = 2,
+        Rejected = 3
+    }
 }

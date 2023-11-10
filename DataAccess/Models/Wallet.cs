@@ -8,6 +8,7 @@ namespace DataAccess.Models
         public Wallet()
         {
             Transactions = new HashSet<Transaction>();
+            Withdrawals = new HashSet<Withdrawal>();
         }
 
         public int Id { get; set; }
@@ -17,5 +18,6 @@ namespace DataAccess.Models
 
         public virtual User IdNavigation { get; set; } = null!;
         public virtual ICollection<Transaction> Transactions { get; set; }
+        public virtual ICollection<Withdrawal> Withdrawals { get; set; }
     }
 }

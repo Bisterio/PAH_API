@@ -8,12 +8,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Request;
 using Request.Param;
 using Request.ThirdParty.GHN;
 using Respon;
 using Respon.OrderRes;
 using Service;
+using Service.EmailService;
 using System.Net;
 
 namespace API.Controllers
@@ -25,12 +27,14 @@ namespace API.Controllers
     public class OrderController : ControllerBase {
         private readonly IOrderService _orderService;
         private readonly IUserService _userService;
+        private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
 
-        public OrderController(IOrderService orderService, IUserService userService, IMapper mapper) {
+        public OrderController(IOrderService orderService, IUserService userService, IMapper mapper, IEmailService emailService) {
             _orderService = orderService;
             _userService = userService;
             _mapper = mapper;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -137,7 +141,7 @@ namespace API.Controllers
         }
 
         [HttpPut("/api/seller/order/cancelrequest/{orderId:int}")]
-        public IActionResult ApproveCancelRequest(int orderId, [FromBody] bool confirm) {
+        public async Task<IActionResult> ApproveCancelRequestAsync(int orderId, [FromBody] bool confirm) {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
 
@@ -150,6 +154,8 @@ namespace API.Controllers
             }
             if (confirm) {
                 _orderService.ApproveCancelOrderRequest(id, orderId);
+                var message = new Message(new string[] { user.Email }, $"Order #{orderId} updates", $"Your order cancellation has been approved");
+                await _emailService.SendEmail(message);
                 return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Approve cancel request successfully", Data = null });
             }
             //implement deny flow
@@ -188,12 +194,16 @@ namespace API.Controllers
             
             if (request.Status == (int)OrderStatus.CancelledBySeller) {
                 _orderService.SellerCancelOrder(id, orderId, request.message);
+                var message = new Message(new string[] { user.Email }, $"Order #{orderId} updates", $"Your order has been cancelled by seller\nReason: {request.message}");
+                await _emailService.SendEmail(message);
                 return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Cancel order successfully", Data = null });
             }
 
             if (request.Status == (int) OrderStatus.ReadyForPickup) {
                 _orderService.UpdateOrderStatus(id, request.Status, orderId);
                 await _orderService.CreateShippingOrder(orderId);
+                var message = new Message(new string[] { user.Email }, $"Order #{orderId} updates", $"Your order has been accepted by seller");
+                await _emailService.SendEmail(message);
                 return Ok(new BaseResponse { Code = (int) HttpStatusCode.OK, Message = "Confirm order successfully", Data = null });
             }
             return BadRequest(new ErrorDetails { StatusCode = (int) HttpStatusCode.BadRequest, Message = "Status not matching required information"});

@@ -9,6 +9,7 @@ namespace DataAccess.Models
         {
             Addresses = new HashSet<Address>();
             Auctions = new HashSet<Auction>();
+            Withdrawals = new HashSet<Withdrawal>();
         }
 
         public int Id { get; set; }
@@ -31,5 +32,6 @@ namespace DataAccess.Models
         public virtual Wallet? Wallet { get; set; }
         public virtual ICollection<Address> Addresses { get; set; }
         public virtual ICollection<Auction> Auctions { get; set; }
+        public virtual ICollection<Withdrawal> Withdrawals { get; set; }
     }
 }

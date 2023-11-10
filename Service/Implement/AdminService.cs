@@ -25,7 +25,7 @@ namespace Service.Implement {
             user.Password = BC.EnhancedHashPassword(user.Password, WORK_FACTOR);
             user.CreatedAt = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
-            user.Role = (int) Role.Staff;
+            //user.Role = (int) Role.Staff;
             user.Status = (int) Status.Available;
             user.ProfilePicture = DEFAULT_AVT;
             _userDAO.Register(user);
@@ -46,6 +46,7 @@ namespace Service.Implement {
             dbUser.ProfilePicture = user.ProfilePicture == null ? DEFAULT_AVT : user.ProfilePicture;
             dbUser.Gender = user.Gender;
             dbUser.Dob = user.Dob;
+            dbUser.Role = user.Role;
             dbUser.Status = user.Status;
             dbUser.UpdatedAt = DateTime.Now;
             _userDAO.Update(dbUser);

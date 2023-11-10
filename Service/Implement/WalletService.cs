@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Request.ThirdParty.Zalopay;
+using Request;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace Service.Implement
 {
@@ -14,13 +16,15 @@ namespace Service.Implement
         private readonly IWalletDAO _walletDAO;
         private readonly ITransactionDAO _transactionDAO;
         private readonly IOrderDAO _orderDAO;
+        private readonly IWithdrawalDAO _withdrawalDAO;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public WalletService(IWalletDAO walletDAO, ITransactionDAO transactionDAO, IHttpClientFactory httpClientFactory, IOrderDAO orderDAO) {
+        public WalletService(IWalletDAO walletDAO, ITransactionDAO transactionDAO, IHttpClientFactory httpClientFactory, IOrderDAO orderDAO, IWithdrawalDAO withdrawalDAO) {
             _walletDAO = walletDAO;
             _transactionDAO = transactionDAO;
             _httpClientFactory = httpClientFactory;
             _orderDAO = orderDAO;
+            _withdrawalDAO = withdrawalDAO;
         }
 
         public async Task Topup(int userId, TopupRequest topupRequest) {
@@ -175,6 +179,75 @@ namespace Service.Implement
                 Description = $"Done for order: {orderId}",
                 Status = (int) Status.Available
             });
+        }
+
+        public void CreateWithdrawal(int userId, WithdrawalRequest request) {
+            var wallet = _walletDAO.Get(userId);
+            if (wallet == null) {
+                throw new Exception("404: Wallet not found when creating withdrawal request");
+            }
+
+            if (wallet.AvailableBalance < request.Amount) {
+                throw new Exception("401: Wallet does not have enough balance to withdraw");
+            }
+            var withdrawal = new Withdrawal {
+                Amount = request.Amount,
+                WalletId = wallet.Id,
+                Bank = request.Bank,
+                BankNumber = request.BankNumber,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+                Status = (int) WithdrawalStatus.Pending
+            };
+            _withdrawalDAO.Create(withdrawal);
+        }
+
+        public void ApproveWithdrawal(int withdrawalId, int managerId) {
+            var withdrawal = _withdrawalDAO.Get(withdrawalId);
+            if (withdrawal == null) {
+                throw new Exception("404: Withdrawal Request not found");
+            }
+
+            var wallet = _walletDAO.Get(withdrawal.WalletId);
+            if (wallet == null) {
+                throw new Exception("404:: Wallet not found when processing withdrawal request");
+            }
+            if (wallet.AvailableBalance < withdrawal.Amount) {
+                throw new Exception("401: Wallet does not have enough balance to withdraw");
+            }
+
+            wallet.AvailableBalance -= withdrawal.Amount;
+            _walletDAO.Update(wallet);
+            var transaction = new Transaction {
+                WalletId = wallet.Id,
+                Amount = withdrawal.Amount,
+                Date = DateTime.Now,
+                PaymentMethod = (int) PaymentType.Wallet,
+                Type = (int) TransactionType.Withdraw,
+                Description = $"Withdrawal to Bank Number: {withdrawal.BankNumber} with amount: {withdrawal.Amount}",
+                Status = (int) Status.Available
+            };
+            _transactionDAO.Create(transaction);
+
+            withdrawal.Status = (int) WithdrawalStatus.Done;
+            withdrawal.ManagerId = managerId;
+            withdrawal.UpdatedAt = DateTime.Now;
+            _withdrawalDAO.Update(withdrawal);
+        }
+
+        public void DenyWithdrawal(int withdrawalId, int managerId) {
+            var withdrawal = _withdrawalDAO.Get(withdrawalId);
+            if (withdrawal == null) {
+                throw new Exception("404: Withdrawal Request not found");
+            }
+            withdrawal.Status = (int) WithdrawalStatus.Rejected;
+            withdrawal.UpdatedAt = DateTime.Now;
+            withdrawal.ManagerId = managerId;
+            _withdrawalDAO.Update(withdrawal);
+        }
+
+        public List<Withdrawal> GetWithdrawalByUserId(int userId) {
+            return _withdrawalDAO.GetByUserId(userId).ToList();
         }
     }
 }
