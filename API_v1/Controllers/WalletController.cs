@@ -111,6 +111,7 @@ namespace API.Controllers
         }
 
         [HttpPost("withdraw")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult Withdrawal([FromBody] WithdrawalRequest request) {
             var userId = GetUserIdFromToken();
             if (userId == null) {
@@ -173,6 +174,7 @@ namespace API.Controllers
         }
         
         [HttpPost("/api/manager/withdraw")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult UpdateWithdrawal([FromBody] UpdateWithdrawRequest request) {
             var userId = GetUserIdFromToken();
             if (userId == null) {
