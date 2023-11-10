@@ -24,5 +24,8 @@ namespace Request {
         public DateTime? Dob { get; set; }
         [Required]
         public int Status { get; set; }
+        [Required]
+        [Range(4,5)]
+        public int Role { get; set; }
     }
 }

@@ -9,6 +9,7 @@ namespace API.Mapper
         public WalletProfile() 
         { 
             CreateMap<Wallet, WalletCurrentUserResponse>();
+            CreateMap<Withdrawal, WithdrawalResponse>();
         }
     }
 }

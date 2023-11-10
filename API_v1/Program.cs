@@ -120,6 +120,7 @@ builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IVerifyTokenDAO, VerifyTokenDAO>();
+builder.Services.AddScoped<IWithdrawalDAO, WithdrawalDAO>();
 
 //JWT authentication
 builder.Services.AddAuthentication(x => {
