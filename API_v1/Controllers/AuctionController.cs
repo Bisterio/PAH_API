@@ -442,6 +442,94 @@ namespace API.Controllers
             });
         }
 
+        [Authorize]
+        [HttpGet("staff/ended/{month}")]
+        public IActionResult GetAuctionsEndedCurrentStaff(int month)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Staff)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            List<Auction> auctionList = _auctionService.GetAuctionsDoneAssignedByMonths(userId, month);
+            List<AuctionListEndedResponse> mappedList = _mapper.Map<List<AuctionListEndedResponse>>(auctionList);
+            foreach (var item in mappedList)
+            {
+                item.NumberOfBidders = _bidService.GetNumberOfBids(item.Id);
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
+                if (image == null)
+                {
+                    item.ImageUrl = null;
+                }
+                else
+                {
+                    item.ImageUrl = image.ImageUrl;
+                }
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
+            }
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get auctions ended successfully",
+                Data = mappedList
+            });
+        }
+
+        [Authorize]
+        [HttpGet("manager/ended/{month}")]
+        public IActionResult GetAuctionsEndedAllStaff(int month)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || user.Role != (int)Role.Manager)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            List<Auction> auctionList = _auctionService.GetAuctionsDoneByMonths(month);
+            List<AuctionListEndedResponse> mappedList = _mapper.Map<List<AuctionListEndedResponse>>(auctionList);
+            foreach (var item in mappedList)
+            {
+                item.NumberOfBidders = _bidService.GetNumberOfBids(item.Id);
+                ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
+                if (image == null)
+                {
+                    item.ImageUrl = null;
+                }
+                else
+                {
+                    item.ImageUrl = image.ImageUrl;
+                }
+
+                Bid highestBid = _bidService.GetHighestBidFromAuction(item.Id);
+                item.CurrentPrice = item.StartingPrice;
+                if (highestBid != null)
+                {
+                    item.CurrentPrice = highestBid.BidAmount;
+                }
+            }
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get auctions ended successfully",
+                Data = mappedList
+            });
+        }
+
         [HttpPost]
         public IActionResult CreateAuction([FromBody] AuctionRequest request)
         {
@@ -630,8 +718,8 @@ namespace API.Controllers
             });
         }
 
-        [HttpPost("staff/time/{id}")]
-        public IActionResult StaffSetAuctionTime(int id, [FromBody] AuctionDateRequest request)
+        [HttpPost("staff/info/{id}")] // cai api nay can sua lai endpoint
+        public IActionResult StaffSetAuctionInfo(int id, [FromBody] AuctionDateRequest request)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -643,7 +731,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            _auctionService.StaffSetAuctionTime(id,
+            _auctionService.StaffSetAuctionInfo(id,
                 (DateTime)request.RegistrationStart,
                 (DateTime)request.RegistrationEnd,
                 (DateTime)request.StartedAt,

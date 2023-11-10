@@ -8,6 +8,7 @@ namespace API.Mapper {
             CreateMap<Order, OrderResponse>();
             CreateMap<OrderItem, OrderItemResponse>().ForMember(dest => dest.ProductName, opt => opt.MapFrom(p => p.Product.Name));
             CreateMap<OrderItem, OrderItemResponse>().ForMember(dest => dest.ProductType, opt => opt.MapFrom(p => p.Product.Type));
+            CreateMap<Order, OrderSalesResponse>();
         }
     }
 }

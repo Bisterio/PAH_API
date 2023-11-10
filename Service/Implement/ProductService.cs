@@ -161,30 +161,36 @@ namespace Service.Implement
             return currentProduct;
         }
 
-        public Product DeleteProduct(int id)
+        public Product DeleteProduct(int id, int sellerId)
         {
             if (id == null) throw new Exception("404: Product not found");
 
             Product currentProduct = _productDAO.GetProductById(id);
-
-            if (currentProduct.Type == (int)ProductType.Auction)
+            if(currentProduct.SellerId != sellerId)
             {
-                List<Auction> auctionLists = _auctionDAO.GetAuctionsByProductId(id).ToList();
-
-                foreach (Auction auction in auctionLists)
-                {
-                    if (auction.Status != (int)AuctionStatus.Pending)
-                    {
-                        throw new Exception("400: This product has an active auction.");
-                    }
-                    auction.Status = (int)AuctionStatus.Unavailable;
-                    auction.UpdatedAt = DateTime.Now;
-                    _auctionDAO.UpdateAuction(auction);
-                }
-                currentProduct.Status = (int)Status.Unavailable;
-                currentProduct.UpdatedAt = DateTime.Now;
-                _productDAO.UpdateProduct(currentProduct);
+                throw new Exception("400: This product is not your product.");
             }
+
+            //if (currentProduct.Type == (int)ProductType.Auction)
+            //{
+            //    List<Auction> auctionLists = _auctionDAO.GetAuctionsByProductId(id).ToList();
+
+            //    foreach (Auction auction in auctionLists)
+            //    {
+            //        if (auction.Status != (int)AuctionStatus.Pending)
+            //        {
+            //            throw new Exception("400: This product has an active auction.");
+            //        }
+            //        auction.Status = (int)AuctionStatus.Unavailable;
+            //        auction.UpdatedAt = DateTime.Now;
+            //        _auctionDAO.UpdateAuction(auction);
+            //    }
+            //}
+
+            currentProduct.Status = (int)Status.Unavailable;
+            currentProduct.UpdatedAt = DateTime.Now;
+            _productDAO.UpdateProduct(currentProduct);
+
             return currentProduct;
         }
     }

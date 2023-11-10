@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.IISIntegration;
 using Request;
 using Respon;
+using Respon.OrderRes;
 using Respon.SellerRes;
 using Service;
 using System.Net;
@@ -21,14 +22,21 @@ namespace API.Controllers
         private readonly IUserService _userService;
         private readonly ISellerService _sellerService;
         private readonly IAddressService _addressService;
+        private readonly IProductService _productService;
+        private readonly IOrderService _orderService;
+        private readonly IAuctionService _auctionService;
         private readonly IMapper _mapper;
 
-        public SellerController(IUserService userService, ISellerService sellerService, IMapper mapper, IAddressService addressService)
+        public SellerController(IUserService userService, ISellerService sellerService, IMapper mapper, IAddressService addressService, 
+            IProductService productService, IOrderService orderService, IAuctionService auctionService)
         {
             _userService = userService;
             _sellerService = sellerService;
             _mapper = mapper;
             _addressService = addressService;
+            _productService = productService;
+            _orderService = orderService;
+            _auctionService = auctionService;
         }
 
         private int GetUserIdFromToken()
@@ -82,6 +90,42 @@ namespace API.Controllers
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get seller successfully",
                 Data = response 
+            });
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            var seller = _sellerService.GetSeller(id);
+            var address = _addressService.GetPickupBySellerId(id);
+
+            SellerDetailResponse response = _mapper.Map<SellerDetailResponse>(new Seller());
+
+            if (seller != null)
+            {
+                response.Id = seller.Id;
+                response.Name = seller.Name;
+                response.Phone = seller.Phone;
+                response.ProfilePicture = seller.ProfilePicture;
+                response.RegisteredAt = seller.RegisteredAt;
+                response.Ratings = seller.Ratings;
+                response.Status = seller.Status;
+                response.RecipientName = address.RecipientName;
+                response.RecipientPhone = address.RecipientPhone;
+                response.Province = address.Province;
+                response.ProvinceId = address.ProvinceId;
+                response.District = address.District;
+                response.DistrictId = address.DistrictId;
+                response.Ward = address.Ward;
+                response.WardCode = address.WardCode;
+                response.Street = address.Street;
+            }
+
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get seller successfully",
+                Data = response
             });
         }
 
@@ -180,6 +224,45 @@ namespace API.Controllers
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get seller requests successfully",
                 Data = responses
+            });
+        }
+
+        [Authorize]
+        [HttpGet("dashboard")]
+        public IActionResult GetDashboardFromCurrentSeller()
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || (user.Role != (int)Role.Seller))
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            var sales = _sellerService.GetSalesCurrentSeller(userId);
+            var sellingProducts = _productService.GetProductsBySellerId(userId)
+                .Where(p => p.Status == (int)Status.Available && p.Type == (int)ProductType.ForSale).Count();
+            var doneOrders = _orderService.GetBySellerId(userId, new List<int>() { (int)OrderStatus.Done }).Count();
+            var processingOrders = _orderService.GetProcessingBySellerId(userId).Count();
+            var totalOrders = _orderService.GetBySellerId(userId, new List<int>()).Count();
+            var totalAuctions = _auctionService.GetAuctionBySellerId(userId, -1).Count();
+            SellerSalesResponse response = new SellerSalesResponse()
+            {
+                TotalSales = sales,
+                SellingProduct = sellingProducts,
+                ProcessingOrders = processingOrders,
+                DoneOrders = doneOrders,
+                TotalOrders = totalOrders,
+                TotalAuctions = totalAuctions,
+            };
+
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get sales of current seller successfully",
+                Data = response
             });
         }
     }

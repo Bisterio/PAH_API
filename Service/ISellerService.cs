@@ -14,6 +14,8 @@ namespace Service
         public List<Seller> GetSellerRequestList();
         public int CreateSeller(int id, Seller seller);
         public void UpdateSeller(Seller seller);
+        public decimal GetSalesCurrentSeller(int id);
+        public List<Order> GetOrdersThreeMonthsCurrentSeller(int id);
 
         public Task<int> CreateShopIdAsync(SellerRequest sellerRequest);
     }

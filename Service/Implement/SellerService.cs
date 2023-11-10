@@ -17,12 +17,14 @@ namespace Service.Implement
     public class SellerService : ISellerService
     {
         private readonly ISellerDAO _sellerDAO;
+        private readonly IOrderDAO _orderDAO;
         private IHttpClientFactory _httpClientFactory;
 
-        public SellerService(ISellerDAO sellerDAO, IHttpClientFactory httpClientFactory)
+        public SellerService(ISellerDAO sellerDAO, IHttpClientFactory httpClientFactory, IOrderDAO orderDAO)
         {
             _sellerDAO = sellerDAO;
             _httpClientFactory = httpClientFactory;
+            _orderDAO = orderDAO;
         }
 
         public int CreateSeller(int id, Seller seller)
@@ -77,6 +79,30 @@ namespace Service.Implement
             }
             var responseData = await responseMessage.Content.ReadAsAsync<BaseGHNResponse<ShopResponse>>();
             return responseData.data.shop_id;
+        }
+
+        public List<Order> GetOrdersThreeMonthsCurrentSeller(int id)
+        {
+            DateTime threeMonthsAgo = DateTime.Now.AddMonths(-3);
+            List<Order> doneOrderList = _orderDAO.GetAllBySellerId(id)
+                .Where(o => o.Status == (int)OrderStatus.Done && o.OrderDate >= threeMonthsAgo).ToList();
+            return doneOrderList;
+        }
+
+        public decimal GetSalesCurrentSeller(int id)
+        {
+            DateTime threeMonthsAgo = DateTime.Now.AddMonths(-3);
+            List<Order> doneOrderList = _orderDAO.GetAllBySellerId(id)
+                .Where(o => o.Status == (int)OrderStatus.Done && o.OrderDate >= threeMonthsAgo).ToList();
+            decimal sum = 0;
+            foreach (var order in doneOrderList)
+            {
+                if(order.TotalAmount != null)
+                {
+                    sum += order.TotalAmount.Value;
+                }
+            }
+            return sum * .97m;
         }
     }
 }

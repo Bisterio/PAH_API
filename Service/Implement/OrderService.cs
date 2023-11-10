@@ -175,23 +175,27 @@ namespace Service.Implement {
         }
 
         public List<Order> GetAll(int status) {
-            var a = status == 0 ? _orderDAO.GetAllOrder().ToList() : _orderDAO.GetAllOrder().Where(p => p.Status == status).ToList();
+            var a = status ==  0 ? _orderDAO.GetAllOrder().ToList() : _orderDAO.GetAllOrder().Where(p => p.Status==status).ToList();
             a.ForEach(p => p.OrderItems.ToList().ForEach(p => { p.Product = _productDAO.GetProductById(p.ProductId); }));
             return a;
         }
 
-        public List<Order> GetByBuyerId(int buyerId, int status) {
-            var a = status == 0 ? _orderDAO.GetAllByBuyerId(buyerId).ToList() : _orderDAO.GetAllByBuyerId(buyerId).Where(p => p.Status == status).ToList();
+        public List<Order> GetByBuyerId(int buyerId, List<int> status) {
+            var a = status.Count == 0 ? _orderDAO.GetAllByBuyerId(buyerId).ToList() : _orderDAO.GetAllByBuyerId(buyerId).Where(p => status.Contains(p.Status)).ToList();
             a.ForEach(p => p.OrderItems.ToList().ForEach(p => { p.Product = _productDAO.GetProductById(p.ProductId); }));
             return a;
         }
 
-        public List<Order> GetBySellerId(int sellerId, int status) {
-            var a = status == 0 ? _orderDAO.GetAllBySellerId(sellerId).ToList() : _orderDAO.GetAllBySellerId(sellerId).Where(p => p.Status == status).ToList();
+        public List<Order> GetBySellerId(int sellerId, List<int> status) {
+            var a = status.Count == 0 ? _orderDAO.GetAllBySellerId(sellerId).ToList() : _orderDAO.GetAllBySellerId(sellerId).Where(p => status.Contains(p.Status)).ToList();
             a.ForEach(p => p.OrderItems.ToList().ForEach(p => { p.Product = _productDAO.GetProductById(p.ProductId); }));
             return a;
         }
 
+        public List<Order> GetProcessingBySellerId(int sellerId)
+        {
+            return _orderDAO.GetAllBySellerId(sellerId).Where(o => o.Status < (int)OrderStatus.Done || o.Status == (int)OrderStatus.CancelApprovalPending).ToList();
+        }
 
         public Order UpdateOrderStatus(int sellerId, int status, int orderId) {
             var order = _orderDAO.Get(orderId);

@@ -38,8 +38,8 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get([FromQuery] PagingParam pagingParam, [FromQuery] OrderParam orderParam) {
-            var list = _orderService.GetAll(orderParam.Status);
+        public IActionResult Get([FromQuery] PagingParam pagingParam, [FromQuery] int Status) {
+            var list = _orderService.GetAll(Status);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = "Get order list successfully",

@@ -260,8 +260,9 @@ namespace API.Controllers
             });
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
-        public IActionResult DeleteProduct(int id)
+        public IActionResult RemoveProduct(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -273,7 +274,7 @@ namespace API.Controllers
                     Message = "You are not allowed to access this" 
                 });
             }
-            Product product = _productService.DeleteProduct(id);
+            Product product = _productService.DeleteProduct(id, userId);
             if (product == null)
             {
                 return NotFound(new ErrorDetails 
@@ -285,7 +286,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Edit product successfully", 
+                Message = "Remove product successfully", 
                 Data = null
             });
         }

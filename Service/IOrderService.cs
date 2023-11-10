@@ -15,8 +15,9 @@ namespace Service {
         public void ApproveCancelOrderRequest(int sellerId, int orderId);
         public void SellerCancelOrder(int sellerId, int orderId, string reason);
 
-        public List<Order> GetByBuyerId(int buyerId, int status);
-        public List<Order> GetBySellerId(int sellerId, int status);
+        public List<Order> GetByBuyerId(int buyerId, List<int> status);
+        public List<Order> GetBySellerId(int sellerId, List<int> status);
+        public List<Order> GetProcessingBySellerId(int sellerId);
         public List<Order> GetAll(int status);
         public Order Get(int orderId);
 

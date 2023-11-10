@@ -14,6 +14,7 @@ namespace API.Mapper
             CreateMap<Auction, AuctionListBidderResponse>();
             CreateMap<Auction, AuctionDetailResponse>();
             CreateMap<Auction, AuctionResponse>();
+            CreateMap<Auction, AuctionListEndedResponse>();
         }
     }
 }
