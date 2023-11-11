@@ -30,13 +30,16 @@ namespace API.Controllers
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
+        private readonly string _templatesPath;
 
-        public OrderController(IOrderService orderService, IUserService userService, IMapper mapper, IEmailService emailService)
+        public OrderController(IOrderService orderService, IUserService userService, IMapper mapper,
+            IEmailService emailService, IConfiguration pathConfig)
         {
             _orderService = orderService;
             _userService = userService;
             _mapper = mapper;
             _emailService = emailService;
+            _templatesPath = pathConfig["Path:Templates"];
         }
 
         [HttpGet]
@@ -178,7 +181,22 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
             }
             _orderService.ApproveCancelOrderRequest(id, orderId);
-            var message = new Message(new string[] { user.Email }, $"Order #{orderId} updates", $"Your order cancellation has been approved");
+
+            // Get order
+            var order = _orderService.Get(orderId);
+
+            // Get HTML template
+            string fullPath = Path.Combine(_templatesPath, "CancelApproveEmail.html");
+            StreamReader str = new StreamReader(fullPath);
+            string mailText = str.ReadToEnd();
+            str.Close();
+            mailText = mailText.Replace("[orderId]", orderId.ToString())
+                .Replace("[shippingAddress]", order.RecipientAddress)
+                .Replace("[totalAmount]", order.TotalAmount.ToString())
+                .Replace("[shippingCost]", order.ShippingCost.ToString())
+                .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
+
+            var message = new Message(new string[] { user.Email }, $"Yêu cầu hủy đơn #{orderId} được xác nhận", mailText);
             await _emailService.SendEmail(message);
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Approve cancel request successfully", Data = null });
         }
@@ -222,7 +240,21 @@ namespace API.Controllers
             if (request.Status == (int)OrderStatus.CancelledBySeller)
             {
                 _orderService.SellerCancelOrder(id, orderId, request.message);
-                var message = new Message(new string[] { user.Email }, $"Order #{orderId} updates", $"Your order has been cancelled by seller\nReason: {request.message}");
+
+                var order = _orderService.Get(orderId);
+
+                // Get HTML template
+                string fullPath = Path.Combine(_templatesPath, "SellerCancelEmail.html");
+                StreamReader str = new StreamReader(fullPath);
+                string mailText = str.ReadToEnd();
+                str.Close();
+                mailText = mailText.Replace("[orderId]", orderId.ToString())
+                    .Replace("[shippingAddress]", order.RecipientAddress)
+                    .Replace("[totalAmount]", order.TotalAmount.ToString())
+                    .Replace("[shippingCost]", order.ShippingCost.ToString())
+                    .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
+
+                var message = new Message(new string[] { user.Email }, $"Đơn hàng #{orderId} đã bị hủy", mailText);
                 await _emailService.SendEmail(message);
                 return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Cancel order successfully", Data = null });
             }
@@ -231,7 +263,21 @@ namespace API.Controllers
             {
                 _orderService.UpdateOrderStatus(id, request.Status, orderId);
                 await _orderService.CreateShippingOrder(orderId);
-                var message = new Message(new string[] { user.Email }, $"Order #{orderId} updates", $"Your order has been accepted by seller");
+
+                var order = _orderService.Get(orderId);
+
+                // Get HTML template
+                string fullPath = Path.Combine(_templatesPath, "OrderConfirmEmail.html");
+                StreamReader str = new StreamReader(fullPath);
+                string mailText = str.ReadToEnd();
+                str.Close();
+                mailText = mailText.Replace("[orderId]", orderId.ToString())
+                    .Replace("[shippingAddress]", order.RecipientAddress)
+                    .Replace("[totalAmount]", order.TotalAmount.ToString())
+                    .Replace("[shippingCost]", order.ShippingCost.ToString())
+                    .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
+
+                var message = new Message(new string[] { user.Email }, $"Đơn hàng #{orderId} đã được xác nhận", mailText);
                 await _emailService.SendEmail(message);
                 return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Confirm order successfully", Data = null });
             }
