@@ -18,11 +18,4 @@
     <ProjectReference Include="..\Service\Service.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Update="View\Mvc\Error.cshtml">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
-
 </Project>
