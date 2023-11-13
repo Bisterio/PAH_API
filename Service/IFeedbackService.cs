@@ -12,7 +12,7 @@ namespace Service
         public Feedback GetById(int id);
         public List<Feedback> GetAll(int productId);
         public List<Feedback> GetTop3Newest(int productId);
-        public void CreateFeedback(Feedback feedback);
+        public void CreateFeedback(int userId, int productId, string buyerFeedBack, double ratings);
         //public void Update(Feedback feedback);
         //public void Delete(Feedback feedback);
     }
