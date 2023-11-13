@@ -15,5 +15,6 @@ namespace Respon.WalletRes {
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public int Status { get; set; }
+        public string ManagerName { get; set; }
     }
 }
