@@ -247,7 +247,12 @@ namespace Service.Implement
         }
 
         public List<Withdrawal> GetWithdrawalByUserId(int userId) {
-            return _withdrawalDAO.GetByUserId(userId).ToList();
+            return _withdrawalDAO.GetByUserId(userId).OrderByDescending(w => w.CreatedAt).ToList();
+        }
+
+        public List<Withdrawal> GetWithdrawalManager()
+        {
+            return _withdrawalDAO.GetAll().OrderByDescending(w => w.CreatedAt).ToList();
         }
     }
 }

@@ -21,6 +21,7 @@ namespace Service
         public void AddSellerBalance(int orderId);
 
         public List<Withdrawal> GetWithdrawalByUserId(int userId);
+        public List<Withdrawal> GetWithdrawalManager();
         public void CreateWithdrawal(int userId, WithdrawalRequest request);
         public void ApproveWithdrawal(int withdrawalId, int managerId);
         public void DenyWithdrawal(int withdrawalId, int managerId);

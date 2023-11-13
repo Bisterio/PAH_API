@@ -12,6 +12,9 @@ using DataAccess;
 using Respon;
 using Respon.WalletRes;
 using Request;
+using Request.Param;
+using Respon.OrderRes;
+using System.Collections.Generic;
 
 namespace API.Controllers
 {
@@ -143,7 +146,7 @@ namespace API.Controllers
         }
         
         [HttpGet("withdraw")]
-        public IActionResult GetWithdrawal() {
+        public IActionResult GetWithdrawal([FromQuery] PagingParam pagingParam) {
             var userId = GetUserIdFromToken();
             if (userId == null) {
                 return Unauthorized(new ErrorDetails {
@@ -159,21 +162,57 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            //if (user.Role != (int) Role.Seller && user.Role != (int) Role.Buyer) {
-            //    return Unauthorized(new ErrorDetails {
-            //        StatusCode = (int) HttpStatusCode.Unauthorized,
-            //        Message = "You are not allowed to access this"
-            //    });
-            //}
+            
             var data = _walletService.GetWithdrawalByUserId(userId);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Create withdrawal successfully",
-                Data = _mapper.Map<WithdrawalResponse>(data)
+                Message = "Get withdrawal successfully",
+                Data = data.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList()
+                .Select(p => _mapper.Map<WithdrawalResponse>(p))
             });
         }
-        
-        [HttpPost("/api/manager/withdraw")]
+
+        [HttpGet("manager/withdraw")]
+        public IActionResult GetWithdrawalManager([FromQuery] PagingParam pagingParam)
+        {
+            var userId = GetUserIdFromToken();
+            if (userId == null)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not logged in"
+                });
+            }
+
+            var user = _userService.Get(userId);
+            if (user == null)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            if (user.Role != (int)Role.Manager)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "You are not allowed to access this"
+                });
+            }
+            var data = _walletService.GetWithdrawalManager();
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Get withdrawal successfully",
+                Data = data.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList()
+                .Select(p => _mapper.Map<WithdrawalResponse>(p))
+            });
+        }
+
+        [HttpPost("manager/withdraw")]
         [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult UpdateWithdrawal([FromBody] UpdateWithdrawRequest request) {
             var userId = GetUserIdFromToken();
