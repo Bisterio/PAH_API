@@ -190,6 +190,11 @@ namespace Service.Implement
             if (wallet.AvailableBalance < request.Amount) {
                 throw new Exception("401: Wallet does not have enough balance to withdraw");
             }
+
+            wallet.AvailableBalance -= request.Amount;
+            wallet.LockedBalance += request.Amount;
+            _walletDAO.Update(wallet);
+
             var withdrawal = new Withdrawal {
                 Amount = request.Amount,
                 WalletId = wallet.Id,
@@ -212,12 +217,13 @@ namespace Service.Implement
             if (wallet == null) {
                 throw new Exception("404:: Wallet not found when processing withdrawal request");
             }
-            if (wallet.AvailableBalance < withdrawal.Amount) {
+            if (wallet.LockedBalance < withdrawal.Amount) {
                 throw new Exception("401: Wallet does not have enough balance to withdraw");
             }
 
-            wallet.AvailableBalance -= withdrawal.Amount;
+            wallet.LockedBalance -= withdrawal.Amount;
             _walletDAO.Update(wallet);
+
             var transaction = new Transaction {
                 WalletId = wallet.Id,
                 Amount = withdrawal.Amount,
@@ -240,6 +246,21 @@ namespace Service.Implement
             if (withdrawal == null) {
                 throw new Exception("404: Withdrawal Request not found");
             }
+
+            var wallet = _walletDAO.Get(withdrawal.WalletId);
+            if (wallet == null)
+            {
+                throw new Exception("404:: Wallet not found when processing withdrawal request");
+            }
+            if (wallet.LockedBalance < withdrawal.Amount)
+            {
+                throw new Exception("401: Wallet does not have enough balance to withdraw");
+            }
+
+            wallet.LockedBalance -= withdrawal.Amount;
+            wallet.AvailableBalance += withdrawal.Amount;
+            _walletDAO.Update(wallet);
+
             withdrawal.Status = (int) WithdrawalStatus.Rejected;
             withdrawal.UpdatedAt = DateTime.Now;
             withdrawal.ManagerId = managerId;
