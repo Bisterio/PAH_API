@@ -28,17 +28,19 @@ namespace API.Controllers
     {
         private readonly IOrderService _orderService;
         private readonly IUserService _userService;
+        private readonly IOrderCancelService _orderCancelService;
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
         private readonly string _templatesPath;
 
         public OrderController(IOrderService orderService, IUserService userService, IMapper mapper,
-            IEmailService emailService, IConfiguration pathConfig)
+            IEmailService emailService, IConfiguration pathConfig, IOrderCancelService orderCancelService)
         {
             _orderService = orderService;
             _userService = userService;
             _mapper = mapper;
             _emailService = emailService;
+            _orderCancelService = orderCancelService;
             _templatesPath = pathConfig["Path:Templates"];
         }
 
@@ -83,6 +85,16 @@ namespace API.Controllers
                     Message = "Order not found"
                 });
             }
+            OrderDetailResponse response = _mapper.Map<OrderDetailResponse>(order);
+            var orderCancel = _orderCancelService.Get(orderId);
+            if (orderCancel != null)
+            {
+                response.OrderCancellation = _mapper.Map<OrderCancellationResponse>(orderCancel);
+            } 
+            else
+            {
+                response.OrderCancellation = null;
+            }
             //if (order.BuyerId != id && order.SellerId != id) {
             //    return Unauthorized(new ErrorDetails {
             //        StatusCode = (int) HttpStatusCode.Unauthorized,
@@ -93,7 +105,7 @@ namespace API.Controllers
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get order successfully",
-                Data = _mapper.Map<OrderResponse>(order)
+                Data = response
             });
         }
 

@@ -99,6 +99,7 @@ builder.Services.AddScoped<IAuctionDAO, AuctionDAO>();
 builder.Services.AddScoped<IAuctionService, AuctionService>();
 builder.Services.AddScoped<IProductImageDAO, ProductImageDAO>();
 builder.Services.AddScoped<IOrderCancelDAO, OrderCancelDAO>();
+builder.Services.AddScoped<IOrderCancelService, OrderCancelService>();
 builder.Services.AddScoped<IAddressDAO, AddressDAO>();
 builder.Services.AddScoped<IAddressService, AddressService>();
 builder.Services.AddScoped<IBuyerDAO, BuyerDAO>();
