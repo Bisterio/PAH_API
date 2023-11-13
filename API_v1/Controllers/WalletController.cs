@@ -167,8 +167,8 @@ namespace API.Controllers
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = "Get withdrawal successfully",
-                Data = data.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList()
-                .Select(p => _mapper.Map<WithdrawalResponse>(p))
+                Data = _mapper.Map<WithdrawalResponse>(data.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
+                .Take(pagingParam.PageSize).ToList())
             });
         }
 
@@ -207,8 +207,8 @@ namespace API.Controllers
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get withdrawal successfully",
-                Data = data.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList()
-                .Select(p => _mapper.Map<WithdrawalResponse>(p))
+                Data = _mapper.Map<WithdrawalResponse>(data.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
+                .Take(pagingParam.PageSize).ToList())
             });
         }
 
