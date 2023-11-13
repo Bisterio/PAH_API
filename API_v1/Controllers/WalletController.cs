@@ -15,6 +15,7 @@ using Request;
 using Request.Param;
 using Respon.OrderRes;
 using System.Collections.Generic;
+using Respon.AuctionRes;
 
 namespace API.Controllers
 {
@@ -163,12 +164,14 @@ namespace API.Controllers
                 });
             }
             
-            var data = _walletService.GetWithdrawalByUserId(userId);
+            var data = _walletService.GetWithdrawalByUserId(userId).Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
+                .Take(pagingParam.PageSize).ToList();
+            List<WithdrawalResponse> mappedList = _mapper.Map<List<WithdrawalResponse>>(data);
+
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = "Get withdrawal successfully",
-                Data = _mapper.Map<WithdrawalResponse>(data.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
-                .Take(pagingParam.PageSize).ToList())
+                Data = mappedList
             });
         }
 
@@ -202,13 +205,14 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            var data = _walletService.GetWithdrawalManager();
+            var data = _walletService.GetWithdrawalManager().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
+                .Take(pagingParam.PageSize).ToList();
+            List<WithdrawalResponse> mappedList = _mapper.Map<List<WithdrawalResponse>>(data);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get withdrawal successfully",
-                Data = _mapper.Map<WithdrawalResponse>(data.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
-                .Take(pagingParam.PageSize).ToList())
+                Data = mappedList
             });
         }
 
