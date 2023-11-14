@@ -18,4 +18,12 @@
     <ProjectReference Include="..\Service\Service.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\Templates\CancelApproveEmail.html" />
+    <None Include="wwwroot\Templates\OrderConfirmEmail.html" />
+    <None Include="wwwroot\Templates\RegisterEmail.html" />
+    <None Include="wwwroot\Templates\ResetPassword.html" />
+    <None Include="wwwroot\Templates\SellerCancelEmail.html" />
+  </ItemGroup>
+
 </Project>
