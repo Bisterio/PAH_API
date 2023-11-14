@@ -223,7 +223,10 @@ namespace API.Controllers
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get seller requests successfully",
-                Data = responses
+                Data = new {
+                    Count = responses.Count,
+                    List = responses
+                }
             });
         }
 
