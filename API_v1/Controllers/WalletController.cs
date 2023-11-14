@@ -169,7 +169,10 @@ namespace API.Controllers
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = "Create withdrawal successfully",
-                Data = _mapper.Map<WithdrawalResponse>(data)
+                Data = new {
+                    Count = data.Count,
+                    List = _mapper.Map<WithdrawalResponse>(data)
+                }
             });
         }
         
