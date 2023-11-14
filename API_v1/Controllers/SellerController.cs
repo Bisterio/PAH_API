@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.IISIntegration;
 using Request;
+using Request.Param;
 using Respon;
 using Respon.OrderRes;
 using Respon.SellerRes;
@@ -188,7 +189,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpGet("request")]
-        public IActionResult GetSellerRequestList()
+        public IActionResult GetSellerRequestList([FromQuery] PagingParam pagingParam)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -200,7 +201,9 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            List<Seller> sellerRequests = _sellerService.GetSellerRequestList();
+            List<Seller> sellerRequests = _sellerService.GetSellerRequestList().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
+                .Take(pagingParam.PageSize).ToList();
+            int sellerRequestsCount = _sellerService.GetSellerRequestList().Count();
             List<SellerRequestResponse> responses = _mapper.Map<List<SellerRequestResponse>>(sellerRequests);
             foreach (var item in responses)
             {
@@ -224,7 +227,7 @@ namespace API.Controllers
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get seller requests successfully",
                 Data = new {
-                    Count = responses.Count,
+                    Count = sellerRequestsCount,
                     List = responses
                 }
             });

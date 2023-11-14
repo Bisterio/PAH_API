@@ -207,12 +207,17 @@ namespace API.Controllers
             }
             var data = _walletService.GetWithdrawalManager().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
                 .Take(pagingParam.PageSize).ToList();
+            int count = _walletService.GetWithdrawalByUserId(userId).Count();
             List<WithdrawalResponse> mappedList = _mapper.Map<List<WithdrawalResponse>>(data);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
                 Message = "Get withdrawal successfully",
-                Data = mappedList
+                Data = new
+                {
+                    Count = count,
+                    List = mappedList
+                }
             });
         }
 
