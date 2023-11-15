@@ -460,7 +460,7 @@ namespace API.Controllers
             List<AuctionListEndedResponse> mappedList = _mapper.Map<List<AuctionListEndedResponse>>(auctionList);
             foreach (var item in mappedList)
             {
-                item.NumberOfBidders = _bidService.GetNumberOfBids(item.Id);
+                item.NumberOfBidders = _bidService.GetNumberOfBidders(item.Id);
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 if (image == null)
                 {
@@ -504,7 +504,7 @@ namespace API.Controllers
             List<AuctionListEndedResponse> mappedList = _mapper.Map<List<AuctionListEndedResponse>>(auctionList);
             foreach (var item in mappedList)
             {
-                item.NumberOfBidders = _bidService.GetNumberOfBids(item.Id);
+                item.NumberOfBidders = _bidService.GetNumberOfBidders(item.Id);
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 if (image == null)
                 {

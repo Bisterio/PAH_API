@@ -45,7 +45,7 @@ namespace Service.Implement
 
         public int GetNumberOfBidders(int auctionId)
         {
-            return GetAllBidsFromAuction(auctionId, (int)BidStatus.Active)
+            return GetAllBidsFromAuction(auctionId, 0)
                 .GroupBy(b => b.BidderId)
                 .Count();
         }
