@@ -273,7 +273,6 @@ namespace API.Controllers
 
             if (request.Status == (int)OrderStatus.ReadyForPickup)
             {
-                _orderService.UpdateOrderStatus(id, request.Status, orderId);
                 await _orderService.CreateShippingOrder(orderId);
 
                 var order = _orderService.Get(orderId);

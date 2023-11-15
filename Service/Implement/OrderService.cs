@@ -263,15 +263,17 @@ namespace Service.Implement {
             }
 
             //Ready for pickup => Delivering
-            //if (order.Status == (int) OrderStatus.ReadyForPickup) {
-            //    var log = responseData.data.log.Where(p => p.status.Contains("picked"));
-            //    if (log.Any()) {
-            //        order.Status = (int) OrderStatus.Delivering;
-            //        _orderDAO.UpdateOrder(order);
-            //    }
-            //    _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
-            //    return;
-            //}
+            if (order.Status == (int)OrderStatus.ReadyForPickup)
+            {
+                var log = responseData.data.log.Where(p => p.status.Contains("picked"));
+                if (log.Any())
+                {
+                    order.Status = (int)OrderStatus.Delivering;
+                    _orderDAO.UpdateOrder(order);
+                }
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
+                return;
+            }
 
             //Delivering => Delivered
             if (order.Status == (int) OrderStatus.Delivering) {
@@ -371,7 +373,7 @@ namespace Service.Implement {
             }
             var data = await responseMessage.Content.ReadAsAsync<BaseGHNResponse<ShippingOrderResponse>>();
             order.OrderShippingCode = data.data.order_code;
-            order.Status = (int) OrderStatus.Delivering;
+            order.Status = (int) OrderStatus.ReadyForPickup;
             _orderDAO.UpdateOrder(order);
 
             //Check order status
