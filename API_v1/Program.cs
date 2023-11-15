@@ -167,9 +167,10 @@ builder.Services.AddAuthentication(x => {
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(
         builder => {
-            builder.WithOrigins("http://localhost:3000", "https://pah-administrator.vercel.app/")
+            builder.WithOrigins("http://localhost:3000", "https://pah-administrator.vercel.app")
                                 .AllowAnyHeader()
-                                .AllowAnyMethod();
+                                .AllowAnyMethod()
+                                .AllowAnyOrigin();
         });
 });
 

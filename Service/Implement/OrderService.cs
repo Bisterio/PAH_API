@@ -316,7 +316,7 @@ namespace Service.Implement {
             if (order == null) {
                 throw new Exception("404: Order not found when creating shipping order");
             }
-            if (order.Status != (int) OrderStatus.ReadyForPickup) {
+            if (order.Status != (int) OrderStatus.WaitingSellerConfirm) {
                 throw new Exception("401: Cannot create shipping order with this order");
             }
 
