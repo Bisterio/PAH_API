@@ -32,17 +32,19 @@ namespace API.Controllers {
         private readonly IMapper _mapper;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
+        private readonly string _templatesPath;
 
         public AuthController(ILogger<AuthController> logger, 
             IUserService userService, IMapper mapper, 
             IConfiguration configuration, ITokenService tokenService,
-            IEmailService emailService) {
+            IEmailService emailService, IConfiguration pathConfig) {
             _logger = logger;
             _userService = userService;
             _mapper = mapper;
             _config = configuration;
             _tokenService = tokenService;
             _emailService = emailService;
+            _templatesPath = pathConfig["Path:Templates"];
         }
 
         [HttpGet]
@@ -143,7 +145,15 @@ namespace API.Controllers {
             _userService.Register(_mapper.Map<User>(request));
             var code = _userService.CreateVerificationCode(request.Email);
             var link = Url.Link("Verify account", new { email = request.Email, code = code });
-            var message = new Message(new string[] { request.Email }, "PAH email verification", $"Click on this link to verify your account: " + link);
+
+            // Get HTML template
+            string fullPath = Path.Combine(_templatesPath, "RegisterEmail.html");
+            StreamReader str = new StreamReader(fullPath);
+            string mailText = str.ReadToEnd();
+            str.Close();
+            mailText = mailText.Replace("[verifyLink]", link);
+
+            var message = new Message(new string[] { request.Email }, "Xác thực tài khoản PAH", mailText);
             await _emailService.SendEmail(message);
             return Ok(new BaseResponse { 
                 Code = 200, Message = 
@@ -166,7 +176,15 @@ namespace API.Controllers {
             var token = _tokenService.GenerateResetToken();
             _userService.AddResetToken(user.Id, token);
             //var callback = Url.Action(nameof(ResetPassword), nameof(AuthController), new { token, email = user.Email }, Request.Scheme);
-            var message = new Message(new string[] { user.Email }, "Reset password token", $"Token is: "+token);
+
+            // Get HTML template
+            string fullPath = Path.Combine(_templatesPath, "ResetPassword.html");
+            StreamReader str = new StreamReader(fullPath);
+            string mailText = str.ReadToEnd();
+            str.Close();
+            mailText = mailText.Replace("[verificationCode]", token);
+
+            var message = new Message(new string[] { user.Email }, "Cài đặt mật khẩu mới PAH", mailText);
             await _emailService.SendEmail(message);
             return Ok(new BaseResponse {
                 Code = 200,
@@ -207,7 +225,15 @@ namespace API.Controllers {
         public async Task<IActionResult> ResendVerificationCode(string email) {
             var code = _userService.CreateVerificationCode(email);
             var link = Url.Link("Verify account", new { email = email, code = code });
-            var message = new Message(new string[] { email }, "PAH email verification", $"Click on this link to verify your account: " + link);
+
+            // Get HTML template
+            string fullPath = Path.Combine(_templatesPath, "RegisterEmail.html");
+            StreamReader str = new StreamReader(fullPath);
+            string mailText = str.ReadToEnd();
+            str.Close();
+            mailText = mailText.Replace("[verifyLink]", link);
+
+            var message = new Message(new string[] { email }, "Xác thực tài khoản PAH", mailText);
             await _emailService.SendEmail(message);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,

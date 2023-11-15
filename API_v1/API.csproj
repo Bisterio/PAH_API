@@ -19,10 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="View\Mvc\Error.cshtml">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
+    <None Include="wwwroot\Templates\CancelApproveEmail.html" />
+    <None Include="wwwroot\Templates\OrderConfirmEmail.html" />
+    <None Include="wwwroot\Templates\RegisterEmail.html" />
+    <None Include="wwwroot\Templates\ResetPassword.html" />
+    <None Include="wwwroot\Templates\SellerCancelEmail.html" />
   </ItemGroup>
 
 </Project>

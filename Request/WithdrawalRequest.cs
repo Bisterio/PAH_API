@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Request.Data;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -38,13 +39,14 @@ namespace Request {
         }
 
         public string[] GetBankData() {
-            JsonSerializerOptions _options = new() {
-                PropertyNameCaseInsensitive = true
-            };
-            string path = System.IO.Directory.GetParent(Environment.CurrentDirectory).ToString() + "/Request/Data/Bank.json";
-            //var path = "./../Request/Data/Bank.json";
-            using FileStream json = File.OpenRead(path);
-            return JsonSerializer.Deserialize<string[]>(json, _options);
+
+            //JsonSerializerOptions _options = new() {
+            //    PropertyNameCaseInsensitive = true
+            //};
+            //string path = System.IO.Directory.GetParent(Environment.CurrentDirectory).ToString() + "/Request/Data/Bank.json";
+            ////var path = "./../Request/Data/Bank.json";
+            //using FileStream json = File.OpenRead(path);
+            return Data.Bank.GetBankList();
         }
     }
 

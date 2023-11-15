@@ -205,8 +205,7 @@ namespace Service.Implement {
 
             if (sellerId !=  order.SellerId 
                 || order.Status == (int)OrderStatus.CancelledByBuyer 
-                || order.Status == (int) OrderStatus.CancelledBySeller 
-                || order.Status == (int) OrderStatus.CancelApprovalPending) {
+                || order.Status == (int) OrderStatus.CancelledBySeller) {
                 throw new Exception("401: You are not allowed to update this order");
             }
 

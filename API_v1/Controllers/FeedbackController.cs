@@ -78,7 +78,16 @@ namespace API.Controllers
             {
                 return BadRequest(ModelState);
             }
-            _feedbackService.CreateFeedback(_mapper.Map<Feedback>(request));
+
+            var id = GetUserIdFromToken();
+            var user = _userService.Get(id);
+
+            if (user == null)
+            {
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+            }
+
+            _feedbackService.CreateFeedback(id, request.ProductId, request.BuyerFeedback, request.Ratings);
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace API.View.Mvc
+namespace API.Views.Mvc
 {
-    public class IndexModel : PageModel
+    public class ErrorModel : PageModel
     {
         public void OnGet()
         {

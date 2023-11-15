@@ -44,10 +44,17 @@ namespace Service.Implement
             return _feedbackDAO.GetAll(productId).Take(3).ToList();
         }
 
-        public void CreateFeedback(Feedback feedback)
+        public void CreateFeedback(int userId, int productId, string buyerFeedBack, double ratings)
         {
-            feedback.Status = (int)Status.Available;
-            feedback.Timestamp = DateTime.Now;
+            Feedback feedback = new Feedback
+            {
+                BuyerId = userId,
+                ProductId = productId,
+                BuyerFeedback = buyerFeedBack,
+                Ratings = ratings,
+                Status = (int)Status.Available,
+                Timestamp = DateTime.Now
+            };
             _feedbackDAO.CreateFeedback(feedback);
         }
 
