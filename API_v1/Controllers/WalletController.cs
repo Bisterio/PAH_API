@@ -207,7 +207,7 @@ namespace API.Controllers
             }
             var data = _walletService.GetWithdrawalManager().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
                 .Take(pagingParam.PageSize).ToList();
-            int count = _walletService.GetWithdrawalByUserId(userId).Count();
+            int count = _walletService.GetWithdrawalManager().Count;
             List<WithdrawalResponse> mappedList = _mapper.Map<List<WithdrawalResponse>>(data);
             return Ok(new BaseResponse
             {

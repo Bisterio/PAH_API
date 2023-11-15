@@ -203,7 +203,7 @@ namespace API.Controllers
             }
             List<Seller> sellerRequests = _sellerService.GetSellerRequestList().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
                 .Take(pagingParam.PageSize).ToList();
-            int sellerRequestsCount = _sellerService.GetSellerRequestList().Count();
+            int sellerRequestsCount = _sellerService.GetSellerRequestList().Count;
             List<SellerRequestResponse> responses = _mapper.Map<List<SellerRequestResponse>>(sellerRequests);
             foreach (var item in responses)
             {
