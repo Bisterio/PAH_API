@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot\Templates\DoneOrderEmail.html" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="CliWrap" Version="3.6.4" />
@@ -20,6 +24,7 @@
 
   <ItemGroup>
     <None Include="wwwroot\Templates\CancelApproveEmail.html" />
+    <None Include="wwwroot\Templates\DoneOrderEmail.html" />
     <None Include="wwwroot\Templates\OrderConfirmEmail.html" />
     <None Include="wwwroot\Templates\RegisterEmail.html" />
     <None Include="wwwroot\Templates\ResetPassword.html" />

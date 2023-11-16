@@ -9,6 +9,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using static Request.ThirdParty.GHN.ShippingOrder;
 
 namespace Service.Implement
 {
@@ -450,7 +451,7 @@ namespace Service.Implement
             return checkRegistration;
         }
 
-        public void CreateAuctionOrder(int userId, AuctionOrderRequest request) {
+        public int CreateAuctionOrder(int userId, AuctionOrderRequest request) {
             var auction = _auctionDAO.GetAuctionById(request.AuctionId);
             if (auction == null) {
                 throw new Exception("404: Auction not found when creating order");
@@ -500,11 +501,14 @@ namespace Service.Implement
                 ImageUrl = _productImageDAO.GetByProductId((int)auction.ProductId).FirstOrDefault().ImageUrl
             });
             _orderDAO.Create(order);
-            var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(userId, now).ToList();
-            foreach(var item in orderList) {
-                //_walletService.CheckoutWallet(userId, item.Id, (int) OrderStatus.ReadyForPickup);
-                _orderService.CreateShippingOrder(item.Id);
-            }
+            //var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(userId, now).ToList();
+            //foreach(var item in orderList) {
+            //    //_walletService.CheckoutWallet(userId, item.Id, (int) OrderStatus.ReadyForPickup);
+            //    _orderService.CreateShippingOrder(item.Id);
+            //}
+
+            _orderService.CreateShippingOrder(order.Id);
+            return order.Id;
         }
         public bool CheckWinner(int bidderId, int auctionId)
         {

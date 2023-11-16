@@ -197,6 +197,9 @@ namespace API.Controllers
             // Get order
             var order = _orderService.Get(orderId);
 
+            // Get Buyer
+            var buyer = _userService.Get((int)order.BuyerId);
+
             // Get HTML template
             string fullPath = Path.Combine(_templatesPath, "CancelApproveEmail.html");
             StreamReader str = new StreamReader(fullPath);
@@ -208,7 +211,7 @@ namespace API.Controllers
                 .Replace("[shippingCost]", order.ShippingCost.ToString())
                 .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
 
-            var message = new Message(new string[] { user.Email }, $"Yêu cầu hủy đơn #{orderId} được xác nhận", mailText);
+            var message = new Message(new string[] { user.Email, buyer.Email }, $"Yêu cầu hủy đơn #{orderId} được xác nhận", mailText);
             await _emailService.SendEmail(message);
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Approve cancel request successfully", Data = null });
         }
@@ -254,6 +257,7 @@ namespace API.Controllers
                 _orderService.SellerCancelOrder(id, orderId, request.message);
 
                 var order = _orderService.Get(orderId);
+                var buyer = _userService.Get((int)order.BuyerId);
 
                 // Get HTML template
                 string fullPath = Path.Combine(_templatesPath, "SellerCancelEmail.html");
@@ -266,7 +270,7 @@ namespace API.Controllers
                     .Replace("[shippingCost]", order.ShippingCost.ToString())
                     .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
 
-                var message = new Message(new string[] { user.Email }, $"Đơn hàng #{orderId} đã bị hủy", mailText);
+                var message = new Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã bị hủy", mailText);
                 await _emailService.SendEmail(message);
                 return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Cancel order successfully", Data = null });
             }
@@ -276,6 +280,7 @@ namespace API.Controllers
                 await _orderService.CreateShippingOrder(orderId);
 
                 var order = _orderService.Get(orderId);
+                var buyer = _userService.Get((int)order.BuyerId);
 
                 // Get HTML template
                 string fullPath = Path.Combine(_templatesPath, "OrderConfirmEmail.html");
@@ -288,7 +293,7 @@ namespace API.Controllers
                     .Replace("[shippingCost]", order.ShippingCost.ToString())
                     .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
 
-                var message = new Message(new string[] { user.Email }, $"Đơn hàng #{orderId} đã được xác nhận", mailText);
+                var message = new Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã được xác nhận", mailText);
                 await _emailService.SendEmail(message);
                 return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Confirm order successfully", Data = null });
             }
@@ -316,7 +321,7 @@ namespace API.Controllers
         //}
 
         [HttpPost("/api/buyer/order/done/{orderId:int}")]
-        public IActionResult BuyerConfirmDoneOrder(int orderId)
+        public async Task<IActionResult> BuyerConfirmDoneOrder(int orderId)
         {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
@@ -357,6 +362,22 @@ namespace API.Controllers
                 });
             }
             _orderService.DoneOrder(orderId);
+
+            var buyer = _userService.Get((int)order.BuyerId);
+
+            // Get HTML template
+            string fullPath = Path.Combine(_templatesPath, "DoneOrderEmail.html");
+            StreamReader str = new StreamReader(fullPath);
+            string mailText = str.ReadToEnd();
+            str.Close();
+            mailText = mailText.Replace("[orderId]", orderId.ToString())
+                .Replace("[shippingAddress]", order.RecipientAddress)
+                .Replace("[totalAmount]", order.TotalAmount.ToString())
+                .Replace("[shippingCost]", order.ShippingCost.ToString())
+                .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
+
+            var message = new Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã hoàn thành", mailText);
+            await _emailService.SendEmail(message);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,

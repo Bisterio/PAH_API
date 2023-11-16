@@ -28,7 +28,6 @@ namespace Service.Implement {
         private readonly IWalletService _walletService;
         private readonly ISellerDAO _sellerDAO;
         private readonly IUserDAO _userDAO;
-        private readonly IEmailService _emailService;
         private readonly IConfiguration _config;
         private IHttpClientFactory _httpClientFactory;
         private IBackgroundJobClient _backgroundJobClient;
@@ -38,7 +37,7 @@ namespace Service.Implement {
             IProductImageDAO productImageDAO, IOrderCancelDAO orderCancelDAO,
             IWalletService walletService, IConfiguration config,
             IHttpClientFactory httpClientFactory, IBackgroundJobClient backgroundJobClient,
-            ISellerDAO sellerDAO, IEmailService emailService, IUserDAO userDAO) {
+            ISellerDAO sellerDAO, IUserDAO userDAO) {
             _orderDAO = orderDAO;
             _productDAO = productDAO;
             _addressDAO = addressDAO;
@@ -49,7 +48,6 @@ namespace Service.Implement {
             _httpClientFactory = httpClientFactory;
             _backgroundJobClient = backgroundJobClient;
             _sellerDAO = sellerDAO;
-            _emailService = emailService;
             _userDAO = userDAO;
         }
 
@@ -299,15 +297,6 @@ namespace Service.Implement {
             order.Status = (int) OrderStatus.Done;
             _orderDAO.UpdateOrder(order);
             _walletService.AddSellerBalance(orderId);
-
-            var buyer = _userDAO.Get(order.BuyerId.Value);
-            var seller = _userDAO.Get(order.SellerId.Value);
-
-            if (buyer == null || seller == null) {
-                throw new Exception("404: Buyer or seller not found when sending email done order");
-            }
-            var message = new Message(new string[] { buyer.Email, seller.Email }, $"Order #{orderId} updates", $"Order has been done");
-            await _emailService.SendEmail(message);
         }
 
         public async Task CreateShippingOrder(int orderId) {

@@ -5,6 +5,7 @@ using DataAccess;
 using DataAccess.Implement;
 using DataAccess.Models;
 using Hangfire;
+using MailKit.Search;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
@@ -17,6 +18,7 @@ using Respon.AuctionRes;
 using Respon.SellerRes;
 using Respon.UserRes;
 using Service;
+using Service.EmailService;
 using Service.Implement;
 using System.Net;
 using System.Reflection;
@@ -37,10 +39,13 @@ namespace API.Controllers
         private readonly IAddressService _addressService;
         private readonly IBackgroundJobClient _backgroundJobClient;
         private IHubContext<AuctionHub> _hubContext { get; set; }
+        private readonly IEmailService _emailService;
+        private readonly string _templatesPath;
+        private readonly IOrderService _orderService;
 
         public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService,
             IBidService bidService, ISellerService sellerService, IAddressService addressService, IBackgroundJobClient backgroundJobClient,
-            IHubContext<AuctionHub> hubcontext)
+            IHubContext<AuctionHub> hubcontext, IEmailService emailService, IConfiguration pathConfig, IOrderService orderService)
         {
             _auctionService = auctionService;
             _mapper = mapper;
@@ -51,6 +56,9 @@ namespace API.Controllers
             _addressService = addressService;
             _backgroundJobClient = backgroundJobClient;
             _hubContext = hubcontext;
+            _emailService = emailService;
+            _templatesPath = pathConfig["Path:Templates"];
+            _orderService = orderService;
         }
 
         private int GetUserIdFromToken()
@@ -753,7 +761,7 @@ namespace API.Controllers
         }
 
         [HttpPost("order/create")]
-        public IActionResult CreateAuctionOrder([FromBody] AuctionOrderRequest request) {
+        public async Task<IActionResult> CreateAuctionOrder([FromBody] AuctionOrderRequest request) {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
             if (user == null) {
@@ -769,7 +777,23 @@ namespace API.Controllers
                     Message = "You are not allowed to access this"
                 });
             }
-            _auctionService.CreateAuctionOrder(userId, request);
+            var orderId = _auctionService.CreateAuctionOrder(userId, request);
+            var order = _orderService.Get(orderId);
+            var buyer = _userService.Get((int)order.BuyerId);
+
+            // Get HTML template
+            string fullPath = Path.Combine(_templatesPath, "OrderConfirmEmail.html");
+            StreamReader str = new StreamReader(fullPath);
+            string mailText = str.ReadToEnd();
+            str.Close();
+            mailText = mailText.Replace("[orderId]", orderId.ToString())
+                .Replace("[shippingAddress]", order.RecipientAddress)
+                .Replace("[totalAmount]", order.TotalAmount.ToString())
+                .Replace("[shippingCost]", order.ShippingCost.ToString())
+                .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
+
+            var message = new Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã được xác nhận", mailText);
+            await _emailService.SendEmail(message);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = "Create auction order successfully",
