@@ -3,6 +3,7 @@ using DataAccess;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Request;
 using Service.EmailService;
 using System;
@@ -95,6 +96,15 @@ namespace Service.Implement
             }
             seller.Status = (int)SellerStatus.Available;
             _sellerDAO.UpdateSeller(seller);
+
+            var user = _userDAO.Get(seller.Id);
+            if (user == null)
+            {
+                throw new Exception("404: User not found");
+            }
+
+            user.Role = (int)Role.Seller;
+            _userDAO.Update(user);
         }
 
         public void RejectSeller(Seller seller)
