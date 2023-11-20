@@ -7,13 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="wwwroot\Templates\DoneOrderEmail.html" />
+    <_ContentIncludedByDefault Remove="firebase-key.json" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="CliWrap" Version="3.6.4" />
+    <PackageReference Include="FirebaseAdmin" Version="2.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.22" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
@@ -29,6 +30,12 @@
     <None Include="wwwroot\Templates\RegisterEmail.html" />
     <None Include="wwwroot\Templates\ResetPassword.html" />
     <None Include="wwwroot\Templates\SellerCancelEmail.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="firebase-key.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

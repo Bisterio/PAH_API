@@ -3,7 +3,12 @@ using AutoMapper;
 using AutoMapper.Configuration.Conventions;
 using DataAccess;
 using DataAccess.Models;
+using Firebase.Auth;
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
 using Hangfire.Annotations;
+using MailKit.Search;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
@@ -16,6 +21,7 @@ using Respon;
 using Respon.OrderRes;
 using Service;
 using Service.EmailService;
+using System;
 using System.Net;
 
 namespace API.Controllers
@@ -32,6 +38,7 @@ namespace API.Controllers
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
         private readonly string _templatesPath;
+        private readonly FirebaseMessaging messaging;
 
         public OrderController(IOrderService orderService, IUserService userService, IMapper mapper,
             IEmailService emailService, IConfiguration pathConfig, IOrderCancelService orderCancelService)
@@ -42,6 +49,12 @@ namespace API.Controllers
             _emailService = emailService;
             _orderCancelService = orderCancelService;
             _templatesPath = pathConfig["Path:Templates"];
+            var app = FirebaseApp.DefaultInstance;
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                app = FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile("firebase-key.json").CreateScoped("https://www.googleapis.com/auth/firebase.messaging") });
+            }
+            messaging = FirebaseMessaging.GetMessaging(app);
         }
 
         [HttpGet]
@@ -145,7 +158,7 @@ namespace API.Controllers
 
         [HttpPost("/api/buyer/checkout")]
         [ServiceFilter(typeof(ValidateModelAttribute))]
-        public IActionResult Checkout([FromBody] CheckoutRequest request)
+        public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request)
         {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
@@ -168,6 +181,20 @@ namespace API.Controllers
                 });
             }
             _orderService.Checkout(request, user.Id, request.AddressId);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Đơn hàng mới",
+                    Body = "Bạn có đơn hàng mới cần được xác nhận!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "SellerOrderList",
+                },
+                Topic = "USER_" + request.Order.First().SellerId
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Checkout successfully", Data = null });
         }
 
@@ -211,13 +238,27 @@ namespace API.Controllers
                 .Replace("[shippingCost]", order.ShippingCost.ToString())
                 .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
 
-            var message = new Message(new string[] { user.Email, buyer.Email }, $"Yêu cầu hủy đơn #{orderId} được xác nhận", mailText);
+            var message = new Service.EmailService.Message(new string[] { user.Email, buyer.Email }, $"Yêu cầu hủy đơn #{orderId} được xác nhận", mailText);
             await _emailService.SendEmail(message);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Đơn hàng #" + orderId,
+                    Body = "Đơn hàng của bạn đã bị hủy!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "BuyerOrderList"
+                },
+                Topic = "USER_" + buyer.Id
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Approve cancel request successfully", Data = null });
         }
 
         [HttpPost("/api/buyer/order/cancelrequest/{orderId:int}")]
-        public IActionResult CreateCancelRequest(int orderId)
+        public async Task<IActionResult> CreateCancelRequest(int orderId)
         {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
@@ -233,6 +274,23 @@ namespace API.Controllers
             }
 
             _orderService.CancelOrderRequest(id, orderId);
+            var order = _orderService.Get(orderId);
+            var seller = _userService.Get((int)order.SellerId);
+
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Đơn hàng #" + orderId,
+                    Body = "Người mua đã yêu cầu hủy đơn này!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "SellerOrderList"
+                },
+                Topic = "USER_" + seller.Id
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Create cancel request successfully", Data = null });
         }
 
@@ -270,8 +328,22 @@ namespace API.Controllers
                     .Replace("[shippingCost]", order.ShippingCost.ToString())
                     .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
 
-                var message = new Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã bị hủy", mailText);
+                var message = new Service.EmailService.Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã bị hủy", mailText);
                 await _emailService.SendEmail(message);
+                var notiMessage = new FirebaseAdmin.Messaging.Message()
+                {
+                    Notification = new Notification
+                    {
+                        Title = "Đơn hàng #" + orderId,
+                        Body = "Đã bị người bán hủy!"
+                    },
+                    Data = new Dictionary<string, string>()
+                    {
+                        ["route"] = "BuyerOrderList"
+                    },
+                    Topic = "USER_" + buyer.Id
+                };
+                await messaging.SendAsync(notiMessage);
                 return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Cancel order successfully", Data = null });
             }
 
@@ -293,8 +365,22 @@ namespace API.Controllers
                     .Replace("[shippingCost]", order.ShippingCost.ToString())
                     .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
 
-                var message = new Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã được xác nhận", mailText);
+                var message = new Service.EmailService.Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã được xác nhận", mailText);
                 await _emailService.SendEmail(message);
+                var notiMessage = new FirebaseAdmin.Messaging.Message()
+                {
+                    Notification = new Notification
+                    {
+                        Title = "Đơn hàng #" + orderId,
+                        Body = "Đã được xác nhận!"
+                    },
+                    Data = new Dictionary<string, string>()
+                    {
+                        ["route"] = "BuyerOrderList"
+                    },
+                    Topic = "USER_" + buyer.Id
+                };
+                await messaging.SendAsync(notiMessage);
                 return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Confirm order successfully", Data = null });
             }
             return BadRequest(new ErrorDetails { StatusCode = (int)HttpStatusCode.BadRequest, Message = "Status not matching required information" });
@@ -363,7 +449,7 @@ namespace API.Controllers
             }
             _orderService.DoneOrder(orderId);
 
-            var buyer = _userService.Get((int)order.BuyerId);
+            var seller = _userService.Get((int)order.SellerId);
 
             // Get HTML template
             string fullPath = Path.Combine(_templatesPath, "DoneOrderEmail.html");
@@ -376,8 +462,22 @@ namespace API.Controllers
                 .Replace("[shippingCost]", order.ShippingCost.ToString())
                 .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
 
-            var message = new Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã hoàn thành", mailText);
+            var message = new Service.EmailService.Message(new string[] { user.Email, seller.Email }, $"Đơn hàng #{orderId} đã hoàn thành", mailText);
             await _emailService.SendEmail(message);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Đơn hàng #" + orderId,
+                    Body = "Đã hoàn thành!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "SellerOrderList"
+                },
+                Topic = "USER_" + seller.Id
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,

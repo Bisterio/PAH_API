@@ -22,6 +22,10 @@ using Service.EmailService;
 using Service.Implement;
 using System.Net;
 using System.Reflection;
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
+using Newtonsoft.Json.Linq;
 
 namespace API.Controllers
 {
@@ -42,6 +46,7 @@ namespace API.Controllers
         private readonly IEmailService _emailService;
         private readonly string _templatesPath;
         private readonly IOrderService _orderService;
+        private readonly FirebaseMessaging messaging;
 
         public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService,
             IBidService bidService, ISellerService sellerService, IAddressService addressService, IBackgroundJobClient backgroundJobClient,
@@ -59,6 +64,12 @@ namespace API.Controllers
             _emailService = emailService;
             _templatesPath = pathConfig["Path:Templates"];
             _orderService = orderService;
+            var app = FirebaseApp.DefaultInstance;
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                app = FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile("firebase-key.json").CreateScoped("https://www.googleapis.com/auth/firebase.messaging") });
+            }
+            messaging = FirebaseMessaging.GetMessaging(app);
         }
 
         private int GetUserIdFromToken()
@@ -779,7 +790,7 @@ namespace API.Controllers
             }
             var orderId = _auctionService.CreateAuctionOrder(userId, request);
             var order = _orderService.Get(orderId);
-            var buyer = _userService.Get((int)order.BuyerId);
+            var seller = _userService.Get((int)order.SellerId);
 
             // Get HTML template
             string fullPath = Path.Combine(_templatesPath, "OrderConfirmEmail.html");
@@ -792,8 +803,22 @@ namespace API.Controllers
                 .Replace("[shippingCost]", order.ShippingCost.ToString())
                 .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
 
-            var message = new Message(new string[] { user.Email, buyer.Email }, $"Đơn hàng #{orderId} đã được xác nhận", mailText);
+            var message = new Service.EmailService.Message(new string[] { user.Email, seller.Email }, $"Đơn hàng #{orderId} đã được xác nhận", mailText);
             await _emailService.SendEmail(message);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Đơn hàng #" + orderId,
+                    Body = "Đơn hàng đã được xác nhận!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "SellerOrderDetail"
+                },
+                Topic = "USER_" + seller.Id
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
                 Message = "Create auction order successfully",
@@ -811,6 +836,20 @@ namespace API.Controllers
                 var auction = _auctionService.GetAuctionById(auctionId);
                 if (auction == null) return;
                 await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionOpen", auction.Title);
+                var message = new FirebaseAdmin.Messaging.Message()
+                {
+                    Notification = new Notification
+                    {
+                        Title = auction.Title,
+                        Body = "Cuộc đấu giá đã bắt đầu, hãy tham gia nào!"
+                    },
+                    Data = new Dictionary<string, string>()
+                    {
+                        ["route"] = "BidderAuctionHistoryListing"
+                    },
+                    Topic = "AUCTION_" + auctionId
+                };
+                await messaging.SendAsync(message);
             }
         }
 
@@ -839,6 +878,20 @@ namespace API.Controllers
             }
 
             await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionEnd", auction.Title);
+            var message = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = auction.Title,
+                    Body = "Cuộc đấu giá đã kết thúc, hãy cùng xem người thắng cuộc nào!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "BidderAuctionHistoryListing"
+                },
+                Topic = "AUCTION_" + auctionId
+            };
+            await messaging.SendAsync(message);
             return mappedWinner;
         }
 
@@ -853,6 +906,20 @@ namespace API.Controllers
                 throw new Exception("404: EndedDate Changed");
             }
             await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionAboutToEnd", auction.Title);
+            var message = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = auction.Title,
+                    Body = "Cuộc đấu giá chuẩn bị kết thúc!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "BidderAuctionHistoryListing"
+                },
+                Topic = "AUCTION_" + auctionId
+            };
+            await messaging.SendAsync(message);
         }
     }
 }
