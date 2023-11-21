@@ -30,12 +30,12 @@ namespace Service.Implement
         public async Task Topup(int userId, TopupRequest topupRequest) {
             var wallet = _walletDAO.Get(userId);
             if (wallet == null) {
-                throw new Exception("404: Wallet not found");
+                throw new Exception("404: Không tìm thấy ví");
             }
 
             //Check transaction from zalopay in committed in db
             if (!_transactionDAO.IsZalopayOrderValid(topupRequest.AppTransId, topupRequest.Mac)) {
-                throw new Exception("409: Order from zalopay is invalid");
+                throw new Exception("409: Đơn hàng từ ZaloPay không hợp lệ");
             }
 
             //Uncomment when zalopay fix their api
@@ -90,16 +90,16 @@ namespace Service.Implement
         public void CheckoutWallet(int userId, int orderId, int orderStatus) {
             var wallet = _walletDAO.Get(userId);
             if (wallet == null) {
-                throw new Exception("404: Wallet not found");
+                throw new Exception("404: Không tìm thấy ví");
             }
 
             var order = _orderDAO.Get(orderId);
             if (order == null) {
-                throw new Exception("404: Order not found when checkout");
+                throw new Exception("404: Không tìm thấy đơn hàng để thanh toán");
             }
 
             if (wallet.AvailableBalance < order.TotalAmount + order.ShippingCost) {
-                throw new Exception($"400: Not enough balance in wallet to confirm order: {orderId}");
+                throw new Exception($"400: Không đủ số dư trong ví để xác nhận đơn hàng: {orderId}");
             }
 
             //Subtract from wallet, create transaction, update order
@@ -112,7 +112,7 @@ namespace Service.Implement
                 Amount = order.TotalAmount + order.ShippingCost,
                 Type = (int) TransactionType.Payment,
                 Date = DateTime.Now,
-                Description = $"Payment for order: {orderId}",
+                Description = $"Thanh toán đơn hàng: {orderId}",
                 Status = (int) Status.Available
             });
             //Update order status to Waiting for Seller Confirm
@@ -128,15 +128,15 @@ namespace Service.Implement
         public void RefundOrder(int orderId) {
             var order = _orderDAO.Get(orderId);
             if (order == null) {
-                throw new Exception("404: Order not found when refund");
+                throw new Exception("404: Không tìm thấy đơn hàng để hoàn tiền");
             }
             if (order.Status != (int) OrderStatus.CancelledByBuyer && order.Status != (int) OrderStatus.CancelledBySeller) {
-                throw new Exception("401: Order is not cancelled, cannot refund");
+                throw new Exception("401: Đơn hàng chưa được hủy, không thể hoàn tiền");
             }
 
             var wallet = _walletDAO.Get(order.BuyerId.Value);
             if (wallet == null) {
-                throw new Exception("404: Wallet not found when refund");
+                throw new Exception("404: Không tìm thấy ví để hoàn tiền");
             }
             var amount = order.ShippingCost + order.TotalAmount;
             wallet.AvailableBalance += amount;
@@ -148,7 +148,7 @@ namespace Service.Implement
                 Amount = amount,
                 Type = (int) TransactionType.Refund,
                 Date = DateTime.Now,
-                Description = $"Refund for order: {orderId}",
+                Description = $"Hoàn tiền cho đơn hàng: {orderId}",
                 Status = (int) Status.Available
             });
         }
@@ -156,15 +156,15 @@ namespace Service.Implement
         public void AddSellerBalance(int orderId) {
             var order = _orderDAO.Get(orderId);
             if (order == null) {
-                throw new Exception("404: Order not found when add balance to seller when done order");
+                throw new Exception("404: Không tìm thấy đơn hàng để thanh toán tiền cho người bán");
             }
             if (order.Status != (int) OrderStatus.Done) {
-                throw new Exception("401: Order is not done, cannot add balance");
+                throw new Exception("401: Đơn hàng chưa hoàn tất, không thể thanh toán cho người bán");
             }
 
             var wallet = _walletDAO.Get(order.SellerId.Value);
             if (wallet == null) {
-                throw new Exception("404: Wallet not found when add balance to seller when done order");
+                throw new Exception("404: Không tìm thấy ví để thanh toán cho người bán");
             }
             var amount = order.ShippingCost + order.TotalAmount * .97m ;
             wallet.AvailableBalance += amount;
@@ -184,11 +184,11 @@ namespace Service.Implement
         public void CreateWithdrawal(int userId, WithdrawalRequest request) {
             var wallet = _walletDAO.Get(userId);
             if (wallet == null) {
-                throw new Exception("404: Wallet not found when creating withdrawal request");
+                throw new Exception("404: Không tìm thấy ví để tạo yêu cầu rút tiền");
             }
 
             if (wallet.AvailableBalance < request.Amount) {
-                throw new Exception("401: Wallet does not have enough balance to withdraw");
+                throw new Exception("401: Ví không đủ số dư để tạo yêu cầu rút tiền");
             }
 
             wallet.AvailableBalance -= request.Amount;
@@ -210,15 +210,15 @@ namespace Service.Implement
         public void ApproveWithdrawal(int withdrawalId, int managerId) {
             var withdrawal = _withdrawalDAO.Get(withdrawalId);
             if (withdrawal == null) {
-                throw new Exception("404: Withdrawal Request not found");
+                throw new Exception("404: Không tìm thấy yêu cầu rút tiền");
             }
 
             var wallet = _walletDAO.Get(withdrawal.WalletId);
             if (wallet == null) {
-                throw new Exception("404:: Wallet not found when processing withdrawal request");
+                throw new Exception("404:: Không tìm thấy ví để xử lí yêu cầu rút tiền");
             }
             if (wallet.LockedBalance < withdrawal.Amount) {
-                throw new Exception("401: Wallet does not have enough balance to withdraw");
+                throw new Exception("401: Ví không đủ số dư để rút tiền");
             }
 
             wallet.LockedBalance -= withdrawal.Amount;
@@ -230,7 +230,7 @@ namespace Service.Implement
                 Date = DateTime.Now,
                 PaymentMethod = (int) PaymentType.Wallet,
                 Type = (int) TransactionType.Withdraw,
-                Description = $"Withdrawal to Bank Number: {withdrawal.BankNumber} with amount: {withdrawal.Amount}",
+                Description = $"Rút về số ngân hàng: {withdrawal.BankNumber} với số tiền: {withdrawal.Amount}",
                 Status = (int) Status.Available
             };
             _transactionDAO.Create(transaction);
@@ -244,17 +244,17 @@ namespace Service.Implement
         public void DenyWithdrawal(int withdrawalId, int managerId) {
             var withdrawal = _withdrawalDAO.Get(withdrawalId);
             if (withdrawal == null) {
-                throw new Exception("404: Withdrawal Request not found");
+                throw new Exception("404: Không tìm thấy yêu cầu rút tiền");
             }
 
             var wallet = _walletDAO.Get(withdrawal.WalletId);
             if (wallet == null)
             {
-                throw new Exception("404:: Wallet not found when processing withdrawal request");
+                throw new Exception("404: Không tìm thấy ví để xử lí yêu cầu rút tiền");
             }
             if (wallet.LockedBalance < withdrawal.Amount)
             {
-                throw new Exception("401: Wallet does not have enough balance to withdraw");
+                throw new Exception("401: Ví không đủ số dư để rút tiền");
             }
 
             wallet.LockedBalance -= withdrawal.Amount;

@@ -59,7 +59,7 @@ namespace Service.Implement {
             var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
             var jwtSecurityToken = securityToken as JwtSecurityToken;
             if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                throw new SecurityTokenException("Invalid token");
+                throw new SecurityTokenException("Token không hợp lệ");
             return principal;
         }
 
@@ -81,14 +81,14 @@ namespace Service.Implement {
 
         private string GetRandomString(int length, IEnumerable<char> characterSet) {
             if (length < 0)
-                throw new ArgumentException("500: Length must not be negative");
+                throw new ArgumentException("500: Độ dài của chuỗi không được là số âm");
             if (length > 100) // 250 million chars ought to be enough for anybody
-                throw new ArgumentException("500: Length is too big");
+                throw new ArgumentException("500: Độ dài của chuỗi quá lớn");
             if (characterSet == null)
-                throw new ArgumentException("500: characterSet must not be null");
+                throw new ArgumentException("500: characterSet không được null");
             var characterArray = characterSet.Distinct().ToArray();
             if (characterArray.Length == 0)
-                throw new ArgumentException("500: characterSet must not be empty");
+                throw new ArgumentException("500: characterSet không được rỗng");
 
             var bytes = new byte[length * 8];
             var result = new char[length];

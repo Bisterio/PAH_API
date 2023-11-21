@@ -162,15 +162,15 @@ namespace Service.Implement
             Bid bid = new Bid();
             if (auction.Status < (int)AuctionStatus.RegistrationOpen && DateTime.Now < auction.RegistrationStart)
             {
-                throw new Exception("400: This auction hasn't been opened for registration");
+                throw new Exception("400: Cuộc đấu giá này chưa mở đăng kí");
             }
             else if (auction.Status > (int)AuctionStatus.RegistrationOpen && DateTime.Now > auction.RegistrationEnd)
             {
-                throw new Exception("400: This auction registration has been closed");
+                throw new Exception("400: Cuộc đấu giá này đã đóng đăng kí");
             }
             if (auction.Product.SellerId == bidderId)
             {
-                throw new Exception("400: You cannot join your own auction");
+                throw new Exception("400: Bạn không thể tham gia cuộc đấu giá của chính mình");
             }
             else
             {
@@ -180,7 +180,7 @@ namespace Service.Implement
 
                 if (checkRegistration)
                 {
-                    throw new Exception("400: You have already registered for this auction");
+                    throw new Exception("400: Bạn đã đăng kí tham gia cuộc đấu giá này rồi");
                 }
 
                 if (bidderWallet.AvailableBalance >= (auction.EntryFee + auction.StartingPrice))
@@ -211,7 +211,7 @@ namespace Service.Implement
                 }
                 else
                 {
-                    throw new Exception("400: Your balance is not sufficient.");
+                    throw new Exception("400: Số dư của bạn không đủ");
                 }
             }
         }
@@ -226,7 +226,7 @@ namespace Service.Implement
             {
                 if (bid.Status == (int)BidStatus.Retracted)
                 {
-                    throw new Exception("400: You have retracted before");
+                    throw new Exception("400: Bạn đã rút khỏi cuộc đấu giá này");
                 }
                 bid.Status = (int)BidStatus.Retracted;
                 _bidDAO.UpdateBid(bid);

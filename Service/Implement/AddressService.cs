@@ -23,7 +23,7 @@ namespace Service.Implement {
                 addresses = _addressDAO.GetPickupByCustomerId((int)address.CustomerId).ToList();
                 if (addresses.Count > 0)
                 {
-                    throw new Exception("400: You can only have 1 pickup address");
+                    throw new Exception("400: Bạn chỉ có thể có tối đa 1 địa chỉ mặc định");
                 }
                 address.Id = 0;
                 address.IsDefault = true;
@@ -57,17 +57,17 @@ namespace Service.Implement {
             var db = _addressDAO.Get(addressId);
 
             if (db == null) {
-                throw new Exception("404: Address not found");
+                throw new Exception("404: Không tìm thấy địa chỉ");
             }
 
             if (db.CustomerId != customerId) {
-                throw new Exception("401: You are not allowed to delete this address");
+                throw new Exception("401: Bạn không được quyền xóa địa chỉ này");
             }
 
             if (db.Type == (int) AddressType.Pickup) {
                 var listAddress = _addressDAO.GetByCustomerId(db.CustomerId.Value).Select(p => p.Type == (int) AddressType.Pickup);
                 if (listAddress.Count() <= 1) { 
-                    throw new Exception("400: You are not allowed to delete address: You do not have sufficient address"); 
+                    throw new Exception("400: Bạn không được quyền xóa địa chỉ này: Bạn không có đủ số lượng địa chỉ tối thiểu"); 
                 }
             }
             _addressDAO.Delete(db);
@@ -98,11 +98,11 @@ namespace Service.Implement {
             var db = _addressDAO.GetPickupBySellerId(customerId);
             if (db == null)
             {
-                throw new Exception("404: Address not found");
+                throw new Exception("404: Không tìm thấy địa chỉ");
             }
             if (customerId == null)
             {
-                throw new Exception("401: Seller not found");
+                throw new Exception("401: Không tìm thấy người bán");
             }
             List<Address> addresses = new List<Address>();
             if (db.Type == (int)AddressType.Pickup)
@@ -152,11 +152,11 @@ namespace Service.Implement {
             var db = _addressDAO.Get(address.Id);
 
             if (db == null) {
-                throw new Exception("404: Address not found");
+                throw new Exception("404: Không tìm thấy địa chỉ");
             }
 
             if (db.CustomerId != customerId) {
-                throw new Exception("401: You are not allowed to update this address");
+                throw new Exception("401: Bạn không được quyền cập nhật địa chỉ này");
             }
 
             List<Address> addresses = new List<Address>();
