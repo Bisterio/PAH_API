@@ -173,7 +173,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -194,7 +194,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAllAuctions(title, status, categoryId, materialId, orderBy)
@@ -232,7 +232,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -247,7 +247,7 @@ namespace API.Controllers
                 return NotFound(new ErrorDetails
                 {
                     StatusCode = 400,
-                    Message = "This auction is not exist"
+                    Message = "Cuộc đấu giá này không tồn tại"
                 });
             }
 
@@ -285,7 +285,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -318,7 +318,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -334,7 +334,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAuctionBySellerId(userId, status)
@@ -362,7 +362,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -378,7 +378,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAuctionAssigned(userId)
@@ -411,7 +411,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -426,7 +426,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAuctionJoinedByStatus(status, userId)
@@ -456,7 +456,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions joined successfully",
+                Message = "Lấy danh sách các cuộc đấu giá đã tham dự thành công",
                 Data = response
             });
         }
@@ -500,7 +500,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions ended successfully",
+                Message = "Lấy danh sách các cuộc đấu giá đã kết thúc thành công",
                 Data = mappedList
             });
         }
@@ -516,7 +516,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAuctionsDoneByMonths(month);
@@ -544,7 +544,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions ended successfully",
+                Message = "Lấy danh sách các cuộc đấu giá đã kết thúc thành công",
                 Data = mappedList
             });
         }
@@ -559,14 +559,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.CreateAuction(_mapper.Map<Auction>(request));
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Create auction successfully",
+                Message = "Thêm mới cuộc đấu giá thành công",
                 Data = null
             });
         }
@@ -582,14 +582,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             bool check = _auctionService.CheckRegistration(userId, id);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Check auction registration successfully",
+                Message = "Kiểm tra đăng kí cuộc đấu giá thành công",
                 Data = check
             });
         }
@@ -605,14 +605,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             bool check = _auctionService.CheckWinner(userId, id);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Check current user win successfully",
+                Message = "Kiểm tra chiến thắng cuộc đấu giá thành công",
                 Data = check
             });
         }
@@ -635,7 +635,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Check user win successfully",
+                Message = "Kiểm tra chiến thắng cuộc đấu giá thành công",
                 Data = check
             });
         }
@@ -651,7 +651,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             WinnerResponse mappedWinner = EndAuction(id, false).Result;
@@ -659,7 +659,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "End auction successfully",
+                Message = "Kết thúc cuộc đấu giá thành công",
                 Data = mappedWinner
             });
         }
@@ -675,7 +675,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.AssignStaff(id, staffId);
@@ -686,7 +686,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Assign staff successfully",
+                Message = "Bàn giao cuộc đấu giá cho nhân viên thành công",
                 Data = null
             });
         }
@@ -702,14 +702,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.ManagerApproveAuction(id);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Auction approved successfully",
+                Message = "Xác nhận cuộc đấu giá thành công",
                 Data = null
             });
         }
@@ -725,14 +725,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.ManagerRejectAuction(id);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Auction rejected successfully",
+                Message = "Từ chối cuộc đấu giá thành công",
                 Data = null
             });
         }
@@ -747,7 +747,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.StaffSetAuctionInfo(id,
@@ -766,7 +766,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Set auction time successfully",
+                Message = "Cập nhật thông tin đấu giá thành công",
                 Data = null
             });
         }
@@ -778,14 +778,14 @@ namespace API.Controllers
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             
             if (user.Role != (int) Role.Buyer && user.Role != (int) Role.Seller) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             var orderId = _auctionService.CreateAuctionOrder(userId, request);
@@ -821,7 +821,7 @@ namespace API.Controllers
             await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Create auction order successfully",
+                Message = "Tạo đơn hàng cho cuộc đấu giá thành công",
                 Data = null
             });
         }

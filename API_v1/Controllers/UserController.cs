@@ -45,14 +45,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 { 
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You must login to use this." 
+                    Message = "Bạn phải đăng nhập để truy cập nội dung này" 
                 });
             }
             var user = _userService.Get(userId);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get user successfully", 
+                Message = "Lấy thông tin người dùng hiện tại thành công", 
                 Data = _mapper.Map<UserDetailResponse>(user)
             });
         }
@@ -66,14 +66,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You must login to use this."
+                    Message = "Bạn phải đăng nhập để truy cập nội dung này"
                 });
             }
             var user = _userService.Get(id);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get user successfully",
+                Message = "Lấy thông tin người dùng thành công",
                 Data = _mapper.Map<UserDetailResponse>(user)
             });
         }
@@ -92,7 +92,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get all users successfully", 
+                Message = "Lấy danh sách tất cả người dùng thành công", 
                 Data = responses
             });
         }
@@ -107,7 +107,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<User> userList = _userService.GetAllBuyersSellers()
@@ -122,7 +122,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get all customers successfully",
+                Message = "Lấy danh sách tất cả khách hàng thành công",
                 Data = response
             });
         }
@@ -137,7 +137,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<User> staffList = _userService.GetAllStaffs().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
@@ -150,7 +150,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get all staffs successfully",
+                Message = "Lấy danh sách tất cả nhân viên thành công",
                 Data = response
             });
         }
@@ -165,7 +165,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<User> staffList = _userService.GetAvailableStaffs();
@@ -173,7 +173,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get all staffs successfully",
+                Message = "Lấy danh sách tất cả nhân viên thành công",
                 Data = responses
             });
         }
@@ -187,7 +187,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Self deactivate successfully", 
+                Message = "Vô hiệu hóa tài khoản thành công", 
                 Data = null
             });
         }
@@ -202,7 +202,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             };
             var reactivateRequests = _userService.GetReactivateRequestList();
@@ -210,7 +210,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get reactivate requests successfully",
+                Message = "Lấy danh sách yêu cầu tái kích hoạt tài khoản thành công",
                 Data = responses
             });
         }
@@ -225,14 +225,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             };
             _userService.Deactivate(_userService.Get(id));
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Deactivate successfully",
+                Message = "Vô hiệu hóa thành công",
                 Data = null
             });
         }
@@ -247,14 +247,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }            
             _userService.Reactivate(_userService.Get(id));
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Reactivate successfully",
+                Message = "Tái kích hoạt tài khoản thành công",
                 Data = null
             });
         }
@@ -269,7 +269,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             var seller = _sellerService.GetSeller(id);
@@ -277,7 +277,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Approve seller successfully",
+                Message = "Chấp nhận yêu cầu trở thành người bán thành công",
                 Data = null
             });
         }
@@ -292,7 +292,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             var seller = _sellerService.GetSeller(id);
@@ -300,7 +300,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Reject seller successfully",
+                Message = "Từ chối yêu cầu trở thành người bán thành công",
                 Data = null
             });
         }
@@ -312,7 +312,7 @@ namespace API.Controllers
             _userService.UpdateProfile(userId, request);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Update profile successfully",
+                Message = "Cập nhật thông tin cá nhân thành công",
                 Data = null
             });
         }
@@ -329,14 +329,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _userService.ChangePassword(request, user.Email);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Change password successfully",
+                Message = "Đổi mật khẩu thành công",
                 Data = null
             });
         }

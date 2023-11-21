@@ -46,7 +46,7 @@ namespace API.Controllers
             if (userId == null) {
                 return Unauthorized(new ErrorDetails { 
                     StatusCode = (int) HttpStatusCode.Unauthorized, 
-                    Message = "You are not logged in" 
+                    Message = "Bạn phải đăng nhập để truy cập nội dung này" 
                 });
             }
 
@@ -54,14 +54,14 @@ namespace API.Controllers
             if (user == null) {
                 return Unauthorized(new ErrorDetails { 
                     StatusCode = (int) HttpStatusCode.Unauthorized, 
-                    Message = "You are not allowed to access this" 
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
 
             await _walletService.Topup(userId, request);
             return Ok(new BaseResponse { 
                 Code = (int) HttpStatusCode.OK, 
-                Message = "Topup successfully", 
+                Message = "Nạp tiền thành công", 
                 Data = null 
             });
         }
@@ -72,26 +72,26 @@ namespace API.Controllers
             if (userId == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not logged in"
+                    Message = "Bạn phải đăng nhập để truy cập nội dung này"
                 });
             }
             var user = _userService.Get(userId);
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "Your account is not available"
+                    Message = "Tài khoản của bạn đang không khả dụng"
                 });
             }
             if (user.Role != (int) Role.Buyer && user.Role != (int) Role.Seller) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _walletService.CheckoutWallet(userId, orderId, (int) OrderStatus.WaitingSellerConfirm);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = $"Pay for order {orderId} successfully",
+                Message = $"Thanh toán đơn hàng {orderId} thành công",
                 Data = null
             });
         }
@@ -109,7 +109,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get current user wallet successfully",
+                Message = "Lấy thông tin ví của người dùng hiện tại thành công",
                 Data = response
             });
         }
@@ -121,7 +121,7 @@ namespace API.Controllers
             if (userId == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not logged in"
+                    Message = "Bạn phải đăng nhập để truy cập nội dung này"
                 });
             }
 
@@ -129,19 +129,19 @@ namespace API.Controllers
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             if (user.Role != (int) Role.Seller && user.Role != (int) Role.Buyer) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _walletService.CreateWithdrawal(userId, request);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Create withdrawal successfully",
+                Message = "Tạo yêu cầu rút tiền thành công",
                 Data = null
             });
         }
@@ -152,7 +152,7 @@ namespace API.Controllers
             if (userId == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not logged in"
+                    Message = "Bạn phải đăng nhập để truy cập nội dung này"
                 });
             }
 
@@ -160,7 +160,7 @@ namespace API.Controllers
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             
@@ -170,7 +170,7 @@ namespace API.Controllers
 
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Get withdrawal successfully",
+                Message = "Lấy yêu cầu rút tiền thành công",
                 Data = mappedList
             });
         }
@@ -184,7 +184,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not logged in"
+                    Message = "Bạn phải đăng nhập để truy cập nội dung này"
                 });
             }
 
@@ -194,7 +194,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             if (user.Role != (int)Role.Manager)
@@ -202,7 +202,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             var data = _walletService.GetWithdrawalManager().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
@@ -212,7 +212,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get withdrawal successfully",
+                Message = "Lấy danh sách yêu cầu rút tiền thành công",
                 Data = new
                 {
                     Count = count,
@@ -228,7 +228,7 @@ namespace API.Controllers
             if (userId == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not logged in"
+                    Message = "Bạn phải đăng nhập để truy cập nội dung này"
                 });
             }
 
@@ -236,13 +236,13 @@ namespace API.Controllers
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             if (user.Role != (int) Role.Manager) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             if (request.Status == (int) WithdrawalStatus.Done) {
@@ -252,7 +252,7 @@ namespace API.Controllers
             }
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Update withdrawal successfully",
+                Message = "Cập nhật yêu cầu rút tiền thành công",
                 Data = null
             });
         }

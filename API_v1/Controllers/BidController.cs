@@ -80,7 +80,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Get bids successfully",
+                Message = "Lấy danh sách những lần đặt giá thành công",
                 Data = response
             });
         }
@@ -96,7 +96,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
 
@@ -114,7 +114,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Place bid successfully",
+                Message = "Đặt giá thành công",
                 Data = null
             });
         }
@@ -130,14 +130,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _bidService.RegisterToJoinAuction(bidderId, id);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Register to join auction successfully",
+                Message = "Đăng kí tham gia cuộc đấu giá thành công",
                 Data = null
             });
         }
@@ -153,14 +153,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _bidService.RetractBid(id, bidderId);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Retract successfully",
+                Message = "Rút lui khỏi cuộc đấu giá thành công",
                 Data = null
             });
         }

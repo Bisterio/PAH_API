@@ -28,7 +28,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get all materials successfully",
+                Message = "Lấy các chất liệu sản phẩm thành công",
                 Data = materialList 
             });
         }

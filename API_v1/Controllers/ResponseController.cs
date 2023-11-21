@@ -42,7 +42,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             {
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Get response successfully",
+                Message = "Lấy phản hồi đánh giá thành công",
                 Data = response 
             });
         }
@@ -57,7 +57,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             if (!ModelState.IsValid)
@@ -68,7 +68,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             { 
                 Code = (int)HttpStatusCode.OK,
-                Message = "Response successfully", 
+                Message = "Phản hồi đánh giá thành công", 
                 Data = null 
             });
         }

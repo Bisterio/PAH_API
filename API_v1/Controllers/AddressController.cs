@@ -35,7 +35,7 @@ namespace API.Controllers {
             var id = GetUserIdFromToken();
             return Ok(new BaseResponse { 
                 Code = (int) HttpStatusCode.OK, 
-                Message = "Get address by customer successfully", 
+                Message = "Lấy địa chỉ khách hàng thành công", 
                 Data = _addressService.GetByCustomerId(id).Select(p => _mapper.Map<AddressResponse>(p)) 
             });
         }
@@ -47,12 +47,12 @@ namespace API.Controllers {
             Address address = _addressService.GetDeliveryByCurrentUser(id);
             if(address == null)
             {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This user doesn't have any address." });
+                return NotFound(new ErrorDetails { StatusCode = 400, Message = "Người dùng này không có bất kì địa chỉ nào." });
             }
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get address default successfully",
+                Message = "Lấy địa chỉ mặc định thành công",
                 Data = _mapper.Map<AddressResponse>(address)
             });
         }
@@ -66,7 +66,7 @@ namespace API.Controllers {
             _addressService.Create(address);
             return Ok(new BaseResponse { 
                 Code = (int) HttpStatusCode.OK, 
-                Message = "Create address successfully", 
+                Message = "Thêm mới địa chỉ thành công", 
                 Data = null 
             });
         }
@@ -78,7 +78,7 @@ namespace API.Controllers {
             _addressService.Update(_mapper.Map<Address>(request), id);
             return Ok(new BaseResponse { 
                 Code = (int) HttpStatusCode.OK, 
-                Message = "Update address successfully", 
+                Message = "Cập nhật địa chỉ thành công", 
                 Data = null 
             });
         }
@@ -89,7 +89,7 @@ namespace API.Controllers {
             _addressService.Delete(addressId, id);
             return Ok(new BaseResponse { 
                 Code = (int) HttpStatusCode.OK, 
-                Message = "Delete address successfully", 
+                Message = "Xóa địa chỉ thành công", 
                 Data = null 
             });
         }

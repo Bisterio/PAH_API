@@ -42,19 +42,19 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _adminService.CreateStaff(_mapper.Map<User>(request));
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Create staff successfully",
+                Message = "Thêm mới nhân viên thành công",
                 Data = null
             });
         }
@@ -67,19 +67,19 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _adminService.UpdateStaff(_mapper.Map<User>(request));
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Create staff successfully",
+                Message = "Cập nhật nhân viên thành công",
                 Data = null
             });
         }
@@ -91,19 +91,19 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             var list = _adminService.GetAccounts(accountParam);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Get all accounts successfully",
+                Message = "Lấy tất cả tài khoản thành công",
                 Data = new { 
                     Count = list.Count,
                     List = list.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).Select(p => _mapper.Map<UserResponse>(p)).ToList()
@@ -118,19 +118,19 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _adminService.UpdateStatusAccount(request.Id, request.Status);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Update account status successfully",
+                Message = "Cập nhật trạng thái tài khoản thành công",
                 Data = null
             });
         }

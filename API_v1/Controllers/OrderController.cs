@@ -64,7 +64,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get order list successfully",
+                Message = "Lấy danh sách đơn hàng thành công",
                 Data = new
                 {
                     Count = list.Count,
@@ -85,7 +85,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not logged in to access this"
+                    Message = "Bạn chưa đăng nhập để truy cập nội dung này"
                 });
             }
 
@@ -95,7 +95,7 @@ namespace API.Controllers
                 return NotFound(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.NotFound,
-                    Message = "Order not found"
+                    Message = "Không tìm thấy đơn hàng"
                 });
             }
             OrderDetailResponse response = _mapper.Map<OrderDetailResponse>(order);
@@ -117,7 +117,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get order successfully",
+                Message = "Lấy đơn hàng thành công",
                 Data = response
             });
         }
@@ -130,13 +130,13 @@ namespace API.Controllers
 
             if (user == null)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không có quyền truy cập nội dung này" });
             }
 
             var orders = _orderService.GetByBuyerId(id, orderParam.Status)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             var responseOrders = orders.Select(p => _mapper.Map<OrderResponse>(p));
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get Buyer's order list successfully", Data = responseOrders });
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Lấy danh sách đơn hàng của người mua thành công", Data = responseOrders });
         }
 
         [HttpGet("/api/seller/order")]
@@ -147,13 +147,13 @@ namespace API.Controllers
 
             if (user == null)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không có quyền truy cập nội dung này" });
             }
 
             var orders = _orderService.GetBySellerId(id, orderParam.Status)
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             var responseOrders = orders.Select(p => _mapper.Map<OrderResponse>(p));
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Get Seller's order list successfully", Data = responseOrders });
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Lấy danh sách đơn hàng của người bán thành công", Data = responseOrders });
         }
 
         [HttpPost("/api/buyer/checkout")]
@@ -168,7 +168,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
 
@@ -177,7 +177,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _orderService.Checkout(request, user.Id, request.AddressId);
@@ -212,12 +212,12 @@ namespace API.Controllers
 
             if (user == null)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không có quyền truy cập nội dung này" });
             }
 
             if (user.Role != (int)Role.Seller)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không có quyền truy cập nội dung này" });
             }
             _orderService.ApproveCancelOrderRequest(id, orderId);
 
@@ -238,7 +238,7 @@ namespace API.Controllers
                 .Replace("[shippingCost]", order.ShippingCost.ToString())
                 .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
 
-            var message = new Service.EmailService.Message(new string[] { user.Email, buyer.Email }, $"Yêu cầu hủy đơn #{orderId} được xác nhận", mailText);
+            var message = new Service.EmailService.Message(new string[] { user.Email, buyer.Email }, $"Yêu cầu hủy đơn #{orderId} được chấp nhận", mailText);
             await _emailService.SendEmail(message);
             var notiMessage = new FirebaseAdmin.Messaging.Message()
             {
@@ -254,7 +254,7 @@ namespace API.Controllers
                 Topic = "USER_" + buyer.Id
             };
             await messaging.SendAsync(notiMessage);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Approve cancel request successfully", Data = null });
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Chấp nhận yêu cầu hủy đơn hàng thành công", Data = null });
         }
 
         [HttpPost("/api/buyer/order/cancelrequest/{orderId:int}")]
@@ -265,12 +265,12 @@ namespace API.Controllers
 
             if (user == null)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không có quyền truy cập nội dung này" });
             }
 
             if (user.Role != (int)Role.Buyer && user.Role != (int)Role.Seller)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không có quyền truy cập nội dung này" });
             }
 
             _orderService.CancelOrderRequest(id, orderId);
@@ -291,7 +291,7 @@ namespace API.Controllers
                 Topic = "USER_" + seller.Id
             };
             await messaging.SendAsync(notiMessage);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Create cancel request successfully", Data = null });
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Tạo yêu cầu hủy đơn hàng thành công", Data = null });
         }
 
         [HttpPost("/api/seller/order/{orderId:int}")]
@@ -302,12 +302,12 @@ namespace API.Controllers
 
             if (user == null)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không có quyền truy cập nội dung này" });
             }
 
             if (user.Role != (int)Role.Seller)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not seller, not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không phải là người bán, không thể truy cập nội dung này" });
             }
 
             if (request.Status == (int)OrderStatus.CancelledBySeller)
@@ -344,7 +344,7 @@ namespace API.Controllers
                     Topic = "USER_" + buyer.Id
                 };
                 await messaging.SendAsync(notiMessage);
-                return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Cancel order successfully", Data = null });
+                return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Hủy đơn hàng thành công", Data = null });
             }
 
             if (request.Status == (int)OrderStatus.ReadyForPickup)
@@ -381,9 +381,9 @@ namespace API.Controllers
                     Topic = "USER_" + buyer.Id
                 };
                 await messaging.SendAsync(notiMessage);
-                return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Confirm order successfully", Data = null });
+                return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Xác nhận đơn hàng thành công", Data = null });
             }
-            return BadRequest(new ErrorDetails { StatusCode = (int)HttpStatusCode.BadRequest, Message = "Status not matching required information" });
+            return BadRequest(new ErrorDetails { StatusCode = (int)HttpStatusCode.BadRequest, Message = "Trạng thái không khớp với thông tin yêu cầu" });
         }
 
         //[HttpPost("/api/seller/order/deliver/{orderId:int}")]
@@ -414,12 +414,12 @@ namespace API.Controllers
 
             if (user == null)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không có quyền truy cập nội dung này" });
             }
 
             if (user.Role != (int)Role.Seller && user.Role != (int)Role.Buyer)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not buyer, not allowed to access this" });
+                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "Bạn không phải là người mua, không thể truy cập nội dung này" });
             }
 
             var order = _orderService.Get(orderId);
@@ -428,7 +428,7 @@ namespace API.Controllers
                 return NotFound(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.NotFound,
-                    Message = "Order not found"
+                    Message = "Không tìm thấy đơn hàng"
                 });
             }
             if (order.BuyerId != id)
@@ -436,7 +436,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to done this order"
+                    Message = "Bạn không được phép hoàn thành đơn hàng này"
                 });
             }
             if (order.Status != (int)OrderStatus.Delivered)
@@ -444,7 +444,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to done this order"
+                    Message = "Bạn không được phép hoàn thành đơn hàng này"
                 });
             }
             _orderService.DoneOrder(orderId);
@@ -481,7 +481,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Done order successfully",
+                Message = "Hoàn tất đơn hàng thành công",
                 Data = null
             });
         }

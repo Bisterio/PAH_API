@@ -68,10 +68,10 @@ namespace API.Controllers {
             if (user.Status == (int) Status.Unverified) {
                 return Unauthorized(new ErrorDetails { 
                     StatusCode = 401, 
-                    Message = "This account need to be verified first" });
+                    Message = "Tài khoản này cần phải xác thực trước" });
             }
             var token = _userService.AddRefreshToken(user.Id);
-            return Ok(new BaseResponse { Code = 200, Message = "Login successfully", Data = token});
+            return Ok(new BaseResponse { Code = 200, Message = "Đăng nhập thành công", Data = token});
         }
 
         [HttpPost]
@@ -93,11 +93,11 @@ namespace API.Controllers {
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = 401,
-                    Message = "This account need to be verified first"
+                    Message = "Tài khoản này cần phải xác thực trước"
                 });
             }
             var token = _userService.AddRefreshToken(user.Id);
-            return Ok(new BaseResponse { Code = 200, Message = "Login successfully", Data = token });
+            return Ok(new BaseResponse { Code = 200, Message = "Đăng nhập thành công", Data = token });
         }
 
         [HttpPost]
@@ -115,7 +115,7 @@ namespace API.Controllers {
                 return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Nhân viên PAH hãy đăng nhập bằng trang hệ thống" });
             }
             var token = _userService.AddRefreshToken(user.Id);
-            return Ok(new BaseResponse { Code = 200, Message = "Login successfully", Data = token });
+            return Ok(new BaseResponse { Code = 200, Message = "Đăng nhập thành công", Data = token });
         }
 
         [HttpPost]
@@ -128,11 +128,11 @@ namespace API.Controllers {
 
             var dbToken = _userService.GetSavedRefreshToken(id, token.RefreshToken);
             if (dbToken == null) {
-                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Please login again" });
+                return Unauthorized(new ErrorDetails { StatusCode = 401, Message = "Vui lòng đăng nhập lại" });
             }
 
             var newToken = _userService.AddRefreshToken(id);
-            return Ok(new BaseResponse { Code = 200, Message = "Refresh successfully", Data = newToken });
+            return Ok(new BaseResponse { Code = 200, Message = "Làm mới thành công", Data = newToken });
         }
         
         [HttpPost]
@@ -157,7 +157,7 @@ namespace API.Controllers {
             await _emailService.SendEmail(message);
             return Ok(new BaseResponse { 
                 Code = 200, Message = 
-                "Register successfully, please check your email for link", 
+                "Đăng kí thành công, vui lòng kiểm tra email để nhận liên kết xác thực", 
                 Data = null });
         }
 
@@ -169,7 +169,7 @@ namespace API.Controllers {
             if (user == null) {
                 return NotFound(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.NotFound,
-                    Message = "User not found"
+                    Message = "Không tìm thấy người dùng"
                 });
             }
 
@@ -188,7 +188,7 @@ namespace API.Controllers {
             await _emailService.SendEmail(message);
             return Ok(new BaseResponse {
                 Code = 200,
-                Message = "Send mail successfully",
+                Message = "Gửi email thành công",
                 Data = null
             });
         }
@@ -200,7 +200,7 @@ namespace API.Controllers {
             _userService.ResetPassword(request);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Reset password successfully",
+                Message = "Khôi phục mật khẩu thành công",
                 Data = null
             });
         }
@@ -237,7 +237,7 @@ namespace API.Controllers {
             await _emailService.SendEmail(message);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Verification code sent successfully",
+                Message = "Gửi mã xác thực thành công",
                 Data = null
             });
         }

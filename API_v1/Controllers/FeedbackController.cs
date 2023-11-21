@@ -47,7 +47,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get feedback successfully",
+                Message = "Lấy đánh giá thành công",
                 Data = response 
             });
         }
@@ -66,7 +66,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get all feedbacks successfully",
+                Message = "Lấy tất cả đánh giá thành công",
                 Data = responses
             });
         }
@@ -91,7 +91,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Feedback successfully", 
+                Message = "Đánh giá sản phẩm thành công", 
                 Data = null 
             });
         }
