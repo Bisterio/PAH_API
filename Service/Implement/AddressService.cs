@@ -33,16 +33,19 @@ namespace Service.Implement {
             } 
             else 
             {
-                addresses = _addressDAO.GetDeliveryByCustomerId((int)address.CustomerId).ToList();
-                foreach (Address existedAddress in addresses)
+                if(address.IsDefault == true)
                 {
-                    if (existedAddress.IsDefault == true)
+                    addresses = _addressDAO.GetDeliveryByCustomerId((int)address.CustomerId).ToList();
+                    foreach (Address existedAddress in addresses)
                     {
-                        existedAddress.IsDefault = false;
+                        if (existedAddress.IsDefault == true)
+                        {
+                            existedAddress.IsDefault = false;
+                        }
                     }
                 }
+                
                 address.Id = 0;
-                address.IsDefault = true;
                 address.CreatedAt = DateTime.Now;
                 address.UpdatedAt = DateTime.Now;
                 _addressDAO.Create(address);
