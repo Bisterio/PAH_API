@@ -41,6 +41,7 @@ namespace Service.Implement {
                         if (existedAddress.IsDefault == true)
                         {
                             existedAddress.IsDefault = false;
+                            _addressDAO.Update(existedAddress);
                         }
                     }
                 }
