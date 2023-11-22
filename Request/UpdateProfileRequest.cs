@@ -20,7 +20,7 @@ namespace Request {
         public string Phone { get; set; }
 
         [Required(ErrorMessage = "Không được để trống ảnh đại diện")]
-        [Url]
+        [Url(ErrorMessage = "Hình đại diện là một đường dẫn")]
         public string ProfilePicture { get; set; }
 
         [Required(ErrorMessage = "Không được để trống giới tính")]
