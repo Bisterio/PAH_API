@@ -138,10 +138,8 @@ namespace API.Controllers {
         [HttpPost]
         [AllowAnonymous]
         [Route("/api/register")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterRequest request) {
-            if (!ModelState.IsValid) {
-                return BadRequest(ModelState);
-            }
             _userService.Register(_mapper.Map<User>(request));
             var code = _userService.CreateVerificationCode(request.Email);
             var link = Url.Link("Verify account", new { email = request.Email, code = code });

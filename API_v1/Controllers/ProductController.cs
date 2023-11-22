@@ -192,6 +192,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpPost]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult RegisterProduct([FromBody] ProductRequest request)
         {
             var userId = GetUserIdFromToken();
