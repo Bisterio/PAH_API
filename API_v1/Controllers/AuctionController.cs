@@ -64,12 +64,12 @@ namespace API.Controllers
             _emailService = emailService;
             _templatesPath = pathConfig["Path:Templates"];
             _orderService = orderService;
-            //var app = FirebaseApp.DefaultInstance;
-            //if (FirebaseApp.DefaultInstance == null)
-            //{
-            //    app = FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile("firebase-key.json").CreateScoped("https://www.googleapis.com/auth/firebase.messaging") });
-            //}
-            //messaging = FirebaseMessaging.GetMessaging(app);
+            var app = FirebaseApp.DefaultInstance;
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                app = FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile("firebase-key.json").CreateScoped("https://www.googleapis.com/auth/firebase.messaging") });
+            }
+            messaging = FirebaseMessaging.GetMessaging(app);
         }
 
         private int GetUserIdFromToken()
@@ -737,7 +737,7 @@ namespace API.Controllers
             });
         }
 
-        [HttpPost("staff/info/{id}")] // cai api nay can sua lai endpoint
+        [HttpPost("staff/info/{id}")]
         [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult StaffSetAuctionInfo(int id, [FromBody] AuctionDateRequest request)
         {

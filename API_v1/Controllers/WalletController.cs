@@ -41,6 +41,7 @@ namespace API.Controllers
         }
 
         [HttpPost("topup")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public async Task<IActionResult> Topup([FromBody] TopupRequest request) {
             var userId = GetUserIdFromToken();  
             if (userId == null) {

@@ -10,15 +10,15 @@ namespace Request
 {
     public class AuctionDateRequest : IValidatableObject
     {
-        [Required]
+        [Required(ErrorMessage = "Không được để trống thời gian bắt đầu đấu giá")]
         public DateTime? StartedAt { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống thời gian kết thúc đấu giá")]
         public DateTime? EndedAt { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống thời gian bắt đầu đăng ký")]
         public DateTime? RegistrationStart { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống thời gian kết thúc đăng ký")]
         public DateTime? RegistrationEnd { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống bước giá")]
         public decimal Step { get; set; } = 50000;
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
@@ -32,7 +32,7 @@ namespace Request
             else if (Step < 50000)
             {
                 yield return new ValidationResult(
-                    $"Bước giá của cuộc đấu giá phải tối thiểu là 50000VND",
+                    $"Bước giá của cuộc đấu giá phải tối thiểu là 50.000VND",
                     new[] { nameof(Step) });
             }
             else if (StartedAt <= RegistrationEnd)

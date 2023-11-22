@@ -3,25 +3,26 @@
 namespace Request {
     public class AddressRequest {
         public int Id { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống tên người nhận hàng")]
         public string RecipientName { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống số điện thoại người nhận hàng")]
         public string RecipientPhone { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống tỉnh thành")]
         public string Province { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống tỉnh thành")]
         public int ProvinceId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống quận huyện")]
         public string District { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống quận huyện")]
         public int DistrictId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống phường xã")]
         public string Ward { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống phường xã")]
         public string WardCode { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống tên đường")]
         public string Street { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống loại địa chỉ")]
+        [Range(1 , 2, ErrorMessage = "Địa chỉ chỉ có thể là giao hàng hoặc lấy hàng")]
         public int Type { get; set; }
         public bool? IsDefault { get; set; }
     }
