@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace Request {
     public class AuctionOrderRequest {
-        [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Please enter a value bigger than {1}")]
+        [Required(ErrorMessage = "Không được để trống ID đấu giá")]
+        [Range(1, int.MaxValue, ErrorMessage = "Điền vào giá trị lớn hơn {1}")]
         public int AuctionId {  get; set; }
-        [Required]
-        [Range(0, int.MaxValue, ErrorMessage = "Please enter a value bigger than {1}")]
+        [Required(ErrorMessage = "Không được để trống giá ship")]
+        [Range(0, int.MaxValue, ErrorMessage = "Điền vào giá trị lớn hơn {1}")]
         public decimal ShippingPrice { get; set; }
-        [Required]
-        [Range(1, int.MaxValue, ErrorMessage = "Please enter a value bigger than {1}")]
+        [Required(ErrorMessage = "Không được để trống ID địa chỉ")]
+        [Range(1, int.MaxValue, ErrorMessage = "Điền vào giá trị lớn hơn {1}")]
         public int AddressId { get; set; }
     }
 }

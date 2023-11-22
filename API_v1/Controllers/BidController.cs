@@ -87,6 +87,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpPost]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult PlaceBid([FromBody] BidRequest request)
         {
             var bidderId = GetUserIdFromToken();

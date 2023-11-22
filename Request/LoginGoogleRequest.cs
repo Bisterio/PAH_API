@@ -9,9 +9,10 @@ namespace Request
 {
     public class LoginGoogleRequest
     {
-        [EmailAddress]
-        [Required]
+        [Required(ErrorMessage = "Không được để trống email")]
+        [EmailAddress(ErrorMessage = "Định dạng email không hợp lệ")]
         public string Email { get; set; }
+        [Required(ErrorMessage = "Không được để trống họ tên người dùng")]
         public string Name { get; set; } = null!;
         public string? ProfilePicture { get; set; }
     }

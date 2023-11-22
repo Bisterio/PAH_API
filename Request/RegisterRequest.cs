@@ -12,6 +12,7 @@ namespace Request {
         [DataType(DataType.Password)]
         public string Password { get; set; } = null!;
         [Required(ErrorMessage = "Không được để trống số điện thoại")]
+        [RegularExpression(@"^(\+84|84|0[1-9]|84[1-9]|\+84[1-9])+([0-9]{8})\b$", ErrorMessage = "Số điện thoại không hợp lệ")]
         public string? Phone { get; set; }
         public int? Gender { get; set; }
         public DateTime? Dob { get; set; }

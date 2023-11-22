@@ -132,6 +132,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpPost]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public async Task<IActionResult> SellerRequest([FromBody] SellerRequest request)
         {
             var userId = GetUserIdFromToken();
