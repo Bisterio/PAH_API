@@ -56,6 +56,7 @@ namespace API.Controllers {
         [HttpPost]
         [AllowAnonymous]
         [Route("/api/customer/login")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult LoginCustomer([FromBody] LoginRequest request) {
             var user = _userService.Login(request.Email, request.Password);
             if (user == null) {
@@ -77,6 +78,7 @@ namespace API.Controllers {
         [HttpPost]
         [AllowAnonymous]
         [Route("/api/staff/login")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult LoginStaff([FromBody] LoginRequest request)
         {
             var user = _userService.Login(request.Email, request.Password);
