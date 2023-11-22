@@ -32,7 +32,7 @@ namespace Request
             else if (Step < 50000)
             {
                 yield return new ValidationResult(
-                    $"Bước giá của cuộc đấu giá phải tối thiểu là 50.000VND",
+                    $"Bước giá của cuộc đấu giá phải tối thiểu là 50.000 VND",
                     new[] { nameof(Step) });
             }
             else if (StartedAt <= RegistrationEnd)
