@@ -6,7 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Request {
-    public class StaffRequest {
+    public class StaffRequest : IValidatableObject
+    {
         [Required(ErrorMessage = "Không được để trống họ tên người dùng")]
         public string Name { get; set; }
         [Required(ErrorMessage = "Không được để trống email")]
@@ -23,11 +24,21 @@ namespace Request {
         [Required(ErrorMessage = "Không được để trống giới tính")]
         public int? Gender { get; set; }
         [Required(ErrorMessage = "Không được để trống ngày tháng năm sinh")]
-        public DateTime? Dob { get; set; }
+        public DateTime Dob { get; set; }
         [Required(ErrorMessage = "Không được để trống trạng thái")]
         public int Status { get; set; }
         [Required(ErrorMessage = "Không được để trống vai trò")]
         [Range(4,5)]
         public int Role { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            int age = DateTime.Now.Year - Dob.Year;
+            if (DateTime.Now.DayOfYear < Dob.DayOfYear) age = age - 1;
+            if (age < 18)
+            {
+                yield return new ValidationResult($"Người dùng phải hơn 18 tuổi", new[] { nameof(Dob) });
+            }
+        }
     }
 }

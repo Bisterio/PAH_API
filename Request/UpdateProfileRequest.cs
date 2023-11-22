@@ -19,7 +19,7 @@ namespace Request {
         [RegularExpression(@"^(\+84|84|0[1-9]|84[1-9]|\+84[1-9])+([0-9]{8})\b$", ErrorMessage = "Số điện thoại không hợp lệ")]
         public string Phone { get; set; }
 
-        [Required(ErrorMessage = "Không được để trống hình ảnh")]
+        [Required(ErrorMessage = "Không được để trống ảnh đại diện")]
         [Url]
         public string ProfilePicture { get; set; }
 
@@ -34,7 +34,7 @@ namespace Request {
             int age = DateTime.Now.Year - Dob.Year;
             if (DateTime.Now.DayOfYear < Dob.DayOfYear) age = age - 1;
             if (age < 18) {
-                yield return new ValidationResult($"Người tham gia cần có độ tuổi từ 18 trở lên", new[] { nameof(Dob) });
+                yield return new ValidationResult($"Người dùng phải hơn 18 tuổi", new[] { nameof(Dob) });
             }
         }
     }
