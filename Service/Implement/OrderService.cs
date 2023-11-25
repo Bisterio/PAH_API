@@ -358,7 +358,7 @@ namespace Service.Implement {
             
             var responseMessage = await client.PostAsync("v2/shipping-order/create", Utils.ConvertForPost<ShippingOrderRequest>(request));
             if (!responseMessage.IsSuccessStatusCode) {
-                throw new Exception($"500: {responseMessage.Content}");
+                throw new Exception($"400: {responseMessage.Content.ReadAsStringAsync().Result}");
             }
             var data = await responseMessage.Content.ReadAsAsync<BaseGHNResponse<ShippingOrderResponse>>();
             order.OrderShippingCode = data.data.order_code;

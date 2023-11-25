@@ -28,7 +28,7 @@ namespace Request {
         [Required(ErrorMessage = "Không được để trống trạng thái")]
         public int Status { get; set; }
         [Required(ErrorMessage = "Không được để trống vai trò")]
-        [Range(4,5)]
+        [Range(4,5, ErrorMessage = "Vai trò phải là Nhân viên hoặc Quản lý")]
         public int Role { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

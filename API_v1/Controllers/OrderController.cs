@@ -195,7 +195,7 @@ namespace API.Controllers
                 Topic = "USER_" + request.Order.First().SellerId
             };
             await messaging.SendAsync(notiMessage);
-            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Checkout successfully", Data = null });
+            return Ok(new BaseResponse { Code = (int)HttpStatusCode.OK, Message = "Tạo đơn hàng thành công", Data = null });
         }
 
         private int GetUserIdFromToken()
