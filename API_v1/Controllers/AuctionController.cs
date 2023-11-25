@@ -26,6 +26,7 @@ using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace API.Controllers
 {
@@ -759,10 +760,11 @@ namespace API.Controllers
                 request.Step);
 
             DateTime endTime = (DateTime)request.EndedAt;
+            DateTime startTime = (DateTime)request.StartedAt;
 
-            _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Opened), (DateTime)request.StartedAt);
-            _backgroundJobClient.Schedule(() => EndAuction(id, true), endTime);
-            _backgroundJobClient.Schedule(() => NotifyEndAuction(id), endTime.AddSeconds(-30));
+            _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Opened), startTime.AddSeconds(-10));
+            _backgroundJobClient.Schedule(() => EndAuction(id, true), endTime.AddSeconds(-10));
+            _backgroundJobClient.Schedule(() => NotifyEndAuction(id), endTime.AddSeconds(-40));
 
             return Ok(new BaseResponse
             {
@@ -860,7 +862,8 @@ namespace API.Controllers
         public async Task<WinnerResponse?> EndAuction(int auctionId, bool scheduled = true)
         {
             var auction = _auctionService.GetAuctionById(auctionId);
-            if (scheduled && DateTime.Now < auction.EndedAt)
+            DateTime endTime = (DateTime)auction.EndedAt;
+            if (scheduled && DateTime.Now < endTime.AddSeconds(-10))
             {
                 throw new Exception("404: EndedDate Changed");
             }
@@ -903,7 +906,7 @@ namespace API.Controllers
         {
             var auction = _auctionService.GetAuctionById(auctionId);
             DateTime endTime = (DateTime)auction.EndedAt;
-            if (DateTime.Now < endTime.AddSeconds(-30))
+            if (DateTime.Now < endTime.AddSeconds(-40))
             {
                 throw new Exception("404: EndedDate Changed");
             }

@@ -2,6 +2,10 @@
 using AutoMapper;
 using DataAccess;
 using DataAccess.Models;
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
+using MailKit.Search;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,12 +26,19 @@ namespace API.Controllers
         private readonly IUserService _userService;
         private readonly ISellerService _sellerService;
         private readonly IMapper _mapper;
+        private readonly FirebaseMessaging messaging;
 
         public UserController(IUserService userService, IMapper mapper, ISellerService sellerService)
         {
             _userService = userService;
             _mapper = mapper;
             _sellerService = sellerService;
+            var app = FirebaseApp.DefaultInstance;
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                app = FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile("firebase-key.json").CreateScoped("https://www.googleapis.com/auth/firebase.messaging") });
+            }
+            messaging = FirebaseMessaging.GetMessaging(app);
         }
 
         private int GetUserIdFromToken()
@@ -260,7 +271,7 @@ namespace API.Controllers
         }
 
         [HttpGet("seller/approve")]
-        public IActionResult AcceptSeller(int id)
+        public async Task<IActionResult> AcceptSeller(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -274,6 +285,16 @@ namespace API.Controllers
             }
             var seller = _sellerService.GetSeller(id);
             _userService.AcceptSeller(seller);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Yêu cầu đã được duyệt",
+                    Body = "Hệ thống đã duyệt yêu cầu của bạn. Hãy bắt đầu đăng sản phẩm lên PAH!"
+                },
+                Topic = "USER_" + id
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
@@ -283,7 +304,7 @@ namespace API.Controllers
         }
 
         [HttpGet("seller/reject")]
-        public IActionResult RejectSeller(int id)
+        public async Task<IActionResult> RejectSeller(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -297,6 +318,16 @@ namespace API.Controllers
             }
             var seller = _sellerService.GetSeller(id);
             _userService.RejectSeller(seller);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Yêu cầu đã bị từ chối",
+                    Body = "Hồ sơ của bạn chưa đủ tin cậy để làm người bán. Hãy cập nhật lại thông tin để hệ thống kiểm duyệt lại!"
+                },
+                Topic = "USER_" + id
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,

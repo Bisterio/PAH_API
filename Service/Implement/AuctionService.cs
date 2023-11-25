@@ -2,6 +2,7 @@
 using DataAccess.Models;
 using Hangfire;
 using Hangfire.Storage;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Request;
 using System;
 using System.Collections.Generic;
@@ -324,8 +325,9 @@ namespace Service.Implement
             if (auction == null) {
                 return false;
             }
+            DateTime startTime = (DateTime)auction.StartedAt;
 
-            if(status == (int)AuctionStatus.Opened && DateTime.Now < auction.StartedAt)
+            if (status == (int)AuctionStatus.Opened && DateTime.Now < startTime.AddSeconds(-10))
             {
                 return false;
             }

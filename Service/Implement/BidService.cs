@@ -30,7 +30,7 @@ namespace Service.Implement
 
         public List<Bid> GetAllBidsFromAuction(int auctionId, int status)
         {
-            var bids = _bidDAO.GetBidsByAuctionId(auctionId).Where(b => status == 0 || b.Status == status).OrderByDescending(b => b.BidDate).ToList();
+            var bids = _bidDAO.GetBidsByAuctionId(auctionId).Where(b => (status == 0 || b.Status == status) && b.Status != (int)BidStatus.Register).OrderByDescending(b => b.BidDate).ToList();
             return bids;
         }
 
@@ -52,7 +52,7 @@ namespace Service.Implement
 
         public int GetNumberOfBids(int auctionId)
         {
-            return GetAllBidsFromAuction(auctionId, (int)BidStatus.Active)
+            return GetAllBidsFromAuction(auctionId,  0)
                 .Count();
         }
 
@@ -64,6 +64,12 @@ namespace Service.Implement
             }
 
             Auction auction = _auctionDAO.GetAuctionById((int)bid.AuctionId);
+
+            if(auction.StartedAt > DateTime.Now || auction.EndedAt < DateTime.Now)
+            {
+                throw new Exception("400: Thời gian đấu giá đã kết thúc, hãy đợi tổng kết kết quả");
+            }
+
             var registrationList = _bidDAO.GetBidsByAuctionId(auction.Id).Where(b => b.Status == (int)BidStatus.Register).ToList();
             if (auction.Product.SellerId == bidderId)
             {
