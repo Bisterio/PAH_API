@@ -34,6 +34,6 @@ namespace Service
         //public void OpenAuction(int id);
         //public void EndAuction(int id);
 
-        public int CreateAuctionOrder(int userId, AuctionOrderRequest request);
+        public Task<int> CreateAuctionOrder(int userId, AuctionOrderRequest request);
     }
 }

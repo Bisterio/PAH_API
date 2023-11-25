@@ -2,7 +2,7 @@
 
 namespace Request
 {
-    public class ProductRequest
+    public class ProductRequest : IValidatableObject
     {
         [Required(ErrorMessage = "Không được để trống danh mục")]
         public int? CategoryId { get; set; }
@@ -46,7 +46,7 @@ namespace Request
                 }
                 if (Step < 50000)
                 {
-                    yield return new ValidationResult("Cần bổ sung bước giá",
+                    yield return new ValidationResult("Bước giá cần lớn hơn 50.000 VNĐ",
                     new[] { nameof(Step) });
                 }
             }

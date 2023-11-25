@@ -1,14 +1,19 @@
 ﻿using DataAccess;
+using DataAccess.Implement;
 using DataAccess.Models;
 using Hangfire;
 using Hangfire.Storage;
+using MailKit.Search;
+using Microsoft.Extensions.Configuration;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Request;
+using Request.ThirdParty.GHN;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static Request.ThirdParty.GHN.ShippingOrder;
 
@@ -26,11 +31,16 @@ namespace Service.Implement
         private readonly IAddressDAO _addressDAO;
         private readonly IWalletService _walletService;
         private readonly IOrderService _orderService;
-        private readonly IProductImageDAO _productImageDAO;     
+        private readonly IProductImageDAO _productImageDAO;
+        private readonly IConfiguration _config;
+        private IHttpClientFactory _httpClientFactory;
+        private readonly ISellerDAO _sellerDAO;
+        private readonly IProductDAO _productDAO;
 
         public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO, 
             IBidDAO bidDAO, IWalletDAO walletDAO, ITransactionDAO transactionDAO, IOrderDAO orderDAO, 
-            IAddressDAO addressDAO, IWalletService walletService, IProductImageDAO productImageDAO, IOrderService orderService)
+            IAddressDAO addressDAO, IWalletService walletService, IProductImageDAO productImageDAO, IOrderService orderService,
+            IConfiguration config, IHttpClientFactory httpClientFactory, ISellerDAO sellerDAO, IProductDAO productDAO)
         {
             _auctionDAO = auctionDAO;
             _userDAO = userDAO;
@@ -43,6 +53,10 @@ namespace Service.Implement
             _transactionDAO = transactionDAO;
             _orderService = orderService;
             _productImageDAO = productImageDAO;
+            _config = config;
+            _httpClientFactory = httpClientFactory;
+            _sellerDAO = sellerDAO;
+            _productDAO = productDAO;
         }
 
         public List<Auction> GetAuctions(string? title, int status, int categoryId, int materialId, int orderBy)
@@ -453,7 +467,7 @@ namespace Service.Implement
             return checkRegistration;
         }
 
-        public int CreateAuctionOrder(int userId, AuctionOrderRequest request) {
+        public async Task<int> CreateAuctionOrder(int userId, AuctionOrderRequest request) {
             var auction = _auctionDAO.GetAuctionById(request.AuctionId);
             if (auction == null) {
                 throw new Exception("404: Không tìm thấy cuộc đấu giá để tạo đơn hàng");
@@ -503,15 +517,151 @@ namespace Service.Implement
                 ImageUrl = _productImageDAO.GetByProductId((int)auction.ProductId).FirstOrDefault().ImageUrl
             });
             _orderDAO.Create(order);
-            //var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(userId, now).ToList();
-            //foreach(var item in orderList) {
-            //    //_walletService.CheckoutWallet(userId, item.Id, (int) OrderStatus.ReadyForPickup);
-            //    _orderService.CreateShippingOrder(item.Id);
-            //}
 
-            _orderService.CreateShippingOrder(order.Id);
+            var seller = _sellerDAO.GetSeller(order.SellerId.Value);
+            if (seller == null)
+            {
+                throw new Exception("404: Không tìm thấy người bán để tạo đơn vận chuyển");
+            }
+
+            var sellerAddress = _addressDAO.GetPickupBySellerId(order.SellerId.Value);
+            if (sellerAddress == null)
+            {
+                throw new Exception("404: Không tìm thấy địa chỉ người bán để tạo đơn vận chuyển");
+            }
+            if (sellerAddress.Type != (int)AddressType.Pickup)
+            {
+                throw new Exception("401: Địa chỉ hiện tại không phải địa chỉ lấy hàng");
+            }
+
+            var buyerAddress = _addressDAO.GetBuyerAddressInOrder(order.BuyerId.Value, order.RecipientAddress);
+            if (buyerAddress == null)
+            {
+                throw new Exception("404: Không tìm thấy địa chỉ để tạo đơn vận chuyển");
+            }
+
+            //Call to GHN to create shipping order
+            var client = _httpClientFactory.CreateClient("GHN");
+            client.DefaultRequestHeaders.Add("shop_id", seller.ShopId);
+            var requestGHN = new ShippingOrderRequest
+            {
+                note = $"Đơn hàng cho khách hàng {buyerAddress.RecipientName}",
+                return_name = sellerAddress.RecipientName,
+                return_address = sellerAddress.Street,
+                return_ward_code = sellerAddress.WardCode,
+                return_district_id = sellerAddress.DistrictId.Value,
+                return_phone = sellerAddress.RecipientPhone,
+                to_name = buyerAddress.RecipientName,
+                to_phone = buyerAddress.RecipientPhone,
+                to_address = buyerAddress.Street,
+                to_district_id = buyerAddress.DistrictId.Value,
+                to_ward_code = buyerAddress.WardCode,
+                weight = 0,
+                items = new List<ShippingOrderItem>()
+            };
+            order.OrderItems.ToList().ForEach(p => {
+                var product = _productDAO.GetProductById(p.ProductId);
+                requestGHN.items.Add(new ShippingOrderItem
+                {
+                    name = product.Name,
+                    code = product.Id.ToString(),
+                    quantity = p.Quantity.Value,
+                    weight = (int)product.Weight.Value
+                });
+                requestGHN.weight += (int)product.Weight.Value;
+            });
+
+            var responseMessage = await client.PostAsync("v2/shipping-order/create", Utils.ConvertForPost<ShippingOrderRequest>(requestGHN));
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                throw new Exception($"400: {responseMessage.Content.ReadAsStringAsync().Result}");
+            }
+            var data = await responseMessage.Content.ReadAsAsync<BaseGHNResponse<ShippingOrderResponse>>();
+            order.OrderShippingCode = data.data.order_code;
+            order.Status = (int)OrderStatus.ReadyForPickup;
+            _orderDAO.UpdateOrder(order);
+
+            //Check order status
+            await CheckStatusShippingOrder(order.Id, data.data.order_code);
             return order.Id;
         }
+
+        public async Task CheckStatusShippingOrder(int orderId, string orderShippingCode)
+        {
+            //Call to GHN
+            var client = _httpClientFactory.CreateClient("GHN");
+            StringContent content = new(
+                JsonSerializer.Serialize(new
+                {
+                    order_code = orderShippingCode
+                }),
+                Encoding.UTF8,
+                "application/json");
+            var httpResponse = await client.PostAsync("v2/shipping-order/detail", content);
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(10));
+                return;
+            }
+
+            //Get data
+            var responseData = await httpResponse.Content.ReadAsAsync<ShippingOrder.Root>();
+            var order = _orderDAO.Get(orderId);
+            if (order == null)
+            {
+                throw new Exception("404: Không tìm thấy đơn hàng để cập nhật sau khi vận chuyển");
+            }
+
+            if (responseData.data.log == null)
+            {
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
+                return;
+            }
+
+            //Ready for pickup => Delivering
+            if (order.Status == (int)OrderStatus.ReadyForPickup)
+            {
+                var log = responseData.data.log.Where(p => p.status.Contains("picked"));
+                if (log.Any())
+                {
+                    order.Status = (int)OrderStatus.Delivering;
+                    _orderDAO.UpdateOrder(order);
+                }
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
+                return;
+            }
+
+            //Delivering => Delivered
+            if (order.Status == (int)OrderStatus.Delivering)
+            {
+                var log = responseData.data.log.Where(p => p.status.Contains("delivered"));
+                if (log.Any())
+                {
+                    order.Status = (int)OrderStatus.Delivered;
+                    _orderDAO.UpdateOrder(order);
+                    _backgroundJobClient.Schedule(() => DoneOrder(orderId), DateTime.Now.AddMinutes(60 * 24));
+                }
+                return;
+            }
+        }
+
+        public async void DoneOrder(int orderId)
+        {
+            var order = _orderDAO.Get(orderId);
+            if (order == null)
+            {
+                throw new Exception("404: Không tìm thấy đơn hàng để cập nhật hoàn tất");
+            }
+            if (order.Status == (int)OrderStatus.Done)
+            {
+                return;
+            }
+
+            order.Status = (int)OrderStatus.Done;
+            _orderDAO.UpdateOrder(order);
+            _walletService.AddSellerBalance(orderId);
+        }
+
         public bool CheckWinner(int bidderId, int auctionId)
         {
             Auction auction = _auctionDAO.GetAuctionById(auctionId);

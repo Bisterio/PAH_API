@@ -694,7 +694,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpGet("manager/approve/{id}")]
-        public IActionResult ManagerApproveAuction(int id)
+        public async Task<IActionResult> ManagerApproveAuction(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -707,6 +707,17 @@ namespace API.Controllers
                 });
             }
             _auctionService.ManagerApproveAuction(id);
+            var auction = _auctionService.GetAuctionById(id);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = auction.Title,
+                    Body = "Cuộc đấu giá của bạn đã được duyệt. Một nhân viên sẽ được giao cho quản lý cuộc đấu giá của bạn."
+                },
+                Topic = "USER_" + auction.Product.SellerId
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
@@ -717,7 +728,7 @@ namespace API.Controllers
 
         [Authorize]
         [HttpGet("manager/reject/{id}")]
-        public IActionResult ManagerRejectAuction(int id)
+        public async Task<IActionResult> ManagerRejectAuction(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -730,6 +741,17 @@ namespace API.Controllers
                 });
             }
             _auctionService.ManagerRejectAuction(id);
+            var auction = _auctionService.GetAuctionById(id);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = auction.Title,
+                    Body = "Cuộc đấu giá của bạn đã được duyệt. Một nhân viên sẽ được giao cho quản lý cuộc đấu giá của bạn."
+                },
+                Topic = "USER_" + auction.Product.SellerId
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
@@ -791,7 +813,7 @@ namespace API.Controllers
                     Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
-            var orderId = _auctionService.CreateAuctionOrder(userId, request);
+            var orderId = _auctionService.CreateAuctionOrder(userId, request).Result;
             var order = _orderService.Get(orderId);
             var seller = _userService.Get((int)order.SellerId);
 
