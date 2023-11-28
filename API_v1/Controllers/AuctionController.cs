@@ -784,9 +784,9 @@ namespace API.Controllers
             DateTime endTime = (DateTime)request.EndedAt;
             DateTime startTime = (DateTime)request.StartedAt;
 
-            _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Opened), startTime.AddSeconds(-10));
-            _backgroundJobClient.Schedule(() => EndAuction(id, true), endTime.AddSeconds(-10));
-            _backgroundJobClient.Schedule(() => NotifyEndAuction(id), endTime.AddSeconds(-40));
+            _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Opened), startTime.AddSeconds(-5));
+            _backgroundJobClient.Schedule(() => EndAuction(id, true), endTime.AddSeconds(-5));
+            _backgroundJobClient.Schedule(() => NotifyEndAuction(id), endTime.AddSeconds(-35));
 
             return Ok(new BaseResponse
             {
@@ -885,7 +885,7 @@ namespace API.Controllers
         {
             var auction = _auctionService.GetAuctionById(auctionId);
             DateTime endTime = (DateTime)auction.EndedAt;
-            if (scheduled && DateTime.Now < endTime.AddSeconds(-10))
+            if (scheduled && DateTime.Now < endTime.AddSeconds(-5))
             {
                 throw new Exception("404: EndedDate Changed");
             }
@@ -928,7 +928,7 @@ namespace API.Controllers
         {
             var auction = _auctionService.GetAuctionById(auctionId);
             DateTime endTime = (DateTime)auction.EndedAt;
-            if (DateTime.Now < endTime.AddSeconds(-40))
+            if (DateTime.Now < endTime.AddSeconds(-35))
             {
                 throw new Exception("404: EndedDate Changed");
             }

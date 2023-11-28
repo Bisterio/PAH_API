@@ -341,7 +341,7 @@ namespace Service.Implement
             }
             DateTime startTime = (DateTime)auction.StartedAt;
 
-            if (status == (int)AuctionStatus.Opened && DateTime.Now < startTime.AddSeconds(-10))
+            if (status == (int)AuctionStatus.Opened && DateTime.Now < startTime.AddSeconds(-5))
             {
                 return false;
             }
