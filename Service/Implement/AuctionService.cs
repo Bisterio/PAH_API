@@ -326,6 +326,7 @@ namespace Service.Implement
                 auction.RegistrationEnd = registrationEnd;
                 auction.StartedAt = startedAt;
                 auction.EndedAt = endedAt;
+                auction.MaxEndedAt = endedAt.AddSeconds(90);
                 auction.Status = (int)AuctionStatus.RegistrationOpen;
                 auction.UpdatedAt = DateTime.Now;
                 auction.Step = step;

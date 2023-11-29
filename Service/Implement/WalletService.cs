@@ -72,9 +72,10 @@ namespace Service.Implement
                 Amount = topupRequest.Topup,
                 Type = (int) TransactionType.Deposit,
                 Date = DateTime.Now,
-                Description = $"app_id: {topupRequest.AppId}, " +
-                    $"app_trans_id: {topupRequest.AppTransId}, " +
-                    $"mac: {topupRequest.Mac}",
+                //Description = $"app_id: {topupRequest.AppId}, " +
+                //    $"app_trans_id: {topupRequest.AppTransId}, " +
+                //    $"mac: {topupRequest.Mac}",
+                Description = $"Nạp tiền vào ví PAH từ ZaloPay. Mã giao dịch: {topupRequest.AppTransId}",
                 Status = (int) Status.Available
             });
         }

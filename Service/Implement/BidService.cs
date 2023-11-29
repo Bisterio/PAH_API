@@ -137,21 +137,11 @@ namespace Service.Implement
             bidderWallet.LockedBalance += remainder;
 
             _walletDAO.Update(bidderWallet);
-            //_transactionDAO.Create(new Transaction()
-            //{
-            //    Id = 0,
-            //    WalletId = bidderWallet.Id,
-            //    PaymentMethod = (int)PaymentType.Wallet,
-            //    Amount = remainder,
-            //    Type = (int)TransactionType.Deposit,
-            //    Date = DateTime.Now,
-            //    Description = $"Place bid for auction {auction}",
-            //    Status = (int)TransactionType.Payment,
-            //});
             _bidDAO.CreateBid(bid);
 
             DateTime auctionEndDate = (DateTime)auction.EndedAt;
-            if (auctionEndDate.Subtract(DateTime.Now).TotalSeconds < 30)
+            DateTime auctionMaxEndDate = (DateTime)auction.MaxEndedAt;
+            if (auctionEndDate.Subtract(DateTime.Now).TotalSeconds < 30 && auctionEndDate.AddSeconds(30) <= auctionMaxEndDate)
             {
                 DateTime newEndDate = auctionEndDate.AddSeconds(30);
                 auction.EndedAt = newEndDate;
