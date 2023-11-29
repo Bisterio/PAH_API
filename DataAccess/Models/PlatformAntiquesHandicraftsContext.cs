@@ -150,6 +150,10 @@ namespace DataAccess.Models
                     .HasColumnType("decimal(12, 1)")
                     .HasColumnName("entryFee");
 
+                entity.Property(e => e.MaxEndedAt)
+                    .HasColumnType("datetime")
+                    .HasColumnName("maxEndedAt");
+
                 entity.Property(e => e.ProductId).HasColumnName("productId");
 
                 entity.Property(e => e.RegistrationEnd)
@@ -389,7 +393,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<OrderItem>(entity =>
             {
                 entity.HasKey(e => new { e.OrderId, e.ProductId })
-                    .HasName("PK__OrderIte__BAD83E4B2DB0C8BE");
+                    .HasName("PK__OrderIte__BAD83E4B11B80E9F");
 
                 entity.ToTable("OrderItem");
 
@@ -523,7 +527,7 @@ namespace DataAccess.Models
             modelBuilder.Entity<Response>(entity =>
             {
                 entity.HasKey(e => e.FeedbackId)
-                    .HasName("PK__Response__2613FD24BD775A80");
+                    .HasName("PK__Response__2613FD24CFBA8B18");
 
                 entity.ToTable("Response");
 

@@ -10,6 +10,7 @@ using Request.Param;
 using Respon;
 using Respon.UserRes;
 using Service;
+using Service.EmailService;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
@@ -22,11 +23,15 @@ namespace API.Controllers {
         private readonly IMapper _mapper;
         private readonly IAdminService _adminService;
         private readonly IUserService _userService;
+        private readonly IEmailService _emailService;
+        private readonly string _templatesPath;
 
-        public AdminController(IMapper mapper, IAdminService adminService, IUserService userService) {
+        public AdminController(IMapper mapper, IAdminService adminService, IUserService userService, IEmailService emailService, IConfiguration configuration) {
             _mapper = mapper;
             _adminService = adminService;
             _userService = userService;
+            _emailService = emailService;
+            _templatesPath = configuration["Path:Templates"];
         }
 
         private int GetUserIdFromToken() {
@@ -36,25 +41,39 @@ namespace API.Controllers {
 
         [HttpPost("staff")]
         [ServiceFilter(typeof(ValidateModelAttribute))]
-        public IActionResult AddStaff([FromBody] StaffRequest request) {
+        public async Task<IActionResult> AddStaffAsync([FromBody] StaffRequest request) {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "Bạn không có quyền truy cập nội dung này"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "Bạn không có quyền truy cập nội dung này"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             _adminService.CreateStaff(_mapper.Map<User>(request));
+
+            var code = _userService.CreateVerificationCode(request.Email);
+            var link = Url.Link("Verify account", new { email = request.Email, code = code });
+
+            // Get HTML template
+            string fullPath = Path.Combine(_templatesPath, "RegisterEmail.html");
+            StreamReader str = new StreamReader(fullPath);
+            string mailText = str.ReadToEnd();
+            str.Close();
+            mailText = mailText.Replace("[verifyLink]", link);
+
+            var message = new Message(new string[] { request.Email }, "Xác thực tài khoản nhân viên PAH", mailText);
+            await _emailService.SendEmail(message);
             return Ok(new BaseResponse {
-                Code = (int) HttpStatusCode.OK,
-                Message = "Thêm mới nhân viên thành công",
+                Code = 200,
+                Message =
+                "Tạo tài khoản nhân viên thành công. Nhân viên cần phải xác thực email để có thể đăng nhập!",
                 Data = null
             });
         }
@@ -67,19 +86,19 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "Bạn không có quyền truy cập nội dung này"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "Bạn không có quyền truy cập nội dung này"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             _adminService.UpdateStaff(_mapper.Map<User>(request));
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Cập nhật nhân viên thành công",
+                Message = "Cập nhật thông tin nhân viên thành công",
                 Data = null
             });
         }
@@ -91,19 +110,19 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "Bạn không có quyền truy cập nội dung này"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "Bạn không có quyền truy cập nội dung này"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             var list = _adminService.GetAccounts(accountParam);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Lấy tất cả tài khoản thành công",
+                Message = "Get all accounts successfully",
                 Data = new { 
                     Count = list.Count,
                     List = list.Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).Select(p => _mapper.Map<UserResponse>(p)).ToList()
@@ -118,19 +137,19 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "Bạn không có quyền truy cập nội dung này"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "Bạn không có quyền truy cập nội dung này"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             _adminService.UpdateStatusAccount(request.Id, request.Status);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Cập nhật trạng thái tài khoản thành công",
+                Message = "Update account status successfully",
                 Data = null
             });
         }

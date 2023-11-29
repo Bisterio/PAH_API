@@ -26,7 +26,7 @@ namespace Service.Implement {
             user.CreatedAt = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
             //user.Role = (int) Role.Staff;
-            user.Status = (int) Status.Available;
+            user.Status = (int) Status.Unverified;
             user.ProfilePicture = DEFAULT_AVT;
             _userDAO.Register(user);
         }
