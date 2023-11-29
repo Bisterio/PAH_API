@@ -20,6 +20,7 @@ namespace DataAccess.Models
         public int Status { get; set; }
         public DateTime? StartedAt { get; set; }
         public DateTime? EndedAt { get; set; }
+        public DateTime? MaxEndedAt { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public DateTime? RegistrationStart { get; set; }

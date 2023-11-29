@@ -10,6 +10,7 @@ using Request.Param;
 using Respon;
 using Respon.UserRes;
 using Service;
+using Service.EmailService;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
@@ -22,11 +23,15 @@ namespace API.Controllers {
         private readonly IMapper _mapper;
         private readonly IAdminService _adminService;
         private readonly IUserService _userService;
+        private readonly IEmailService _emailService;
+        private readonly string _templatesPath;
 
-        public AdminController(IMapper mapper, IAdminService adminService, IUserService userService) {
+        public AdminController(IMapper mapper, IAdminService adminService, IUserService userService, IEmailService emailService, IConfiguration configuration) {
             _mapper = mapper;
             _adminService = adminService;
             _userService = userService;
+            _emailService = emailService;
+            _templatesPath = configuration["Path:Templates"];
         }
 
         private int GetUserIdFromToken() {
@@ -36,7 +41,7 @@ namespace API.Controllers {
 
         [HttpPost("staff")]
         [ServiceFilter(typeof(ValidateModelAttribute))]
-        public IActionResult AddStaff([FromBody] StaffRequest request) {
+        public async Task<IActionResult> AddStaffAsync([FromBody] StaffRequest request) {
             var id = GetUserIdFromToken();
             var user = _userService.Get(id);
             if (user == null) {
@@ -52,9 +57,23 @@ namespace API.Controllers {
                 });
             }
             _adminService.CreateStaff(_mapper.Map<User>(request));
+
+            var code = _userService.CreateVerificationCode(request.Email);
+            var link = Url.Link("Verify account", new { email = request.Email, code = code });
+
+            // Get HTML template
+            string fullPath = Path.Combine(_templatesPath, "RegisterEmail.html");
+            StreamReader str = new StreamReader(fullPath);
+            string mailText = str.ReadToEnd();
+            str.Close();
+            mailText = mailText.Replace("[verifyLink]", link);
+
+            var message = new Message(new string[] { request.Email }, "Xác thực tài khoản nhân viên PAH", mailText);
+            await _emailService.SendEmail(message);
             return Ok(new BaseResponse {
-                Code = (int) HttpStatusCode.OK,
-                Message = "Create staff successfully",
+                Code = 200,
+                Message =
+                "Created Staff account successfully, please check your email for link",
                 Data = null
             });
         }
