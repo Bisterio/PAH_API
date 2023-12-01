@@ -37,7 +37,7 @@ namespace Service {
         public void ResetPassword(ResetPasswordRequest request);
         public void VerifyAccount(string email, string code);
         public string CreateVerificationCode(string email);
-
+        public List<RevenueResponse> GetRevenues(int year);
         public int CountDoneOrdersByBuyerId(int id);
     }
 }

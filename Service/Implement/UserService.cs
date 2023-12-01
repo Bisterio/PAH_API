@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Request;
+using Respon.UserRes;
 using Service.EmailService;
 using System;
 using System.Collections.Generic;
@@ -24,15 +25,18 @@ namespace Service.Implement
         private readonly ISellerDAO _sellerDAO;
         private readonly ITokenService _tokenService;
         private readonly IVerifyTokenDAO _verifyTokenDAO;
-        private readonly IOrderDAO _orderDAO;
         private readonly IEmailService _emailService;
         private readonly int WORK_FACTOR = 13;
+        private readonly IOrderDAO _orderDAO;
+        private readonly IAuctionDAO _auctionDAO;
+        private readonly IBidDAO _bidDAO;
         private static readonly string DEFAULT_AVT = "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg";
 
         public UserService(IUserDAO userDAO, ITokenDAO tokenDAO,
             ITokenService tokenService, IBuyerDAO buyerDAO,
             IWalletDAO walletDAO, ISellerDAO sellerDAO, IVerifyTokenDAO verifyTokenDAO,
-            IOrderDAO orderDAO, IEmailService emailService)
+            IEmailService emailService, IOrderDAO orderDAO, IAuctionDAO auctionDAO,
+            IBidDAO bidDAO)
         {
             _userDAO = userDAO;
             _tokenDAO = tokenDAO;
@@ -41,8 +45,10 @@ namespace Service.Implement
             _walletDAO = walletDAO;
             _sellerDAO = sellerDAO;
             _verifyTokenDAO = verifyTokenDAO;
-            _orderDAO = orderDAO;
             _emailService = emailService;
+            _orderDAO = orderDAO;
+            _auctionDAO = auctionDAO;
+            _bidDAO = bidDAO;
         }
 
         public User Get(int id)
@@ -451,6 +457,47 @@ namespace Service.Implement
                 throw new Exception($"500: Khởi tạo token không thành công");
             }
             return newToken.Code;
+        }
+
+        public List<RevenueResponse> GetRevenues(int year)
+        {
+            List<RevenueResponse> revenues = new List<RevenueResponse>();
+
+            for (int i = 1; i <= 12; i++)
+            {
+                decimal orderRevenues = 0;
+                decimal auctionRevenues = 0;
+                DateTime a = DateTime.Now;
+                // Calculate revenue from orders (3% of orders total amount) by month and year
+                var allDoneOrder = _orderDAO.GetAllOrder().Where(o => o.Status == (int)OrderStatus.Done 
+                && ((DateTime)o.OrderDate).Year == year
+                && ((DateTime)o.OrderDate).Month == i)
+                .ToList();
+                if (allDoneOrder.Any())
+                {
+                    orderRevenues = (decimal)allDoneOrder.Sum(o => o.TotalAmount * .03m);
+                }
+
+                // Calculate revenue from auctions (entry fee * number of participants) by month and year
+                var allDoneAuction = _auctionDAO.GetAuctions().Where(a => (a.Status == (int)AuctionStatus.Ended || a.Status == (int)AuctionStatus.EndedWithoutBids)
+                && ((DateTime)a.StartedAt).Year == year
+                && ((DateTime)a.StartedAt).Month == i)
+                .ToList();
+                int numberOfParticipants = 0;
+                foreach (var auction in allDoneAuction)
+                {
+                    numberOfParticipants = _bidDAO.GetBidsByAuctionId(auction.Id).Where(b => b.Status == (int)BidStatus.Register).Count();
+                    auctionRevenues += numberOfParticipants * auction.EntryFee;
+                }
+                revenues.Add(new RevenueResponse()
+                {
+                    Month = i,
+                    OrderRevenue = orderRevenues,
+                    AuctionRevenue = auctionRevenues
+                });
+            }
+
+            return revenues;
         }
 
         public int CountDoneOrdersByBuyerId(int id)

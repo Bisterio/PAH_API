@@ -400,5 +400,27 @@ namespace API.Controllers
                 Data = null
             });
         }
+
+        [HttpGet("revenue/{year}")]
+        public IActionResult GetPlatformRevenueByMonths(int year)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || (user.Role != (int)Role.Manager && user.Role != (int)Role.Staff && user.Role != (int)Role.Administrator))
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "Bạn không có quyền truy cập nội dung này"
+                });
+            }
+            var revenueList = _userService.GetRevenues(year);
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Lấy doanh thu nền tàng thành công",
+                Data = revenueList
+            });
+        }
     }
 }

@@ -43,6 +43,13 @@ namespace Service.Implement
             return bid;
         }
 
+        public int GetNumberOfParticipants(int auctionId)
+        {
+            return GetAllBidsFromAuction(auctionId, (int)BidStatus.Register)
+                .GroupBy(b => b.BidderId)
+                .Count();
+        }
+
         public int GetNumberOfBidders(int auctionId)
         {
             return GetAllBidsFromAuction(auctionId, 0)
