@@ -302,7 +302,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Lấy thông tin người bán theo doanh thu thành công",
+                Message = "Lấy danh sách người bán theo doanh thu thành công",
                 Data = responses
             });
         }

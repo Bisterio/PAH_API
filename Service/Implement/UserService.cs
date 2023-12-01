@@ -24,6 +24,7 @@ namespace Service.Implement
         private readonly ISellerDAO _sellerDAO;
         private readonly ITokenService _tokenService;
         private readonly IVerifyTokenDAO _verifyTokenDAO;
+        private readonly IOrderDAO _orderDAO;
         private readonly IEmailService _emailService;
         private readonly int WORK_FACTOR = 13;
         private static readonly string DEFAULT_AVT = "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg";
@@ -31,7 +32,7 @@ namespace Service.Implement
         public UserService(IUserDAO userDAO, ITokenDAO tokenDAO,
             ITokenService tokenService, IBuyerDAO buyerDAO,
             IWalletDAO walletDAO, ISellerDAO sellerDAO, IVerifyTokenDAO verifyTokenDAO,
-            IEmailService emailService)
+            IOrderDAO orderDAO, IEmailService emailService)
         {
             _userDAO = userDAO;
             _tokenDAO = tokenDAO;
@@ -40,6 +41,7 @@ namespace Service.Implement
             _walletDAO = walletDAO;
             _sellerDAO = sellerDAO;
             _verifyTokenDAO = verifyTokenDAO;
+            _orderDAO = orderDAO;
             _emailService = emailService;
         }
 
@@ -67,6 +69,21 @@ namespace Service.Implement
         {
             return _userDAO.GetAll().Where(u => u.Status == (int)Status.Available
             && (u.Role == (int)Role.Buyer || u.Role == (int)Role.Seller)).ToList();
+        }
+
+        public List<User> GetBuyersWithDoneOrders()
+        {
+            var buyers = _userDAO.GetAll().Where(u => u.Status == (int)Status.Available
+            && (u.Role == (int)Role.Buyer || u.Role == (int)Role.Seller)).ToList();
+            var buyersWithDoneOrders = new List<User>();
+            foreach (var buyer in buyers)
+            {
+                if(_orderDAO.GetAllByBuyerId(buyer.Id).Any(o => o.Status == (int)OrderStatus.Done))
+                {
+                    buyersWithDoneOrders.Add(buyer);
+                }
+            }
+            return buyersWithDoneOrders;
         }
 
         public void Deactivate(User user)
@@ -434,6 +451,12 @@ namespace Service.Implement
                 throw new Exception($"500: Khởi tạo token không thành công");
             }
             return newToken.Code;
+        }
+
+        public int CountDoneOrdersByBuyerId(int id)
+        {
+            int numberOfOrderDone = _orderDAO.GetAllByBuyerId(id).Where(o => o.Status == (int)OrderStatus.Done).Count();
+            return numberOfOrderDone;
         }
     }
 }

@@ -15,6 +15,7 @@ using Respon;
 using Respon.UserRes;
 using Service;
 using System.Net;
+using static Google.Apis.Requests.BatchRequest;
 
 namespace API.Controllers
 {
@@ -135,6 +136,34 @@ namespace API.Controllers
                 Code = (int)HttpStatusCode.OK,
                 Message = "Lấy danh sách tất cả khách hàng thành công",
                 Data = response
+            });
+        }
+
+        [HttpGet("buyer")]
+        public IActionResult GetBuyersByOrders([FromQuery] PagingParam pagingParam)
+        {
+            var id = GetUserIdFromToken();
+            var user = _userService.Get(id);
+            if (user == null || user.Role != (int)Role.Manager && user.Role != (int)Role.Staff && user.Role != (int)Role.Administrator)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "Bạn không có quyền truy cập nội dung này"
+                });
+            }
+            List<User> buyerList = _userService.GetBuyersWithDoneOrders();
+            List<BuyerWithOrderNumberResponse> mappedList = _mapper.Map<List<BuyerWithOrderNumberResponse>>(buyerList);
+            foreach(var item in mappedList)
+            {
+                item.NumberOfDoneOrders = _userService.CountDoneOrdersByBuyerId(item.Id);
+            }
+            List<BuyerWithOrderNumberResponse> responses = mappedList.OrderByDescending(b => b.NumberOfDoneOrders).ToList();
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Lấy danh sách người mua theo số lượng đơn hàng thành công",
+                Data = responses
             });
         }
 
