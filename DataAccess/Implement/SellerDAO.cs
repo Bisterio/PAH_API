@@ -35,5 +35,10 @@ namespace DataAccess.Implement
                 .Include(s => s.IdNavigation)
                 .Where(s => s.Status == (int)SellerStatus.Pending);
         }
+
+        public IQueryable<Seller> GetSellers()
+        {
+            return GetAll();
+        }
     }
 }
