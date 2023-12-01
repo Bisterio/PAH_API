@@ -122,8 +122,16 @@ namespace Service.Implement
 
         public List<Seller> GetSellers()
         {
-            List<Seller> sellerList = _sellerDAO.GetSellers().ToList();
-            return sellerList;
+            var sellers = _sellerDAO.GetSellers().ToList();
+            var sellersWithDoneOrders = new List<Seller>();
+            foreach (var seller in sellers)
+            {
+                if (_orderDAO.GetAllBySellerId(seller.Id).Any(o => o.Status == (int)OrderStatus.Done))
+                {
+                    sellersWithDoneOrders.Add(seller);
+                }
+            }
+            return sellersWithDoneOrders;
         }
     }
 }
