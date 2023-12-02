@@ -155,9 +155,9 @@ namespace Service.Implement
             }
             DateTime filterMonth = DateTime.Now.AddMonths(-month);
             return _auctionDAO.GetAuctionAssigned(staffId)
-                .Where(a => (a.Status == (int)AuctionStatus.Ended 
-                || a.Status == (int)AuctionStatus.EndedWithoutBids)
+                .Where(a => (a.Status == (int)AuctionStatus.Ended)
                 && a.StartedAt >= filterMonth)
+                .OrderByDescending(a => a.StartedAt)
                 .ToList();
         }
 
@@ -165,9 +165,9 @@ namespace Service.Implement
         {
             DateTime filterMonth = DateTime.Now.AddMonths(-month);
             return _auctionDAO.GetAuctions()
-                .Where(a => (a.Status == (int)AuctionStatus.Ended
-                || a.Status == (int)AuctionStatus.EndedWithoutBids)
+                .Where(a => (a.Status == (int)AuctionStatus.Ended)
                 && a.StartedAt >= filterMonth)
+                .OrderByDescending(a => a.StartedAt)
                 .ToList();
         }
 
