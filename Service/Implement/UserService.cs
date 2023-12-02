@@ -479,7 +479,7 @@ namespace Service.Implement
                 }
 
                 // Calculate revenue from auctions (entry fee * number of participants) by month and year
-                var allDoneAuction = _auctionDAO.GetAuctions().Where(a => (a.Status == (int)AuctionStatus.Ended || a.Status == (int)AuctionStatus.EndedWithoutBids)
+                var allDoneAuction = _auctionDAO.GetAuctions().Where(a => (a.Status == (int)AuctionStatus.Ended)
                 && ((DateTime)a.StartedAt).Year == year
                 && ((DateTime)a.StartedAt).Month == i)
                 .ToList();

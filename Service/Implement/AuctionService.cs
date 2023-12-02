@@ -305,18 +305,24 @@ namespace Service.Implement
         }
 
         public void StaffSetAuctionInfo(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt,
-            decimal step)
+            decimal step, int userId)
         {
             if (id == null)
             {
                 throw new Exception("404: Không tìm thấy cuộc đấu giá");
             }
             Auction auction = GetAuctionById(id);
-            if(auction.Status < (int)AuctionStatus.Assigned)
+            if(auction.StaffId != userId)
+            {
+                throw new Exception("400: Bạn không được thay đổi thông tin cuộc đấu giá này");
+            }
+            if(auction.Status == (int)AuctionStatus.Pending || auction.Status == (int)AuctionStatus.Unassigned
+                || auction.Status == (int)AuctionStatus.Rejected)
             {
                 throw new Exception("400: Cuộc đấu giá này không được bàn giao cho bạn");
             } 
-            else if(auction.Status > (int)AuctionStatus.RegistrationOpen)
+            else if(auction.Status == (int)AuctionStatus.Opened || auction.Status == (int)AuctionStatus.Ended
+                || auction.Status == (int)AuctionStatus.Unavailable)
             {
                 throw new Exception("400: Bạn không thể cập nhật thông tin cuộc đấu giá này nữa");
             }

@@ -779,7 +779,7 @@ namespace API.Controllers
                 (DateTime)request.RegistrationEnd,
                 (DateTime)request.StartedAt,
                 (DateTime)request.EndedAt,
-                request.Step);
+                request.Step, userId);
 
             DateTime endTime = (DateTime)request.EndedAt;
             DateTime startTime = (DateTime)request.StartedAt;
