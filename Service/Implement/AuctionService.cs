@@ -144,7 +144,7 @@ namespace Service.Implement
             {
                 throw new Exception("404: Không tìm thấy nhân viên");
             }
-            return _auctionDAO.GetAuctionAssigned(staffId).ToList();
+            return _auctionDAO.GetAuctionAssigned(staffId).OrderByDescending(a => a.CreatedAt).ToList();
         }
 
         public List<Auction> GetAuctionsDoneAssignedByMonths(int staffId, int month)
