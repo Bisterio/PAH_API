@@ -243,7 +243,7 @@ namespace Service.Implement
             {
                 throw new Exception("400: Cuộc đấu giá này đã bị từ chối");
             }
-            else if (auction.Status > (int)AuctionStatus.Unassigned && auction.Status != (int)AuctionStatus.Rejected)
+            else if (auction.Status != (int)AuctionStatus.Assigned && auction.Status != (int)AuctionStatus.Unassigned)
             {
                 throw new Exception("400: Cuộc đấu giá này đã được bàn giao");
             } 
