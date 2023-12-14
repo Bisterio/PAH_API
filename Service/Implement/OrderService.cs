@@ -135,6 +135,10 @@ namespace Service.Implement {
                     if (order.SellerId != dbProduct.SellerId) {
                         throw new Exception("400: Người bán hiện tại không khớp với người bán của sản phẩm trong cơ sở dữ liệu");
                     }
+                    if(dbProduct.SellerId == buyerId)
+                    {
+                        throw new Exception("404: Người bán không được phép mua sản phẩm của chính mình");
+                    }
                     insert.OrderItems.Add(new OrderItem {
                         ProductId = dbProduct.Id,
                         Price = dbProduct.Price,
