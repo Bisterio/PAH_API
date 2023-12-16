@@ -26,7 +26,7 @@ namespace Service
         public void AssignStaff(int id, int staffId);
         public void ManagerApproveAuction(int id);
         public void ManagerRejectAuction(int id);
-        public void StaffSetAuctionInfo(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt, decimal step);
+        public void StaffSetAuctionInfo(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt, decimal step, int userId);
         public bool HostAuction(int auctionId, int status);
         public bool CheckRegistration(int bidderId, int auctionId);
         public bool CheckWinner(int bidderId, int auctionId);
@@ -34,6 +34,6 @@ namespace Service
         //public void OpenAuction(int id);
         //public void EndAuction(int id);
 
-        public void CreateAuctionOrder(int userId, AuctionOrderRequest request);
+        public Task<int> CreateAuctionOrder(int userId, AuctionOrderRequest request);
     }
 }

@@ -3,7 +3,9 @@ using DataAccess;
 using DataAccess.Models;
 using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Request;
+using Respon.UserRes;
 using Service.EmailService;
 using System;
 using System.Collections.Generic;
@@ -25,12 +27,16 @@ namespace Service.Implement
         private readonly IVerifyTokenDAO _verifyTokenDAO;
         private readonly IEmailService _emailService;
         private readonly int WORK_FACTOR = 13;
+        private readonly IOrderDAO _orderDAO;
+        private readonly IAuctionDAO _auctionDAO;
+        private readonly IBidDAO _bidDAO;
         private static readonly string DEFAULT_AVT = "https://static.vecteezy.com/system/resources/thumbnails/001/840/618/small/picture-profile-icon-male-icon-human-or-people-sign-and-symbol-free-vector.jpg";
 
         public UserService(IUserDAO userDAO, ITokenDAO tokenDAO,
             ITokenService tokenService, IBuyerDAO buyerDAO,
             IWalletDAO walletDAO, ISellerDAO sellerDAO, IVerifyTokenDAO verifyTokenDAO,
-            IEmailService emailService)
+            IEmailService emailService, IOrderDAO orderDAO, IAuctionDAO auctionDAO,
+            IBidDAO bidDAO)
         {
             _userDAO = userDAO;
             _tokenDAO = tokenDAO;
@@ -40,6 +46,9 @@ namespace Service.Implement
             _sellerDAO = sellerDAO;
             _verifyTokenDAO = verifyTokenDAO;
             _emailService = emailService;
+            _orderDAO = orderDAO;
+            _auctionDAO = auctionDAO;
+            _bidDAO = bidDAO;
         }
 
         public User Get(int id)
@@ -68,11 +77,26 @@ namespace Service.Implement
             && (u.Role == (int)Role.Buyer || u.Role == (int)Role.Seller)).ToList();
         }
 
+        public List<User> GetBuyersWithDoneOrders()
+        {
+            var buyers = _userDAO.GetAll().Where(u => u.Status == (int)Status.Available
+            && (u.Role == (int)Role.Buyer || u.Role == (int)Role.Seller)).ToList();
+            var buyersWithDoneOrders = new List<User>();
+            foreach (var buyer in buyers)
+            {
+                if(_orderDAO.GetAllByBuyerId(buyer.Id).Any(o => o.Status == (int)OrderStatus.Done))
+                {
+                    buyersWithDoneOrders.Add(buyer);
+                }
+            }
+            return buyersWithDoneOrders;
+        }
+
         public void Deactivate(User user)
         {
             if (user.Status == (int)Status.Unavailable)
             {
-                throw new Exception("400: This user has already deactivated");
+                throw new Exception("400: Người dùng này đã bị vô hiệu hóa");
             }
             user.Status = (int)Status.Unavailable;
             _userDAO.Deactivate(user);
@@ -81,7 +105,7 @@ namespace Service.Implement
         {
             if (user.Status == (int)Status.Available)
             {
-                throw new Exception("400: This user hasn't been deactivated");
+                throw new Exception("400: Người dùng này chưa bị vô hiệu hóa");
             }
             user.Status = (int)Status.Available;
             _userDAO.Deactivate(user);
@@ -91,17 +115,26 @@ namespace Service.Implement
         {
             if (seller.Status != (int)SellerStatus.Pending)
             {
-                throw new Exception("400: This seller request has been approved");
+                throw new Exception("400: Yêu cầu trở thành người bán này đã được chấp nhận");
             }
             seller.Status = (int)SellerStatus.Available;
             _sellerDAO.UpdateSeller(seller);
+
+            var user = _userDAO.Get(seller.Id);
+            if (user == null)
+            {
+                throw new Exception("404: Không tìm thấy người dùng");
+            }
+
+            user.Role = (int)Role.Seller;
+            _userDAO.Update(user);
         }
 
         public void RejectSeller(Seller seller)
         {
             if (seller.Status != (int)SellerStatus.Pending)
             {
-                throw new Exception("400: This seller request has been approved");
+                throw new Exception("400: Yêu cầu trở thành người bán này đã được chấp nhận");
             }
             seller.Status = (int)SellerStatus.Unavailable;
             _sellerDAO.UpdateSeller(seller);
@@ -195,7 +228,7 @@ namespace Service.Implement
             var dbUser = _userDAO.GetByEmail(user.Email);
             if (dbUser != null)
             {
-                throw new Exception("409: Email already exists");
+                throw new Exception("409: Địa chỉ email đã tồn tại");
             }
 
             user.Password = BC.EnhancedHashPassword(user.Password, WORK_FACTOR);
@@ -206,7 +239,7 @@ namespace Service.Implement
             user.ProfilePicture = DEFAULT_AVT;
             _userDAO.Register(user);
             var newUser = _userDAO.GetByEmail(user.Email);
-            if (newUser == null) throw new Exception("500: Cannot insert new user");
+            if (newUser == null) throw new Exception("500: Không thể thêm mới người dùng");
             //CreateVerificationCode(newUser.Email);
         }
 
@@ -292,18 +325,18 @@ namespace Service.Implement
         {
             if (request.NewPassword.Equals(request.OldPassword))
             {
-                throw new Exception("400: New password must be different from old password");
+                throw new Exception("400: Mật khẩu mới phải khác mật khẩu cũ");
             }
 
             var user = _userDAO.GetByEmail(email);
             if (user != null)
             {
                 var verifyPassword = BC.EnhancedVerify(request.OldPassword, user.Password);
-                if (!verifyPassword) throw new Exception("400: Old password is not correct");
+                if (!verifyPassword) throw new Exception("400: Mật khẩu cũ không chính xác");
             }
             else
             {
-                throw new Exception("404: User not found when change password");
+                throw new Exception("404: Không tìm thấy người dùng để đổi mật khẩu");
             }
 
             user.Password = BC.EnhancedHashPassword(request.NewPassword, WORK_FACTOR);
@@ -316,13 +349,13 @@ namespace Service.Implement
             var user = _userDAO.GetByEmail(request.Email);
             if (user == null)
             {
-                throw new Exception("404: User not found when reset password");
+                throw new Exception("404: Không tìm thấy người dùng để khôi phục mật khẩu");
             }
 
             var token = _tokenDAO.GetResetToken(user.Id, request.Token, DateTime.Now);
             if (token == null)
             {
-                throw new Exception("401: Token not correct");
+                throw new Exception("401: Token không chính xác");
             }
 
             user.Password = BC.EnhancedHashPassword(request.Password, WORK_FACTOR);
@@ -338,7 +371,7 @@ namespace Service.Implement
             var user = _userDAO.Get(id);
             if (user == null)
             {
-                throw new Exception("404: User not found");
+                throw new Exception("404: Không tìm thấy người dùng");
             }
 
             user.Name = request.Name;
@@ -356,21 +389,21 @@ namespace Service.Implement
             var user = _userDAO.GetByEmail(email);
             if (user == null)
             {
-                throw new Exception("404: This email does not exist");
+                throw new Exception("404: Địa chỉ email không tồn tại");
             }
             if (user.Status != (int)Status.Unverified)
             {
-                throw new Exception("401: This account cannot be verified");
+                throw new Exception("401: Tài khoản này không thể được xác thực");
             }
             var verifyToken = _verifyTokenDAO.Get(user.Id);
             if (verifyToken == null)
             {
-                throw new Exception("404: This account does not have verification token");
+                throw new Exception("404: Tài khoản này không có token xác thực");
             }
 
             if (verifyToken.ExpirationDate < DateTime.Now || !verifyToken.Code.Equals(code))
             {
-                throw new Exception("401: Verification token is invalid, please send another verification code");
+                throw new Exception("401: Token xác thực này không khả dụng, vui lòng gửi token xác thực khác");
             }
 
             //Update user and token
@@ -392,7 +425,7 @@ namespace Service.Implement
             var user = _userDAO.GetByEmail(email);
             if (user == null)
             {
-                throw new Exception($"404: User with {email} not found");
+                throw new Exception($"404: Người dùng với email {email} không tìm thấy");
             }
             var verifyToken = _verifyTokenDAO.Get(user.Id);
 
@@ -421,9 +454,56 @@ namespace Service.Implement
             var newToken = _verifyTokenDAO.Get(user.Id);
             if (newToken == null)
             {
-                throw new Exception($"500: Token creation unsuccessful");
+                throw new Exception($"500: Khởi tạo token không thành công");
             }
             return newToken.Code;
+        }
+
+        public List<RevenueResponse> GetRevenues(int year)
+        {
+            List<RevenueResponse> revenues = new List<RevenueResponse>();
+
+            for (int i = 1; i <= 12; i++)
+            {
+                decimal orderRevenues = 0;
+                decimal auctionRevenues = 0;
+                DateTime a = DateTime.Now;
+                // Calculate revenue from orders (3% of orders total amount) by month and year
+                var allDoneOrder = _orderDAO.GetAllOrder().Where(o => o.Status == (int)OrderStatus.Done 
+                && ((DateTime)o.OrderDate).Year == year
+                && ((DateTime)o.OrderDate).Month == i)
+                .ToList();
+                if (allDoneOrder.Any())
+                {
+                    orderRevenues = (decimal)allDoneOrder.Sum(o => o.TotalAmount * .03m);
+                }
+
+                // Calculate revenue from auctions (entry fee * number of participants) by month and year
+                var allDoneAuction = _auctionDAO.GetAuctions().Where(a => (a.Status == (int)AuctionStatus.Ended)
+                && ((DateTime)a.StartedAt).Year == year
+                && ((DateTime)a.StartedAt).Month == i)
+                .ToList();
+                int numberOfParticipants = 0;
+                foreach (var auction in allDoneAuction)
+                {
+                    numberOfParticipants = _bidDAO.GetBidsByAuctionId(auction.Id).Where(b => b.Status == (int)BidStatus.Register).Count();
+                    auctionRevenues += numberOfParticipants * auction.EntryFee;
+                }
+                revenues.Add(new RevenueResponse()
+                {
+                    Month = i,
+                    OrderRevenue = orderRevenues,
+                    AuctionRevenue = auctionRevenues
+                });
+            }
+
+            return revenues;
+        }
+
+        public int CountDoneOrdersByBuyerId(int id)
+        {
+            int numberOfOrderDone = _orderDAO.GetAllByBuyerId(id).Where(o => o.Status == (int)OrderStatus.Done).Count();
+            return numberOfOrderDone;
         }
     }
 }

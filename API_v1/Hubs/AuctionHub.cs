@@ -26,9 +26,13 @@ namespace API.Hubs
             var userId = int.Parse(Context.User?.Claims?.FirstOrDefault(p => p.Type == "UserId")?.Value);
             var user = _userService.Get(userId);
 
-            // Add buyer and seller to joined auction room
+            // Add buyer to joined auction room
             if (user.Role == (int)Role.Buyer || user.Role == (int)Role.Seller)
             {
+                await Groups.AddToGroupAsync(Context.ConnectionId, "USER_" + userId);
+                await Clients.Group("USER_" + userId).SendAsync("ReceiveMessage", userId, "You have been added to group " + "USER_" + userId);
+                await Clients.Group("USER_" + userId).SendAsync("ReceiveSubscribe",  "USER_" + userId);
+
                 List<Auction> auctionList = _auctionService.GetAuctionJoined(userId);
                 
                 foreach (var auction in auctionList)
@@ -37,6 +41,7 @@ namespace API.Hubs
                     {
                         await Groups.AddToGroupAsync(Context.ConnectionId, "AUCTION_" + auction.Id);
                         await Clients.Group("AUCTION_" + auction.Id).SendAsync("ReceiveMessage", userId, "You have been added to group " + "AUCTION_" + auction.Id);
+                        await Clients.Group("AUCTION_" + auction.Id).SendAsync("ReceiveSubscribe", "AUCTION_" + auction.Id);
                     }
                 }
             }
@@ -52,6 +57,7 @@ namespace API.Hubs
                     {
                         await Groups.AddToGroupAsync(Context.ConnectionId, "AUCTION_" + auction.Id);
                         await Clients.Group("AUCTION_" + auction.Id).SendAsync("ReceiveMessage", userId, "You have been added to group " + "AUCTION_" + auction.Id);
+                        await Clients.Group("AUCTION_" + auction.Id).SendAsync("ReceiveSubscribe", "AUCTION_" + auction.Id);
                     }
                 }
             }

@@ -13,5 +13,6 @@ namespace DataAccess
         public IQueryable<Seller> GetSellerRequestList();
         public void CreateSeller(Seller seller);
         public void UpdateSeller(Seller seller);
+        public IQueryable<Seller> GetSellers();
     }
 }

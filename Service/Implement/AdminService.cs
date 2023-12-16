@@ -20,7 +20,7 @@ namespace Service.Implement {
         public void CreateStaff(User user) {
             var dbUser = _userDAO.GetByEmail(user.Email);
             if (dbUser != null ) {
-                throw new Exception("409: Email already exists");
+                throw new Exception("409: Địa chỉ email đã tồn tại");
             }
             user.Password = BC.EnhancedHashPassword(user.Password, WORK_FACTOR);
             user.CreatedAt = DateTime.Now;
@@ -34,10 +34,10 @@ namespace Service.Implement {
         public void UpdateStaff(User user) {
             var dbUser = _userDAO.GetByEmail(user.Email);
             if ( dbUser == null ) {
-                throw new Exception("404: Staff not found");
+                throw new Exception("404: Không tìm thấy nhân viên");
             }
             if (dbUser.Role != (int) Role.Staff) {
-                throw new Exception("401: This user cannot be updated");
+                throw new Exception("401: Không thể cập nhật thông tin nhân viên này");
             }
             dbUser.Name = user.Name;
             dbUser.Email = user.Email;
@@ -72,7 +72,7 @@ namespace Service.Implement {
         public void UpdateStatusAccount(int id, int status) {
             var user = _userDAO.GetIgnoreStatus(id);
             if ( user == null ) {
-                throw new Exception("404: Account not found");
+                throw new Exception("404: Không tìm thấy tài khoản");
             }
             user.Status = status;
             _userDAO.Update(user);

@@ -5,6 +5,7 @@ using DataAccess;
 using DataAccess.Implement;
 using DataAccess.Models;
 using Hangfire;
+using MailKit.Search;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
@@ -17,9 +18,15 @@ using Respon.AuctionRes;
 using Respon.SellerRes;
 using Respon.UserRes;
 using Service;
+using Service.EmailService;
 using Service.Implement;
 using System.Net;
 using System.Reflection;
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
+using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace API.Controllers
 {
@@ -37,10 +44,14 @@ namespace API.Controllers
         private readonly IAddressService _addressService;
         private readonly IBackgroundJobClient _backgroundJobClient;
         private IHubContext<AuctionHub> _hubContext { get; set; }
+        private readonly IEmailService _emailService;
+        private readonly string _templatesPath;
+        private readonly IOrderService _orderService;
+        private readonly FirebaseMessaging messaging;
 
         public AuctionController(IAuctionService auctionService, IMapper mapper, IUserService userService, IImageService imageService,
             IBidService bidService, ISellerService sellerService, IAddressService addressService, IBackgroundJobClient backgroundJobClient,
-            IHubContext<AuctionHub> hubcontext)
+            IHubContext<AuctionHub> hubcontext, IEmailService emailService, IConfiguration pathConfig, IOrderService orderService)
         {
             _auctionService = auctionService;
             _mapper = mapper;
@@ -51,6 +62,15 @@ namespace API.Controllers
             _addressService = addressService;
             _backgroundJobClient = backgroundJobClient;
             _hubContext = hubcontext;
+            _emailService = emailService;
+            _templatesPath = pathConfig["Path:Templates"];
+            _orderService = orderService;
+            var app = FirebaseApp.DefaultInstance;
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                app = FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile("firebase-key.json").CreateScoped("https://www.googleapis.com/auth/firebase.messaging") });
+            }
+            messaging = FirebaseMessaging.GetMessaging(app);
         }
 
         private int GetUserIdFromToken()
@@ -154,7 +174,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -175,7 +195,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAllAuctions(title, status, categoryId, materialId, orderBy)
@@ -213,7 +233,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -228,7 +248,7 @@ namespace API.Controllers
                 return NotFound(new ErrorDetails
                 {
                     StatusCode = 400,
-                    Message = "This auction is not exist"
+                    Message = "Cuộc đấu giá này không tồn tại"
                 });
             }
 
@@ -266,7 +286,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -299,7 +319,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -315,7 +335,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAuctionBySellerId(userId, status)
@@ -343,7 +363,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -359,7 +379,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAuctionAssigned(userId)
@@ -392,7 +412,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions successfully",
+                Message = "Lấy danh sách các cuộc đấu giá thành công",
                 Data = response
             });
         }
@@ -407,7 +427,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAuctionJoinedByStatus(status, userId)
@@ -437,7 +457,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions joined successfully",
+                Message = "Lấy danh sách các cuộc đấu giá đã tham dự thành công",
                 Data = response
             });
         }
@@ -460,7 +480,7 @@ namespace API.Controllers
             List<AuctionListEndedResponse> mappedList = _mapper.Map<List<AuctionListEndedResponse>>(auctionList);
             foreach (var item in mappedList)
             {
-                item.NumberOfBidders = _bidService.GetNumberOfBids(item.Id);
+                item.NumberOfBidders = _bidService.GetNumberOfParticipants(item.Id);
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 if (image == null)
                 {
@@ -481,7 +501,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions ended successfully",
+                Message = "Lấy danh sách các cuộc đấu giá đã kết thúc thành công",
                 Data = mappedList
             });
         }
@@ -497,14 +517,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Auction> auctionList = _auctionService.GetAuctionsDoneByMonths(month);
             List<AuctionListEndedResponse> mappedList = _mapper.Map<List<AuctionListEndedResponse>>(auctionList);
             foreach (var item in mappedList)
             {
-                item.NumberOfBidders = _bidService.GetNumberOfBids(item.Id);
+                item.NumberOfBidders = _bidService.GetNumberOfParticipants(item.Id);
                 ProductImage image = _imageService.GetMainImageByProductId(item.ProductId);
                 if (image == null)
                 {
@@ -525,7 +545,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get auctions ended successfully",
+                Message = "Lấy danh sách các cuộc đấu giá đã kết thúc thành công",
                 Data = mappedList
             });
         }
@@ -540,14 +560,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.CreateAuction(_mapper.Map<Auction>(request));
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Create auction successfully",
+                Message = "Thêm mới cuộc đấu giá thành công",
                 Data = null
             });
         }
@@ -563,14 +583,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             bool check = _auctionService.CheckRegistration(userId, id);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Check auction registration successfully",
+                Message = "Kiểm tra đăng kí cuộc đấu giá thành công",
                 Data = check
             });
         }
@@ -586,14 +606,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             bool check = _auctionService.CheckWinner(userId, id);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Check current user win successfully",
+                Message = "Kiểm tra chiến thắng cuộc đấu giá thành công",
                 Data = check
             });
         }
@@ -616,7 +636,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Check user win successfully",
+                Message = "Kiểm tra chiến thắng cuộc đấu giá thành công",
                 Data = check
             });
         }
@@ -632,7 +652,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             WinnerResponse mappedWinner = EndAuction(id, false).Result;
@@ -640,7 +660,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "End auction successfully",
+                Message = "Kết thúc cuộc đấu giá thành công",
                 Data = mappedWinner
             });
         }
@@ -656,7 +676,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.AssignStaff(id, staffId);
@@ -667,14 +687,14 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Assign staff successfully",
+                Message = "Bàn giao cuộc đấu giá cho nhân viên thành công",
                 Data = null
             });
         }
 
         [Authorize]
         [HttpGet("manager/approve/{id}")]
-        public IActionResult ManagerApproveAuction(int id)
+        public async Task<IActionResult> ManagerApproveAuction(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -683,21 +703,32 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.ManagerApproveAuction(id);
+            var auction = _auctionService.GetAuctionById(id);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = auction.Title,
+                    Body = "Cuộc đấu giá của bạn đã được duyệt. Một nhân viên sẽ được giao cho quản lý cuộc đấu giá của bạn."
+                },
+                Topic = "USER_" + auction.Product.SellerId
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Auction approved successfully",
+                Message = "Xác nhận cuộc đấu giá thành công",
                 Data = null
             });
         }
 
         [Authorize]
         [HttpGet("manager/reject/{id}")]
-        public IActionResult ManagerRejectAuction(int id)
+        public async Task<IActionResult> ManagerRejectAuction(int id)
         {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
@@ -706,19 +737,31 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.ManagerRejectAuction(id);
+            var auction = _auctionService.GetAuctionById(id);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = auction.Title,
+                    Body = "Cuộc đấu giá của bạn đã được duyệt. Một nhân viên sẽ được giao cho quản lý cuộc đấu giá của bạn."
+                },
+                Topic = "USER_" + auction.Product.SellerId
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Auction rejected successfully",
+                Message = "Từ chối cuộc đấu giá thành công",
                 Data = null
             });
         }
 
-        [HttpPost("staff/info/{id}")] // cai api nay can sua lai endpoint
+        [HttpPost("staff/info/{id}")]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult StaffSetAuctionInfo(int id, [FromBody] AuctionDateRequest request)
         {
             var userId = GetUserIdFromToken();
@@ -728,7 +771,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _auctionService.StaffSetAuctionInfo(id,
@@ -736,46 +779,78 @@ namespace API.Controllers
                 (DateTime)request.RegistrationEnd,
                 (DateTime)request.StartedAt,
                 (DateTime)request.EndedAt,
-                request.Step);
+                request.Step, userId);
 
             DateTime endTime = (DateTime)request.EndedAt;
+            DateTime startTime = (DateTime)request.StartedAt;
 
-            _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Opened), (DateTime)request.StartedAt);
-            _backgroundJobClient.Schedule(() => EndAuction(id, true), endTime);
-            _backgroundJobClient.Schedule(() => NotifyEndAuction(id), endTime.AddSeconds(-30));
+            _backgroundJobClient.Schedule(() => HostAuction(id, (int)AuctionStatus.Opened), startTime.AddSeconds(-5));
+            _backgroundJobClient.Schedule(() => EndAuction(id, true), endTime.AddSeconds(-5));
+            _backgroundJobClient.Schedule(() => NotifyEndAuction(id), endTime.AddSeconds(-35));
 
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Set auction time successfully",
+                Message = "Cập nhật thông tin đấu giá thành công",
                 Data = null
             });
         }
 
         [HttpPost("order/create")]
-        public IActionResult CreateAuctionOrder([FromBody] AuctionOrderRequest request) {
+        public async Task<IActionResult> CreateAuctionOrder([FromBody] AuctionOrderRequest request) {
             var userId = GetUserIdFromToken();
             var user = _userService.Get(userId);
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             
             if (user.Role != (int) Role.Buyer && user.Role != (int) Role.Seller) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
-            _auctionService.CreateAuctionOrder(userId, request);
+            var orderId = _auctionService.CreateAuctionOrder(userId, request).Result;
+            var order = _orderService.Get(orderId);
+            var seller = _userService.Get((int)order.SellerId);
+
+            // Get HTML template
+            string fullPath = Path.Combine(_templatesPath, "OrderConfirmEmail.html");
+            StreamReader str = new StreamReader(fullPath);
+            string mailText = str.ReadToEnd();
+            str.Close();
+            mailText = mailText.Replace("[orderId]", orderId.ToString())
+                .Replace("[shippingAddress]", order.RecipientAddress)
+                .Replace("[totalAmount]", order.TotalAmount.ToString())
+                .Replace("[shippingCost]", order.ShippingCost.ToString())
+                .Replace("[sumAmount]", (order.TotalAmount + order.ShippingCost).ToString());
+
+            var message = new Service.EmailService.Message(new string[] { user.Email, seller.Email }, $"Đơn hàng #{orderId} đã được xác nhận", mailText);
+            await _emailService.SendEmail(message);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Đơn hàng #" + orderId,
+                    Body = "Đơn hàng đã được xác nhận!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "SellerOrderDetail"
+                },
+                Topic = "USER_" + seller.Id
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Create auction order successfully",
+                Message = "Tạo đơn hàng cho cuộc đấu giá thành công",
                 Data = null
             });
         }
+
         // Start auction automatically
         [NonAction]
         public async Task HostAuction(int auctionId, int status)
@@ -787,6 +862,20 @@ namespace API.Controllers
                 var auction = _auctionService.GetAuctionById(auctionId);
                 if (auction == null) return;
                 await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionOpen", auction.Title);
+                var message = new FirebaseAdmin.Messaging.Message()
+                {
+                    Notification = new Notification
+                    {
+                        Title = auction.Title,
+                        Body = "Cuộc đấu giá đã bắt đầu, hãy tham gia nào!"
+                    },
+                    Data = new Dictionary<string, string>()
+                    {
+                        ["route"] = "BidderAuctionHistoryListing"
+                    },
+                    Topic = "AUCTION_" + auctionId
+                };
+                await messaging.SendAsync(message);
             }
         }
 
@@ -795,7 +884,8 @@ namespace API.Controllers
         public async Task<WinnerResponse?> EndAuction(int auctionId, bool scheduled = true)
         {
             var auction = _auctionService.GetAuctionById(auctionId);
-            if (scheduled && DateTime.Now < auction.EndedAt)
+            DateTime endTime = (DateTime)auction.EndedAt;
+            if (scheduled && DateTime.Now < endTime.AddSeconds(-5))
             {
                 throw new Exception("404: EndedDate Changed");
             }
@@ -815,6 +905,20 @@ namespace API.Controllers
             }
 
             await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionEnd", auction.Title);
+            var message = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = auction.Title,
+                    Body = "Cuộc đấu giá đã kết thúc, hãy cùng xem người thắng cuộc nào!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "BidderAuctionHistoryListing"
+                },
+                Topic = "AUCTION_" + auctionId
+            };
+            await messaging.SendAsync(message);
             return mappedWinner;
         }
 
@@ -824,11 +928,25 @@ namespace API.Controllers
         {
             var auction = _auctionService.GetAuctionById(auctionId);
             DateTime endTime = (DateTime)auction.EndedAt;
-            if (DateTime.Now < endTime.AddSeconds(-30))
+            if (DateTime.Now < endTime.AddSeconds(-35))
             {
                 throw new Exception("404: EndedDate Changed");
             }
             await _hubContext.Clients.Group("AUCTION_" + auctionId).SendAsync("ReceiveAuctionAboutToEnd", auction.Title);
+            var message = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = auction.Title,
+                    Body = "Cuộc đấu giá chuẩn bị kết thúc!"
+                },
+                Data = new Dictionary<string, string>()
+                {
+                    ["route"] = "BidderAuctionHistoryListing"
+                },
+                Topic = "AUCTION_" + auctionId
+            };
+            await messaging.SendAsync(message);
         }
     }
 }

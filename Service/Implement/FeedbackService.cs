@@ -21,7 +21,7 @@ namespace Service.Implement
         {
             if (id == null)
             {
-                throw new Exception("404: Feedback not found");
+                throw new Exception("404: Không tìm thấy đánh giá");
             }
             return _feedbackDAO.GetById(id);
         }
@@ -30,7 +30,7 @@ namespace Service.Implement
         {
             if(productId == null)
             {
-                throw new Exception("404: Product not found");
+                throw new Exception("404: Không tìm thấy sản phẩm");
             }
             return _feedbackDAO.GetAll(productId).ToList();
         }
@@ -39,7 +39,7 @@ namespace Service.Implement
         {
             if (productId == null)
             {
-                throw new Exception("404: Product not found");
+                throw new Exception("404: Không tìm thấy sản phẩm");
             }
             return _feedbackDAO.GetAll(productId).Take(3).ToList();
         }

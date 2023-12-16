@@ -13,6 +13,7 @@ using Respon.OrderRes;
 using Respon.SellerRes;
 using Service;
 using System.Net;
+using static Google.Apis.Requests.BatchRequest;
 
 namespace API.Controllers
 {
@@ -58,7 +59,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 { StatusCode =
                 (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             var seller = _sellerService.GetSeller(userId);
@@ -89,7 +90,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get seller successfully",
+                Message = "Lấy thông tin người bán thành công",
                 Data = response 
             });
         }
@@ -125,13 +126,14 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get seller successfully",
+                Message = "Lấy thông tin người bán thành công",
                 Data = response
             });
         }
 
         [Authorize]
         [HttpPost]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public async Task<IActionResult> SellerRequest([FromBody] SellerRequest request)
         {
             var userId = GetUserIdFromToken();
@@ -170,7 +172,7 @@ namespace API.Controllers
                 return Ok(new BaseResponse
                 {
                     Code = (int)HttpStatusCode.OK,
-                    Message = "Request to become seller successfully",
+                    Message = "Gửi yêu cầu trở thành người bán thành công",
                     Data = null
                 });
             }
@@ -181,7 +183,7 @@ namespace API.Controllers
                 return Ok(new BaseResponse
                 {
                     Code = (int)HttpStatusCode.OK,
-                    Message = "Update seller successfully",
+                    Message = "Cập nhật thông tin người bán thành công",
                     Data = null
                 });
             }
@@ -198,12 +200,12 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Seller> sellerRequests = _sellerService.GetSellerRequestList().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
                 .Take(pagingParam.PageSize).ToList();
-            int sellerRequestsCount = _sellerService.GetSellerRequestList().Count();
+            int sellerRequestsCount = _sellerService.GetSellerRequestList().Count;
             List<SellerRequestResponse> responses = _mapper.Map<List<SellerRequestResponse>>(sellerRequests);
             foreach (var item in responses)
             {
@@ -225,7 +227,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get seller requests successfully",
+                Message = "Lấy danh sách yêu cầu trở thành người bán thành công",
                 Data = new {
                     Count = sellerRequestsCount,
                     List = responses
@@ -244,7 +246,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             var sales = _sellerService.GetSalesCurrentSeller(userId);
@@ -267,8 +269,41 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get sales of current seller successfully",
+                Message = "Lấy doanh thu của người bán hiện tại thành công",
                 Data = response
+            });
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult GetSellersBySales([FromQuery] PagingParam pagingParam)
+        {
+            var userId = GetUserIdFromToken();
+            var user = _userService.Get(userId);
+            if (user == null || (user.Role != (int)Role.Staff
+                && user.Role != (int)Role.Manager
+                && user.Role != (int)Role.Administrator))
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "Bạn không có quyền truy cập nội dung này"
+                });
+            }
+            List<Seller> sellerList = _sellerService.GetSellers().Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize)
+                .Take(pagingParam.PageSize).ToList(); 
+            List<SellerWithSalesResponse> mappedList = _mapper.Map<List<SellerWithSalesResponse>>(sellerList);
+            foreach(SellerWithSalesResponse seller in mappedList)
+            {
+                var sales = _sellerService.GetSalesCurrentSellerAllTime(seller.Id);
+                seller.Sales = sales;
+            }
+            List<SellerWithSalesResponse> responses = mappedList.OrderByDescending(s => s.Sales).ToList();
+            return Ok(new BaseResponse
+            {
+                Code = (int)HttpStatusCode.OK,
+                Message = "Lấy danh sách người bán theo doanh thu thành công",
+                Data = responses
             });
         }
     }

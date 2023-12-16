@@ -21,7 +21,7 @@ namespace Service.Implement
         {
             if (feedbackId == null)
             {
-                throw new Exception("404: Response not found");
+                throw new Exception("404: Không tìm thấy phản hồi đánh giá");
             }
             return _responseDAO.GetByFeedbackId(feedbackId);
         }

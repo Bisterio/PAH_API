@@ -104,5 +104,34 @@ namespace Service.Implement
             }
             return sum * .97m;
         }
+
+        public decimal GetSalesCurrentSellerAllTime(int id)
+        {
+            List<Order> doneOrderList = _orderDAO.GetAllBySellerId(id)
+                .Where(o => o.Status == (int)OrderStatus.Done).ToList();
+            decimal sum = 0;
+            foreach (var order in doneOrderList)
+            {
+                if (order.TotalAmount != null)
+                {
+                    sum += order.TotalAmount.Value;
+                }
+            }
+            return sum * .97m;
+        }
+
+        public List<Seller> GetSellers()
+        {
+            var sellers = _sellerDAO.GetSellers().ToList();
+            var sellersWithDoneOrders = new List<Seller>();
+            foreach (var seller in sellers)
+            {
+                if (_orderDAO.GetAllBySellerId(seller.Id).Any(o => o.Status == (int)OrderStatus.Done))
+                {
+                    sellersWithDoneOrders.Add(seller);
+                }
+            }
+            return sellersWithDoneOrders;
+        }
     }
 }

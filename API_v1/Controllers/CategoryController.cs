@@ -31,7 +31,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get all categories successfully",
+                Message = "Lấy các danh mục sản phẩm thành công",
                 Data = categoryList 
             });
         }

@@ -71,7 +71,7 @@ namespace Service.Implement
         {
             if (id == null)
             {
-                throw new Exception("404: Product not found");
+                throw new Exception("404: Không tìm thấy sản phẩm");
             } 
             return _productDAO.GetProductById(id);
         }
@@ -80,7 +80,7 @@ namespace Service.Implement
         {
             if (sellerId == null)
             {
-                throw new Exception("404: Seller not found");
+                throw new Exception("404: Không tìm thấy người bán");
             }
             return _productDAO.GetProductsBySellerId(sellerId).ToList();
         }
@@ -128,7 +128,7 @@ namespace Service.Implement
 
         public Product UpdateProduct(int id, Product product, Auction auction)
         {
-            if (id == null) throw new Exception("404: Product not found");
+            if (id == null) throw new Exception("404: Không tìm thấy sản phẩm");
 
             Product currentProduct = _productDAO.GetProductById(id);
 
@@ -163,12 +163,12 @@ namespace Service.Implement
 
         public Product DeleteProduct(int id, int sellerId)
         {
-            if (id == null) throw new Exception("404: Product not found");
+            if (id == null) throw new Exception("404: Không tìm thấy sản phẩm");
 
             Product currentProduct = _productDAO.GetProductById(id);
             if(currentProduct.SellerId != sellerId)
             {
-                throw new Exception("400: This product is not your product.");
+                throw new Exception("400: Sản phẩm này không phải là sản phẩm của bạn");
             }
 
             //if (currentProduct.Type == (int)ProductType.Auction)

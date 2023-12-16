@@ -10,30 +10,30 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace Request {
     public class WithdrawalRequest : IValidatableObject{
-        [Required]
+        [Required(ErrorMessage = "Không được để trống số tiền rút")]
         public decimal Amount { get; set; }
-        [Required]
-        [MaxLength(20)]
+        [Required(ErrorMessage = "Không được để trống tên ngân hàng")]
+        [MaxLength(20, ErrorMessage = "Tên ngân hàng tối đa 20 ký tự")]
         public string Bank { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Không được để trống số tài khoản ngân hàng")]
         public string BankNumber { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) {
-            if (Amount <= 0) {
+            if (Amount < 50000) {
                 yield return new ValidationResult(
-                    $"Amount must be greater than 0",
+                    $"Số tiền rút phải lớn hơn 50.000 VNĐ",
                     new[] { nameof(Amount) });
             }
             var bankData = GetBankData();
             if (!bankData.Contains(Bank)) {
                 yield return new ValidationResult(
-                    $"Your bank: \"{Bank}\" is not in our bank list",
+                    $"Ngân hàng: \"{Bank}\" không nằm trong danh sách ngân hàng chúng tôi hỗ trợ",
                     new[] { nameof(Bank) });
             }
             
             if (!BankNumber.All(c => c >= '0' && c <= '9')) {
                 yield return new ValidationResult(
-                    $"Your bank number: \"{BankNumber}\" must contains only number",
+                    $"Tài khoản ngân hàng của bạn: \"{BankNumber}\" chỉ được chứa số",
                     new[] { nameof(Bank) });
             }
         }

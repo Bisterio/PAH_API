@@ -1,14 +1,21 @@
 ﻿using DataAccess;
+using DataAccess.Implement;
 using DataAccess.Models;
 using Hangfire;
 using Hangfire.Storage;
+using MailKit.Search;
+using Microsoft.Extensions.Configuration;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Request;
+using Request.ThirdParty.GHN;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using static Request.ThirdParty.GHN.ShippingOrder;
 
 namespace Service.Implement
 {
@@ -24,11 +31,16 @@ namespace Service.Implement
         private readonly IAddressDAO _addressDAO;
         private readonly IWalletService _walletService;
         private readonly IOrderService _orderService;
-        private readonly IProductImageDAO _productImageDAO;     
+        private readonly IProductImageDAO _productImageDAO;
+        private readonly IConfiguration _config;
+        private IHttpClientFactory _httpClientFactory;
+        private readonly ISellerDAO _sellerDAO;
+        private readonly IProductDAO _productDAO;
 
         public AuctionService (IAuctionDAO auctionDAO, IBackgroundJobClient backgroundJobClient, IUserDAO userDAO, 
             IBidDAO bidDAO, IWalletDAO walletDAO, ITransactionDAO transactionDAO, IOrderDAO orderDAO, 
-            IAddressDAO addressDAO, IWalletService walletService, IProductImageDAO productImageDAO, IOrderService orderService)
+            IAddressDAO addressDAO, IWalletService walletService, IProductImageDAO productImageDAO, IOrderService orderService,
+            IConfiguration config, IHttpClientFactory httpClientFactory, ISellerDAO sellerDAO, IProductDAO productDAO)
         {
             _auctionDAO = auctionDAO;
             _userDAO = userDAO;
@@ -41,6 +53,10 @@ namespace Service.Implement
             _transactionDAO = transactionDAO;
             _orderService = orderService;
             _productImageDAO = productImageDAO;
+            _config = config;
+            _httpClientFactory = httpClientFactory;
+            _sellerDAO = sellerDAO;
+            _productDAO = productDAO;
         }
 
         public List<Auction> GetAuctions(string? title, int status, int categoryId, int materialId, int orderBy)
@@ -126,22 +142,22 @@ namespace Service.Implement
         {
             if (staffId == null)
             {
-                throw new Exception("404: Staff not found");
+                throw new Exception("404: Không tìm thấy nhân viên");
             }
-            return _auctionDAO.GetAuctionAssigned(staffId).ToList();
+            return _auctionDAO.GetAuctionAssigned(staffId).OrderByDescending(a => a.CreatedAt).ToList();
         }
 
         public List<Auction> GetAuctionsDoneAssignedByMonths(int staffId, int month)
         {
             if (staffId == null)
             {
-                throw new Exception("404: Staff not found");
+                throw new Exception("404: Không tìm thấy nhân viên");
             }
             DateTime filterMonth = DateTime.Now.AddMonths(-month);
             return _auctionDAO.GetAuctionAssigned(staffId)
-                .Where(a => (a.Status == (int)AuctionStatus.Ended 
-                || a.Status == (int)AuctionStatus.EndedWithoutBids)
+                .Where(a => (a.Status == (int)AuctionStatus.Ended)
                 && a.StartedAt >= filterMonth)
+                .OrderByDescending(a => a.StartedAt)
                 .ToList();
         }
 
@@ -149,9 +165,9 @@ namespace Service.Implement
         {
             DateTime filterMonth = DateTime.Now.AddMonths(-month);
             return _auctionDAO.GetAuctions()
-                .Where(a => (a.Status == (int)AuctionStatus.Ended
-                || a.Status == (int)AuctionStatus.EndedWithoutBids)
+                .Where(a => (a.Status == (int)AuctionStatus.Ended)
                 && a.StartedAt >= filterMonth)
+                .OrderByDescending(a => a.StartedAt)
                 .ToList();
         }
 
@@ -159,7 +175,7 @@ namespace Service.Implement
         {
             if (productId == null)
             {
-                throw new Exception("404: Product not found");
+                throw new Exception("404: Không tìm thấy sản phẩm");
             }
             return _auctionDAO.GetAuctionsByProductId(productId).ToList();
         }
@@ -168,7 +184,7 @@ namespace Service.Implement
         {
             if (id == null)
             {
-                throw new Exception("404: Auction not found");
+                throw new Exception("404: Không tìm thấy cuộc đấu giá");
             }
             return _auctionDAO.GetAuctionById(id);
         }
@@ -177,7 +193,7 @@ namespace Service.Implement
         {
             if (sellerId == null)
             {
-                throw new Exception("404: Seller not found");
+                throw new Exception("404: Không tìm thấy người bán");
             }
             return _auctionDAO.GetAuctionBySellerId(sellerId)
                 .Where(a => status == -1 || a.Status == status)
@@ -188,7 +204,7 @@ namespace Service.Implement
         {
             if (bidderId == null)
             {
-                throw new Exception("404: Bidder not found");
+                throw new Exception("404: Không tìm thấy người tham gia");
             }
             return _auctionDAO.GetAuctionJoined(bidderId).ToList();
         }
@@ -197,7 +213,7 @@ namespace Service.Implement
         {
             if (bidderId == null)
             {
-                throw new Exception("404: Bidder not found");
+                throw new Exception("404: Không tìm thấy người tham gia");
             }
             return _auctionDAO.GetAuctionJoined(bidderId).Where(a => status == -1 || a.Status == status).ToList();
         }
@@ -216,20 +232,20 @@ namespace Service.Implement
         {
             if (id == null)
             {
-                throw new Exception("404: Auction not found");
+                throw new Exception("404: Không tìm thấy cuộc đấu giá");
             } 
             else if (staffId == null || _userDAO.Get(staffId).Role != (int)Role.Staff)
             {
-                throw new Exception("404: Staff not found");
+                throw new Exception("404: Không tìm thấy nhân viên");
             }
             Auction auction = _auctionDAO.GetAuctionById(id);
             if (auction.Status == (int)AuctionStatus.Rejected)
             {
-                throw new Exception("400: This auction hasn been rejected");
+                throw new Exception("400: Cuộc đấu giá này đã bị từ chối");
             }
-            else if (auction.Status > (int)AuctionStatus.Unassigned && auction.Status != (int)AuctionStatus.Rejected)
+            else if (auction.Status != (int)AuctionStatus.Assigned && auction.Status != (int)AuctionStatus.Unassigned)
             {
-                throw new Exception("400: This auction has been assigned");
+                throw new Exception("400: Cuộc đấu giá này đã được bàn giao");
             } 
             auction.StaffId = staffId;
             auction.Status = (int)AuctionStatus.Assigned;
@@ -241,17 +257,17 @@ namespace Service.Implement
         {
             if (id == null)
             {
-                throw new Exception("404: Auction not found");
+                throw new Exception("404: Không tìm thấy cuộc đấu giá");
             }
             Auction auction = GetAuctionById(id);
 
             if(auction.Status > (int) AuctionStatus.Pending && auction.Status != (int)AuctionStatus.Rejected)
             {
-                throw new Exception("400: This auction is already approved.");
+                throw new Exception("400: Cuộc đấu giá này đã được chấp nhận");
             } 
             else if (auction.Status == (int)AuctionStatus.Rejected)
             {
-                throw new Exception("400: This auction is already rejected.");
+                throw new Exception("400: Cuộc đấu giá này đã bị từ chối");
             }
             else
             {                
@@ -268,17 +284,17 @@ namespace Service.Implement
         {
             if (id == null)
             {
-                throw new Exception("404: Auction not found");
+                throw new Exception("404: Không tìm thấy cuộc đấu giá");
             }
             Auction auction = GetAuctionById(id);
 
             if (auction.Status > (int)AuctionStatus.Pending && auction.Status != (int)AuctionStatus.Rejected)
             {
-                throw new Exception("400: This auction is already approved.");
+                throw new Exception("400: Cuộc đấu giá này đã được chấp nhận");
             }
             else if (auction.Status == (int)AuctionStatus.Rejected)
             {
-                throw new Exception("400: This auction is already rejected.");
+                throw new Exception("400: Cuộc đấu giá này đã bị từ chối");
             }
             else
             {
@@ -289,20 +305,26 @@ namespace Service.Implement
         }
 
         public void StaffSetAuctionInfo(int id, DateTime registrationStart, DateTime registrationEnd, DateTime startedAt, DateTime endedAt,
-            decimal step)
+            decimal step, int userId)
         {
             if (id == null)
             {
-                throw new Exception("404: Auction not found");
+                throw new Exception("404: Không tìm thấy cuộc đấu giá");
             }
             Auction auction = GetAuctionById(id);
-            if(auction.Status < (int)AuctionStatus.Assigned)
+            if(auction.StaffId != userId)
             {
-                throw new Exception("400: This auction hasn't been assigned to you");
+                throw new Exception("400: Bạn không được thay đổi thông tin cuộc đấu giá này");
+            }
+            if(auction.Status == (int)AuctionStatus.Pending || auction.Status == (int)AuctionStatus.Unassigned
+                || auction.Status == (int)AuctionStatus.Rejected)
+            {
+                throw new Exception("400: Cuộc đấu giá này không được bàn giao cho bạn");
             } 
-            else if(auction.Status > (int)AuctionStatus.RegistrationOpen)
+            else if(auction.Status == (int)AuctionStatus.Opened || auction.Status == (int)AuctionStatus.Ended
+                || auction.Status == (int)AuctionStatus.Unavailable)
             {
-                throw new Exception("400: You cannot edit this auction anymore");
+                throw new Exception("400: Bạn không thể cập nhật thông tin cuộc đấu giá này nữa");
             }
             else
             {
@@ -310,6 +332,7 @@ namespace Service.Implement
                 auction.RegistrationEnd = registrationEnd;
                 auction.StartedAt = startedAt;
                 auction.EndedAt = endedAt;
+                auction.MaxEndedAt = endedAt.AddSeconds(90);
                 auction.Status = (int)AuctionStatus.RegistrationOpen;
                 auction.UpdatedAt = DateTime.Now;
                 auction.Step = step;
@@ -323,8 +346,9 @@ namespace Service.Implement
             if (auction == null) {
                 return false;
             }
+            DateTime startTime = (DateTime)auction.StartedAt;
 
-            if(status == (int)AuctionStatus.Opened && DateTime.Now < auction.StartedAt)
+            if (status == (int)AuctionStatus.Opened && DateTime.Now < startTime.AddSeconds(-5))
             {
                 return false;
             }
@@ -338,16 +362,16 @@ namespace Service.Implement
         {
             if (auctionId == null) 
             {
-                throw new Exception("404: Auction not found");
+                throw new Exception("404: Không tìm thấy cuộc đấu giá");
             }
             Auction auction = GetAuctionById(auctionId);
             if (auction.Status < (int)AuctionStatus.Opened)
             {
-                throw new Exception("400: This auction hasn't opened.");
+                throw new Exception("400: Cuộc đấu giá này chưa mở");
             }
             if (auction.Status > (int)AuctionStatus.Opened)
             {
-                throw new Exception("400: This auction has ended.");
+                throw new Exception("400: Cuộc đấu giá này đã kết thúc");
             }
             List<Bid> activeBids = _bidDAO.GetBidsByAuctionId(auctionId).Where(b => b.Status == (int)BidStatus.Active).ToList();
             if (activeBids.Count == 0)
@@ -438,11 +462,11 @@ namespace Service.Implement
         {
             if(bidderId == null)
             {
-                throw new Exception("400: Bidder not found");
+                throw new Exception("400: Không tìm thấy người tham gia");
             }
             if(auctionId == null)
             {
-                throw new Exception("400: Auction not found");
+                throw new Exception("400: Không tìm thấy cuộc đấu giá");
             }
             var checkRegistration = _bidDAO.GetBidsByAuctionId(auctionId)
                     .Where(b => b.BidderId == bidderId && b.Status == (int)BidStatus.Register)
@@ -450,31 +474,31 @@ namespace Service.Implement
             return checkRegistration;
         }
 
-        public void CreateAuctionOrder(int userId, AuctionOrderRequest request) {
+        public async Task<int> CreateAuctionOrder(int userId, AuctionOrderRequest request) {
             var auction = _auctionDAO.GetAuctionById(request.AuctionId);
             if (auction == null) {
-                throw new Exception("404: Auction not found when creating order");
+                throw new Exception("404: Không tìm thấy cuộc đấu giá để tạo đơn hàng");
             }
             if (auction.Status != (int) AuctionStatus.Ended) {
-                throw new Exception("401: This auction cannot be created order with");
+                throw new Exception("401: Không thể tạo đơn hàng với cuộc đấu giá này");
             }
 
             var address = _addressDAO.Get(request.AddressId);
             if (address == null) {
-                throw new Exception("404: Address not found when creating auction order");
+                throw new Exception("404: Không tìm thấy địa chỉ để tạo đơn hàng");
             }
 
             var existOrder = _orderDAO.GetByProductId(auction.ProductId.Value);
             if (existOrder != null) {
-                throw new Exception("409: This auction cannot be created with more order");
+                throw new Exception("409: Không thể tạo thêm đơn hàng với cuộc đấu giá này");
             }
 
             var wallet = _walletService.GetByCurrentUser(userId);
             if (wallet == null) {
-                throw new Exception("404: Wallet not found when creating auction order");
+                throw new Exception("404: Không tìm thấy ví để tạo đơn hàng");
             }
             if (wallet.AvailableBalance < request.ShippingPrice) {
-                throw new Exception("401: Your wallet does not have enough balance to create order");
+                throw new Exception("401: Ví của bạn không có đủ số dư để tạo đơn hàng");
             }
 
             var now = DateTime.Now;
@@ -500,12 +524,151 @@ namespace Service.Implement
                 ImageUrl = _productImageDAO.GetByProductId((int)auction.ProductId).FirstOrDefault().ImageUrl
             });
             _orderDAO.Create(order);
-            var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(userId, now).ToList();
-            foreach(var item in orderList) {
-                //_walletService.CheckoutWallet(userId, item.Id, (int) OrderStatus.ReadyForPickup);
-                _orderService.CreateShippingOrder(item.Id);
+
+            var seller = _sellerDAO.GetSeller(order.SellerId.Value);
+            if (seller == null)
+            {
+                throw new Exception("404: Không tìm thấy người bán để tạo đơn vận chuyển");
+            }
+
+            var sellerAddress = _addressDAO.GetPickupBySellerId(order.SellerId.Value);
+            if (sellerAddress == null)
+            {
+                throw new Exception("404: Không tìm thấy địa chỉ người bán để tạo đơn vận chuyển");
+            }
+            if (sellerAddress.Type != (int)AddressType.Pickup)
+            {
+                throw new Exception("401: Địa chỉ hiện tại không phải địa chỉ lấy hàng");
+            }
+
+            var buyerAddress = _addressDAO.GetBuyerAddressInOrder(order.BuyerId.Value, order.RecipientAddress);
+            if (buyerAddress == null)
+            {
+                throw new Exception("404: Không tìm thấy địa chỉ để tạo đơn vận chuyển");
+            }
+
+            //Call to GHN to create shipping order
+            var client = _httpClientFactory.CreateClient("GHN");
+            client.DefaultRequestHeaders.Add("shop_id", seller.ShopId);
+            var requestGHN = new ShippingOrderRequest
+            {
+                note = $"Đơn hàng cho khách hàng {buyerAddress.RecipientName}",
+                return_name = sellerAddress.RecipientName,
+                return_address = sellerAddress.Street,
+                return_ward_code = sellerAddress.WardCode,
+                return_district_id = sellerAddress.DistrictId.Value,
+                return_phone = sellerAddress.RecipientPhone,
+                to_name = buyerAddress.RecipientName,
+                to_phone = buyerAddress.RecipientPhone,
+                to_address = buyerAddress.Street,
+                to_district_id = buyerAddress.DistrictId.Value,
+                to_ward_code = buyerAddress.WardCode,
+                weight = 0,
+                items = new List<ShippingOrderItem>()
+            };
+            order.OrderItems.ToList().ForEach(p => {
+                var product = _productDAO.GetProductById(p.ProductId);
+                requestGHN.items.Add(new ShippingOrderItem
+                {
+                    name = product.Name,
+                    code = product.Id.ToString(),
+                    quantity = p.Quantity.Value,
+                    weight = (int)product.Weight.Value
+                });
+                requestGHN.weight += (int)product.Weight.Value;
+            });
+
+            var responseMessage = await client.PostAsync("v2/shipping-order/create", Utils.ConvertForPost<ShippingOrderRequest>(requestGHN));
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                throw new Exception($"400: {responseMessage.Content.ReadAsStringAsync().Result}");
+            }
+            var data = await responseMessage.Content.ReadAsAsync<BaseGHNResponse<ShippingOrderResponse>>();
+            order.OrderShippingCode = data.data.order_code;
+            order.Status = (int)OrderStatus.ReadyForPickup;
+            _orderDAO.UpdateOrder(order);
+
+            //Check order status
+            await CheckStatusShippingOrder(order.Id, data.data.order_code);
+            return order.Id;
+        }
+
+        public async Task CheckStatusShippingOrder(int orderId, string orderShippingCode)
+        {
+            //Call to GHN
+            var client = _httpClientFactory.CreateClient("GHN");
+            StringContent content = new(
+                JsonSerializer.Serialize(new
+                {
+                    order_code = orderShippingCode
+                }),
+                Encoding.UTF8,
+                "application/json");
+            var httpResponse = await client.PostAsync("v2/shipping-order/detail", content);
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(10));
+                return;
+            }
+
+            //Get data
+            var responseData = await httpResponse.Content.ReadAsAsync<ShippingOrder.Root>();
+            var order = _orderDAO.Get(orderId);
+            if (order == null)
+            {
+                throw new Exception("404: Không tìm thấy đơn hàng để cập nhật sau khi vận chuyển");
+            }
+
+            if (responseData.data.log == null)
+            {
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
+                return;
+            }
+
+            //Ready for pickup => Delivering
+            if (order.Status == (int)OrderStatus.ReadyForPickup)
+            {
+                var log = responseData.data.log.Where(p => p.status.Contains("picked"));
+                if (log.Any())
+                {
+                    order.Status = (int)OrderStatus.Delivering;
+                    _orderDAO.UpdateOrder(order);
+                }
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
+                return;
+            }
+
+            //Delivering => Delivered
+            if (order.Status == (int)OrderStatus.Delivering)
+            {
+                var log = responseData.data.log.Where(p => p.status.Contains("delivered"));
+                if (log.Any())
+                {
+                    order.Status = (int)OrderStatus.Delivered;
+                    _orderDAO.UpdateOrder(order);
+                    _backgroundJobClient.Schedule(() => DoneOrder(orderId), DateTime.Now.AddMinutes(60 * 24));
+                }
+                return;
             }
         }
+
+        public async void DoneOrder(int orderId)
+        {
+            var order = _orderDAO.Get(orderId);
+            if (order == null)
+            {
+                throw new Exception("404: Không tìm thấy đơn hàng để cập nhật hoàn tất");
+            }
+            if (order.Status == (int)OrderStatus.Done)
+            {
+                return;
+            }
+
+            order.Status = (int)OrderStatus.Done;
+            _orderDAO.UpdateOrder(order);
+            _walletService.AddSellerBalance(orderId);
+        }
+
         public bool CheckWinner(int bidderId, int auctionId)
         {
             Auction auction = _auctionDAO.GetAuctionById(auctionId);

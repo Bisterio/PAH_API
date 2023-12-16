@@ -121,7 +121,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get products successfully", 
+                Message = "Lấy các sản phẩm thành công", 
                 Data = response
             });
         }
@@ -133,7 +133,7 @@ namespace API.Controllers
                 .Skip((pagingParam.PageNumber - 1) * pagingParam.PageSize).Take(pagingParam.PageSize).ToList();
             if (productList == null)
             {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This seller is not exist" });
+                return NotFound(new ErrorDetails { StatusCode = 400, Message = "Người bán này không tồn tại" });
             }
             List<ProductListResponse> response = _mapper.Map<List<ProductListResponse>>(productList);
             foreach (var item in response)
@@ -151,7 +151,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Get products by seller successfully",
+                Message = "Lấy các sản phẩm của người bán thành công",
                 Data = response 
             });
         }
@@ -162,7 +162,7 @@ namespace API.Controllers
             Product product = _productService.GetProductById(id);
             if(product == null)
             {
-                return NotFound(new ErrorDetails { StatusCode = 400, Message = "This product is not exist" });
+                return NotFound(new ErrorDetails { StatusCode = 400, Message = "Sản phẩm này không tồn tại" });
             }
             ProductDetailResponse response = _mapper.Map<ProductDetailResponse>(product);
             List<ProductImage> imageList = _imageService.GetAllImagesByProductId(id);
@@ -185,13 +185,14 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Get product successfully", 
+                Message = "Lấy sản phẩm thành công", 
                 Data = response
             });
         }
 
         [Authorize]
         [HttpPost]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult RegisterProduct([FromBody] ProductRequest request)
         {
             var userId = GetUserIdFromToken();
@@ -200,7 +201,7 @@ namespace API.Controllers
             {
                 return Unauthorized(new ErrorDetails 
                 { StatusCode = (int)HttpStatusCode.Unauthorized, 
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             var auctionRequest = new AuctionRequest
@@ -217,7 +218,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Register product successfully", 
+                Message = "Đăng kí sản phẩm thành công", 
                 Data = null 
             });
         }
@@ -233,7 +234,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails 
                 { 
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this" 
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
 
@@ -249,13 +250,13 @@ namespace API.Controllers
                 return NotFound(new ErrorDetails 
                 { 
                     StatusCode = 400, 
-                    Message = "This product is not exist" 
+                    Message = "Sản phẩm này không tồn tại" 
                 });
             }
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Edit product successfully", 
+                Message = "Cập nhật sản phẩm thành công", 
                 Data = null 
             });
         }
@@ -271,7 +272,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails 
                 { 
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this" 
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             Product product = _productService.DeleteProduct(id, userId);
@@ -280,13 +281,13 @@ namespace API.Controllers
                 return NotFound(new ErrorDetails 
                 { 
                     StatusCode = 400, 
-                    Message = "This product is not exist" 
+                    Message = "Sản phẩm này không tồn tại" 
                 });
             }
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Remove product successfully", 
+                Message = "Xóa sản phẩm thành công", 
                 Data = null
             });
         }

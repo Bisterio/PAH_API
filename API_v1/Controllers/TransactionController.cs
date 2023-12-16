@@ -46,7 +46,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Transaction> transactions = _transactionService.GetTransactionsByUserId(userId, type, orderBy)
@@ -57,7 +57,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get current user's transactions successfully",
+                Message = "Lấy danh sách giao dịch của người dùng hiện tại thành công",
                 Data = responses
             });
         }
@@ -73,7 +73,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             List<Transaction> transactions = _transactionService.GetAllTransactions()
@@ -84,7 +84,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get transactions successfully",
+                Message = "Lấy tất cả giao dịch thành công",
                 Data = responses
             });
         }
@@ -100,7 +100,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             Transaction transaction = _transactionService.GetTransactionById(id);
@@ -110,7 +110,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get transactions successfully",
+                Message = "Lấy thông tin giao dịch thành công",
                 Data = response
             });
         }

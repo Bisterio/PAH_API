@@ -43,16 +43,25 @@ namespace Service.Implement
             return bid;
         }
 
+        public int GetNumberOfParticipants(int auctionId)
+        {
+            return GetAllBidsFromAuction(auctionId, (int)BidStatus.Register)
+                .GroupBy(b => b.BidderId)
+                .Count();
+        }
+
         public int GetNumberOfBidders(int auctionId)
         {
-            return GetAllBidsFromAuction(auctionId, (int)BidStatus.Active)
+            return GetAllBidsFromAuction(auctionId, 0)
+                .Where(b => b.Status != (int)BidStatus.Register)
                 .GroupBy(b => b.BidderId)
                 .Count();
         }
 
         public int GetNumberOfBids(int auctionId)
         {
-            return GetAllBidsFromAuction(auctionId, (int)BidStatus.Active)
+            return GetAllBidsFromAuction(auctionId,  0)
+                .Where(b => b.Status != (int)BidStatus.Register)
                 .Count();
         }
 
@@ -64,6 +73,12 @@ namespace Service.Implement
             }
 
             Auction auction = _auctionDAO.GetAuctionById((int)bid.AuctionId);
+
+            if(auction.StartedAt > DateTime.Now || auction.EndedAt < DateTime.Now)
+            {
+                throw new Exception("400: Thời gian đấu giá đã kết thúc, hãy đợi tổng kết kết quả");
+            }
+
             var registrationList = _bidDAO.GetBidsByAuctionId(auction.Id).Where(b => b.Status == (int)BidStatus.Register).ToList();
             if (auction.Product.SellerId == bidderId)
             {
@@ -129,21 +144,11 @@ namespace Service.Implement
             bidderWallet.LockedBalance += remainder;
 
             _walletDAO.Update(bidderWallet);
-            //_transactionDAO.Create(new Transaction()
-            //{
-            //    Id = 0,
-            //    WalletId = bidderWallet.Id,
-            //    PaymentMethod = (int)PaymentType.Wallet,
-            //    Amount = remainder,
-            //    Type = (int)TransactionType.Deposit,
-            //    Date = DateTime.Now,
-            //    Description = $"Place bid for auction {auction}",
-            //    Status = (int)TransactionType.Payment,
-            //});
             _bidDAO.CreateBid(bid);
 
             DateTime auctionEndDate = (DateTime)auction.EndedAt;
-            if (auctionEndDate.Subtract(DateTime.Now).TotalSeconds < 30)
+            DateTime auctionMaxEndDate = (DateTime)auction.MaxEndedAt;
+            if (auctionEndDate.Subtract(DateTime.Now).TotalSeconds < 30 && auctionEndDate.AddSeconds(30) <= auctionMaxEndDate)
             {
                 DateTime newEndDate = auctionEndDate.AddSeconds(30);
                 auction.EndedAt = newEndDate;
@@ -162,15 +167,15 @@ namespace Service.Implement
             Bid bid = new Bid();
             if (auction.Status < (int)AuctionStatus.RegistrationOpen && DateTime.Now < auction.RegistrationStart)
             {
-                throw new Exception("400: This auction hasn't been opened for registration");
+                throw new Exception("400: Cuộc đấu giá này chưa mở đăng kí");
             }
             else if (auction.Status > (int)AuctionStatus.RegistrationOpen && DateTime.Now > auction.RegistrationEnd)
             {
-                throw new Exception("400: This auction registration has been closed");
+                throw new Exception("400: Cuộc đấu giá này đã đóng đăng kí");
             }
             if (auction.Product.SellerId == bidderId)
             {
-                throw new Exception("400: You cannot join your own auction");
+                throw new Exception("400: Bạn không thể tham gia cuộc đấu giá của chính mình");
             }
             else
             {
@@ -180,7 +185,7 @@ namespace Service.Implement
 
                 if (checkRegistration)
                 {
-                    throw new Exception("400: You have already registered for this auction");
+                    throw new Exception("400: Bạn đã đăng kí tham gia cuộc đấu giá này rồi");
                 }
 
                 if (bidderWallet.AvailableBalance >= (auction.EntryFee + auction.StartingPrice))
@@ -211,7 +216,7 @@ namespace Service.Implement
                 }
                 else
                 {
-                    throw new Exception("400: Your balance is not sufficient.");
+                    throw new Exception("400: Số dư của bạn không đủ");
                 }
             }
         }
@@ -226,7 +231,7 @@ namespace Service.Implement
             {
                 if (bid.Status == (int)BidStatus.Retracted)
                 {
-                    throw new Exception("400: You have retracted before");
+                    throw new Exception("400: Bạn đã rút khỏi cuộc đấu giá này");
                 }
                 bid.Status = (int)BidStatus.Retracted;
                 _bidDAO.UpdateBid(bid);

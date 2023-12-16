@@ -28,7 +28,6 @@ namespace Service.Implement {
         private readonly IWalletService _walletService;
         private readonly ISellerDAO _sellerDAO;
         private readonly IUserDAO _userDAO;
-        private readonly IEmailService _emailService;
         private readonly IConfiguration _config;
         private IHttpClientFactory _httpClientFactory;
         private IBackgroundJobClient _backgroundJobClient;
@@ -38,7 +37,7 @@ namespace Service.Implement {
             IProductImageDAO productImageDAO, IOrderCancelDAO orderCancelDAO,
             IWalletService walletService, IConfiguration config,
             IHttpClientFactory httpClientFactory, IBackgroundJobClient backgroundJobClient,
-            ISellerDAO sellerDAO, IEmailService emailService, IUserDAO userDAO) {
+            ISellerDAO sellerDAO, IUserDAO userDAO) {
             _orderDAO = orderDAO;
             _productDAO = productDAO;
             _addressDAO = addressDAO;
@@ -49,15 +48,14 @@ namespace Service.Implement {
             _httpClientFactory = httpClientFactory;
             _backgroundJobClient = backgroundJobClient;
             _sellerDAO = sellerDAO;
-            _emailService = emailService;
             _userDAO = userDAO;
         }
 
         public void SellerCancelOrder(int sellerId, int orderId, string reason) {
             var order = _orderDAO.Get(orderId);
 
-            if (order == null) throw new Exception("404: Order not found");
-            if (sellerId != order.SellerId || order.Status != (int) OrderStatus.WaitingSellerConfirm) throw new Exception("401: You are not allowed to cancel this order");
+            if (order == null) throw new Exception("404: Không tìm thấy đơn hàng");
+            if (sellerId != order.SellerId || order.Status != (int) OrderStatus.WaitingSellerConfirm) throw new Exception("401: Bạn không được quyền hủy đơn hàng này");
 
             order.Status = (int) OrderStatus.CancelledBySeller;
             _orderDAO.UpdateOrder(order);
@@ -68,20 +66,20 @@ namespace Service.Implement {
         public void ApproveCancelOrderRequest(int sellerId, int orderId) {
             var order = _orderDAO.Get(orderId);
 
-            if (order == null) throw new Exception("404: Order not found");
-            if (sellerId != order.SellerId || order.Status != (int) OrderStatus.CancelApprovalPending) throw new Exception("401: You are not allowed to approve cancel this order");
+            if (order == null) throw new Exception("404: Không tìm thấy đơn hàng");
+            if (sellerId != order.SellerId || order.Status != (int) OrderStatus.CancelApprovalPending) throw new Exception("401: Bạn không được quyền chấp nhận yêu cầu hủy đơn hàng này");
 
             order.Status = (int) OrderStatus.CancelledByBuyer;
             _orderDAO.UpdateOrder(order);
             _walletService.RefundOrder(order.Id);
-            _orderCancelDAO.Create(new OrderCancellation { Id = order.Id, Reason = "Buyer cancelled" });
+            _orderCancelDAO.Create(new OrderCancellation { Id = order.Id, Reason = "Người mua đã hủy đơn hàng" });
         }
 
         public void CancelOrderRequest(int buyerId, int orderId) {
             var order = _orderDAO.Get(orderId);
 
-            if (order == null) throw new Exception("404: Order not found");
-            if (buyerId != order.BuyerId || order.Status != (int) OrderStatus.WaitingSellerConfirm) throw new Exception($"401: You are not allowed to cancel this order with status: {order.Status}");
+            if (order == null) throw new Exception("404: Không tìm thấy đơn hàng");
+            if (buyerId != order.BuyerId || order.Status != (int) OrderStatus.WaitingSellerConfirm) throw new Exception($"401: Bạn không được quyền hủy đơn hàng với trạng thái là: {order.Status}");
 
             order.Status = (int) OrderStatus.CancelApprovalPending;
             _orderDAO.UpdateOrder(order);
@@ -93,8 +91,8 @@ namespace Service.Implement {
 
         public void Checkout(CheckoutRequest request, int buyerId, int addressId) {
             var address = _addressDAO.Get(addressId);
-            if (address == null) throw new Exception("404: Address not found when checkout");
-            if (address.CustomerId != buyerId) throw new Exception("401: Address does not associate with current buyer");
+            if (address == null) throw new Exception("404: Không tìm thấy địa chỉ để mua hàng");
+            if (address.CustomerId != buyerId) throw new Exception("401: Địa chỉ không thống nhất với người mua hiện tại");
             //if (address.Type != (int) AddressType.Delivery) throw new Exception("401: Address type must be delivery");
 
             var dateNow = DateTime.Now;
@@ -103,10 +101,10 @@ namespace Service.Implement {
 
             var wallet = _walletService.GetByCurrentUser(buyerId);
             if (wallet == null) {
-                throw new Exception("400: Wallet not found");
+                throw new Exception("400: Không tìm thấy ví");
             }
             if (wallet.AvailableBalance < totalWithShip && request.PaymentType == (int)PaymentType.Wallet) {
-                throw new Exception("400: Wallet not enough to create order");
+                throw new Exception("400: Không đủ số dư để tạo đơn hàng");
             }
 
             foreach (var order in request.Order) {
@@ -129,13 +127,17 @@ namespace Service.Implement {
                 foreach (var product in order.Products) {
                     var dbProduct = _productDAO.GetProductById(product.Id);
                     if (dbProduct == null) {
-                        throw new Exception("404: Product not found when create order");
+                        throw new Exception("404: Không tìm thấy sản phẩm để tạo đơn hàng");
                     }
                     if (!CheckPrice(product.Price, dbProduct.Price)) {
-                        throw new Exception("400: Price does not match with product in database");
+                        throw new Exception("400: Giá sản phẩm hiện tại không khớp với giá của cơ sở dữ liệu");
                     }
                     if (order.SellerId != dbProduct.SellerId) {
-                        throw new Exception("400: Seller does not match with seller's product in database");
+                        throw new Exception("400: Người bán hiện tại không khớp với người bán của sản phẩm trong cơ sở dữ liệu");
+                    }
+                    if(dbProduct.SellerId == buyerId)
+                    {
+                        throw new Exception("404: Người bán không được phép mua sản phẩm của chính mình");
                     }
                     insert.OrderItems.Add(new OrderItem {
                         ProductId = dbProduct.Id,
@@ -200,13 +202,13 @@ namespace Service.Implement {
         public Order UpdateOrderStatus(int sellerId, int status, int orderId) {
             var order = _orderDAO.Get(orderId);
             if (order == null) {
-                throw new Exception("404: Order not found");
+                throw new Exception("404: Không tìm thấy đơn hàng");
             }
 
             if (sellerId !=  order.SellerId 
                 || order.Status == (int)OrderStatus.CancelledByBuyer 
                 || order.Status == (int) OrderStatus.CancelledBySeller) {
-                throw new Exception("401: You are not allowed to update this order");
+                throw new Exception("401: Bạn không được quyền cập nhật đơn hàng này");
             }
 
             order.Status = status;
@@ -223,11 +225,11 @@ namespace Service.Implement {
         public async Task DefaultShippingOrder(int orderId) {
             var order = _orderDAO.Get(orderId);
             if (order == null) {
-                throw new Exception("404: Order not found when create shipping");
+                throw new Exception("404: Không tìm thấy đơn hàng để tạo đơn vận chuyển");
             }
 
             if (order.Status != (int) OrderStatus.ReadyForPickup) {
-                throw new Exception("401: This order cannot be assigned to be delivered");
+                throw new Exception("401: Đơn hàng này không thể được bàn giao để vận chuyển");
             }
             string orderShippingCode = _config["API3rdParty:GHN:dev:defaultShippingCode"];
             order.OrderShippingCode = orderShippingCode;
@@ -254,7 +256,7 @@ namespace Service.Implement {
             var responseData = await httpResponse.Content.ReadAsAsync<ShippingOrder.Root>();
             var order = _orderDAO.Get(orderId);
             if (order == null) {
-                throw new Exception("404: Order not found when updating after shipping");
+                throw new Exception("404: Không tìm thấy đơn hàng để cập nhật sau khi vận chuyển");
             }
 
             if (responseData.data.log == null) {
@@ -263,15 +265,17 @@ namespace Service.Implement {
             }
 
             //Ready for pickup => Delivering
-            //if (order.Status == (int) OrderStatus.ReadyForPickup) {
-            //    var log = responseData.data.log.Where(p => p.status.Contains("picked"));
-            //    if (log.Any()) {
-            //        order.Status = (int) OrderStatus.Delivering;
-            //        _orderDAO.UpdateOrder(order);
-            //    }
-            //    _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
-            //    return;
-            //}
+            if (order.Status == (int)OrderStatus.ReadyForPickup)
+            {
+                var log = responseData.data.log.Where(p => p.status.Contains("picked"));
+                if (log.Any())
+                {
+                    order.Status = (int)OrderStatus.Delivering;
+                    _orderDAO.UpdateOrder(order);
+                }
+                _backgroundJobClient.Schedule(() => CheckStatusShippingOrder(orderId, orderShippingCode), DateTime.Now.AddMinutes(60 * 24));
+                return;
+            }
 
             //Delivering => Delivered
             if (order.Status == (int) OrderStatus.Delivering) {
@@ -288,7 +292,7 @@ namespace Service.Implement {
         public async void DoneOrder(int orderId) {
             var order = _orderDAO.Get(orderId);
             if (order == null) {
-                throw new Exception("404: Order not found when updating to done");
+                throw new Exception("404: Không tìm thấy đơn hàng để cập nhật hoàn tất");
             }
             if (order.Status == (int) OrderStatus.Done) {
                 return;
@@ -297,50 +301,41 @@ namespace Service.Implement {
             order.Status = (int) OrderStatus.Done;
             _orderDAO.UpdateOrder(order);
             _walletService.AddSellerBalance(orderId);
-
-            var buyer = _userDAO.Get(order.BuyerId.Value);
-            var seller = _userDAO.Get(order.SellerId.Value);
-
-            if (buyer == null || seller == null) {
-                throw new Exception("404: Buyer or seller not found when sending email done order");
-            }
-            var message = new Message(new string[] { buyer.Email, seller.Email }, $"Order #{orderId} updates", $"Order has been done");
-            await _emailService.SendEmail(message);
         }
 
         public async Task CreateShippingOrder(int orderId) {
             //Get order, address info
             var order = _orderDAO.Get(orderId);
             if (order == null) {
-                throw new Exception("404: Order not found when creating shipping order");
+                throw new Exception("404: Không tìm thấy đơn hàng để tạo đơn vận chuyển");
             }
-            if (order.Status != (int) OrderStatus.ReadyForPickup) {
-                throw new Exception("401: Cannot create shipping order with this order");
+            if (order.Status != (int) OrderStatus.WaitingSellerConfirm) {
+                throw new Exception("401: Không thể tạo đơn vận chuyển cho đơn hàng này");
             }
 
             var seller = _sellerDAO.GetSeller(order.SellerId.Value);
             if (seller == null) {
-                throw new Exception("404: Seller not found when creating shipping order");
+                throw new Exception("404: Không tìm thấy người bán để tạo đơn vận chuyển");
             }
             
             var sellerAddress = _addressDAO.GetPickupBySellerId(order.SellerId.Value);
             if (sellerAddress == null) {
-                throw new Exception("404: Seller address not found when creating shipping order");
+                throw new Exception("404: Không tìm thấy địa chỉ người bán để tạo đơn vận chuyển");
             }
             if (sellerAddress.Type != (int) AddressType.Pickup) {
-                throw new Exception("401: Address is not pick up when creating shipping order");
+                throw new Exception("401: Địa chỉ hiện tại không phải địa chỉ lấy hàng");
             }
 
             var buyerAddress = _addressDAO.GetBuyerAddressInOrder(order.BuyerId.Value, order.RecipientAddress);
             if (buyerAddress == null) {
-                throw new Exception("404: Address not found when creating shipping order");
+                throw new Exception("404: Không tìm thấy địa chỉ để tạo đơn vận chuyển");
             }
 
             //Call to GHN to create shipping order
             var client = _httpClientFactory.CreateClient("GHN");
             client.DefaultRequestHeaders.Add("shop_id", seller.ShopId);
             var request = new ShippingOrderRequest {
-                note = $"Order for customer {buyerAddress.RecipientName}",
+                note = $"Đơn hàng cho khách hàng {buyerAddress.RecipientName}",
                 return_name = sellerAddress.RecipientName,
                 return_address = sellerAddress.Street,
                 return_ward_code = sellerAddress.WardCode,
@@ -352,7 +347,8 @@ namespace Service.Implement {
                 to_district_id = buyerAddress.DistrictId.Value,
                 to_ward_code = buyerAddress.WardCode,
                 weight = 0,
-                items = new List<ShippingOrderItem>()
+                items = new List<ShippingOrderItem>(),
+                insurance_value = 0
             };
             order.OrderItems.ToList().ForEach(p => {
                 var product = _productDAO.GetProductById(p.ProductId);
@@ -367,11 +363,11 @@ namespace Service.Implement {
             
             var responseMessage = await client.PostAsync("v2/shipping-order/create", Utils.ConvertForPost<ShippingOrderRequest>(request));
             if (!responseMessage.IsSuccessStatusCode) {
-                throw new Exception($"500: {responseMessage.Content}");
+                throw new Exception($"400: {responseMessage.Content.ReadAsStringAsync().Result}");
             }
             var data = await responseMessage.Content.ReadAsAsync<BaseGHNResponse<ShippingOrderResponse>>();
             order.OrderShippingCode = data.data.order_code;
-            order.Status = (int) OrderStatus.Delivering;
+            order.Status = (int) OrderStatus.ReadyForPickup;
             _orderDAO.UpdateOrder(order);
 
             //Check order status

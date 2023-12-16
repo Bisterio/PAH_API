@@ -17,6 +17,9 @@ using Respon.UserRes;
 using API.Hubs;
 using Hangfire;
 using Microsoft.AspNetCore.SignalR;
+using FirebaseAdmin.Messaging;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 namespace API.Controllers
 {
@@ -31,6 +34,7 @@ namespace API.Controllers
         private readonly IAuctionService _auctionService;
         private readonly IBackgroundJobClient _backgroundJobClient;
         private IHubContext<AuctionHub> _hubContext { get; set; }
+        private readonly FirebaseMessaging messaging;
 
         public BidController(IBidService bidService, IMapper mapper, IUserService userService,
             IAuctionService auctionService, IBackgroundJobClient backgroundJobClient,
@@ -42,6 +46,12 @@ namespace API.Controllers
             _auctionService = auctionService;
             _backgroundJobClient = backgroundJobClient;
             _hubContext = hubcontext;
+            var app = FirebaseApp.DefaultInstance;
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                app = FirebaseApp.Create(new AppOptions() { Credential = GoogleCredential.FromFile("firebase-key.json").CreateScoped("https://www.googleapis.com/auth/firebase.messaging") });
+            }
+            messaging = FirebaseMessaging.GetMessaging(app);
         }
 
         private int GetUserIdFromToken()
@@ -80,13 +90,14 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Get bids successfully",
+                Message = "Lấy danh sách những lần đặt giá thành công",
                 Data = response
             });
         }
 
         [Authorize]
         [HttpPost]
+        [ServiceFilter(typeof(ValidateModelAttribute))]
         public IActionResult PlaceBid([FromBody] BidRequest request)
         {
             var bidderId = GetUserIdFromToken();
@@ -96,7 +107,7 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
 
@@ -108,20 +119,20 @@ namespace API.Controllers
                 DateTime endTime = (DateTime)auction.EndedAt;
 
                 // Set new schedule for auction end
-                _backgroundJobClient.Schedule(() => EndAuction(auction.Id, true), endTime);
-                _backgroundJobClient.Schedule(() => NotifyEndAuction(auction.Id), endTime.AddSeconds(-40));
+                _backgroundJobClient.Schedule(() => EndAuction(auction.Id, true), endTime.AddSeconds(-5));
+                _backgroundJobClient.Schedule(() => NotifyEndAuction(auction.Id), endTime.AddSeconds(-35));
             }
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Place bid successfully",
+                Message = "Đặt giá thành công",
                 Data = null
             });
         }
 
         [Authorize]
         [HttpPost("auction/register/{id}")]
-        public IActionResult RegisterAuction(int id)
+        public async Task<IActionResult> RegisterAuction(int id)
         {
             var bidderId = GetUserIdFromToken();
             var bidder = _userService.Get(bidderId);
@@ -130,14 +141,24 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _bidService.RegisterToJoinAuction(bidderId, id);
+            var notiMessage = new FirebaseAdmin.Messaging.Message()
+            {
+                Notification = new Notification
+                {
+                    Title = "Đăng ký tham gia đấu giá thành công",
+                    Body = "Phí tham gia đấu giá đã bị trừ vào tài khoản của bạn!"
+                },
+                Topic = "USER_" + bidderId
+            };
+            await messaging.SendAsync(notiMessage);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Register to join auction successfully",
+                Message = "Đăng kí tham gia cuộc đấu giá thành công",
                 Data = null
             });
         }
@@ -153,14 +174,14 @@ namespace API.Controllers
                 return Unauthorized(new ErrorDetails
                 {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không có quyền truy cập nội dung này"
                 });
             }
             _bidService.RetractBid(id, bidderId);
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Retract successfully",
+                Message = "Rút lui khỏi cuộc đấu giá thành công",
                 Data = null
             });
         }
@@ -170,7 +191,8 @@ namespace API.Controllers
         public async Task<WinnerResponse?> EndAuction(int auctionId, bool scheduled = true)
         {
             var auction = _auctionService.GetAuctionById(auctionId);
-            if (scheduled && DateTime.Now < auction.EndedAt)
+            DateTime endTime = (DateTime)auction.EndedAt;
+            if (scheduled && DateTime.Now < endTime.AddSeconds(-5))
             {
                 throw new Exception("404: EndedDate Changed");
             }
@@ -199,7 +221,7 @@ namespace API.Controllers
         {
             var auction = _auctionService.GetAuctionById(auctionId);
             DateTime endTime = (DateTime)auction.EndedAt;
-            if (DateTime.Now < endTime.AddSeconds(-40))
+            if (DateTime.Now < endTime.AddSeconds(-35))
             {
                 throw new Exception("404: EndedDate Changed");
             }

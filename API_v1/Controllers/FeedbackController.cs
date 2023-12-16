@@ -22,14 +22,17 @@ namespace API.Controllers
     {
         private readonly ILogger _logger;
         private readonly IFeedbackService _feedbackService;
+        private readonly IProductService _productService;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
 
-        public FeedbackController(IFeedbackService feedbackService, IMapper mapper, IUserService userService)
+        public FeedbackController(IFeedbackService feedbackService, IMapper mapper, IUserService userService,
+            IProductService productService)
         {
             _feedbackService = feedbackService;
             _mapper = mapper;
             _userService = userService;
+            _productService = productService;
         }
 
         private int GetUserIdFromToken()
@@ -47,7 +50,7 @@ namespace API.Controllers
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get feedback successfully",
+                Message = "Lấy đánh giá thành công",
                 Data = response 
             });
         }
@@ -66,7 +69,7 @@ namespace API.Controllers
             return Ok(new BaseResponse
             {
                 Code = (int)HttpStatusCode.OK,
-                Message = "Get all feedbacks successfully",
+                Message = "Lấy tất cả đánh giá thành công",
                 Data = responses
             });
         }
@@ -84,14 +87,45 @@ namespace API.Controllers
 
             if (user == null)
             {
-                return Unauthorized(new ErrorDetails { StatusCode = (int)HttpStatusCode.Unauthorized, Message = "You are not allowed to access this" });
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "Bạn không có quyền truy cập nội dung này"
+                });
+            }
+
+            if (user.Role != (int)Role.Buyer && user.Role != (int)Role.Seller)
+            {
+                return Unauthorized(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.Unauthorized,
+                    Message = "Bạn không có quyền truy cập nội dung này"
+                });
+            }
+
+            var product = _productService.GetProductById(request.ProductId);
+            if (product == null) {
+                return BadRequest(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message = "Không thể tìm thấy sản phẩm này"
+                });
+            }
+
+            if (product.SellerId == id)
+            {
+                return BadRequest(new ErrorDetails
+                {
+                    StatusCode = (int)HttpStatusCode.BadRequest,
+                    Message = "Bạn không được đánh giá sản phẩm của chính mình"
+                });
             }
 
             _feedbackService.CreateFeedback(id, request.ProductId, request.BuyerFeedback, request.Ratings);
             return Ok(new BaseResponse 
             { 
                 Code = (int)HttpStatusCode.OK, 
-                Message = "Feedback successfully", 
+                Message = "Đánh giá sản phẩm thành công", 
                 Data = null 
             });
         }

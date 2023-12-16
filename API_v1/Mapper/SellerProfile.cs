@@ -13,6 +13,7 @@ namespace API.Mapper
             CreateMap<Seller, SellerWithAddressResponse>();
             CreateMap<Seller, SellerDetailResponse>();
             CreateMap<Seller, SellerRequestResponse>();
+            CreateMap<Seller, SellerWithSalesResponse>();
         }
     }
 }

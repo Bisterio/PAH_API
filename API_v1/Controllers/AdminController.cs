@@ -47,13 +47,13 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int)HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             _adminService.CreateStaff(_mapper.Map<User>(request));
@@ -73,7 +73,7 @@ namespace API.Controllers {
             return Ok(new BaseResponse {
                 Code = 200,
                 Message =
-                "Created Staff account successfully, please check your email for link",
+                "Tạo tài khoản nhân viên thành công. Nhân viên cần phải xác thực email để có thể đăng nhập!",
                 Data = null
             });
         }
@@ -86,19 +86,19 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             _adminService.UpdateStaff(_mapper.Map<User>(request));
             return Ok(new BaseResponse {
                 Code = (int) HttpStatusCode.OK,
-                Message = "Create staff successfully",
+                Message = "Cập nhật thông tin nhân viên thành công",
                 Data = null
             });
         }
@@ -110,13 +110,13 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             var list = _adminService.GetAccounts(accountParam);
@@ -137,13 +137,13 @@ namespace API.Controllers {
             if (user == null) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             if (user.Role != (int) Role.Administrator) {
                 return Unauthorized(new ErrorDetails {
                     StatusCode = (int) HttpStatusCode.Unauthorized,
-                    Message = "You are not allowed to access this"
+                    Message = "Bạn không được truy cập tính năng này"
                 });
             }
             _adminService.UpdateStatusAccount(request.Id, request.Status);

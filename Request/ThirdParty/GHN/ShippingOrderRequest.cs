@@ -37,5 +37,6 @@ namespace Request.ThirdParty.GHN {
         public int service_type_id { get; set; } = 2;
         public object coupon { get; set; }
         public List<ShippingOrderItem> items { get; set; }
+        public int insurance_value { get; set; } = 0;
     }
 }

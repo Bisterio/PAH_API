@@ -13,6 +13,7 @@ namespace Service {
         public List<User> GetAll();
         public List<User> GetAllBuyersSellers();
         public List<User> GetAllStaffs();
+        public List<User> GetBuyersWithDoneOrders();
         public User GetByEmail(string email);
         public User Login(string email, string password);
         public User LoginWithGoogle(string email, string name, string profileUrl);
@@ -36,5 +37,7 @@ namespace Service {
         public void ResetPassword(ResetPasswordRequest request);
         public void VerifyAccount(string email, string code);
         public string CreateVerificationCode(string email);
+        public List<RevenueResponse> GetRevenues(int year);
+        public int CountDoneOrdersByBuyerId(int id);
     }
 }
