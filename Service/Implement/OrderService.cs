@@ -347,7 +347,8 @@ namespace Service.Implement {
                 to_district_id = buyerAddress.DistrictId.Value,
                 to_ward_code = buyerAddress.WardCode,
                 weight = 0,
-                items = new List<ShippingOrderItem>()
+                items = new List<ShippingOrderItem>(),
+                insurance_value = 0
             };
             order.OrderItems.ToList().ForEach(p => {
                 var product = _productDAO.GetProductById(p.ProductId);

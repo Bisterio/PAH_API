@@ -16,9 +16,10 @@ namespace Request
         [Range(1000, Double.MaxValue, ErrorMessage = "Giá cả ít nhất phải là 1.000 VNĐ")]
         public decimal Price { get; set; }
         [Required(ErrorMessage = "Không được để trống kích thước")]
+        [RegularExpression(@"^\d+x\d+x\d+$", ErrorMessage = "Kích thước không hợp lệ")]
         public string? Dimension { get; set; }
         [Required(ErrorMessage = "Không được để trống khối lượng")]
-        [Range(1, Double.MaxValue, ErrorMessage = "Khối lượng ít nhất phải là 1g")]
+        [Range(1, 30000, ErrorMessage = "Khối lượng ít nhất phải là 1 gram và nhiều nhất là 30000 gram")]
         public decimal? Weight { get; set; }
         [Required(ErrorMessage = "Không được để trống xuất xứ")]
         public string? Origin { get; set; }
@@ -49,6 +50,23 @@ namespace Request
                     yield return new ValidationResult("Bước giá cần lớn hơn 50.000 VNĐ",
                     new[] { nameof(Step) });
                 }
+            }
+
+            decimal[] sizes = Dimension.Split('x').Select(decimal.Parse).ToArray();
+            if (sizes[0] <= 0 || sizes[0] > 150)
+            {
+                yield return new ValidationResult("Chiều dài cần phải lớn hơn 0 cm và nhỏ hơn hoặc bằng 150 cm",
+                    new[] { nameof(Dimension) });
+            }
+            if (sizes[1] <= 0 || sizes[1] > 150)
+            {
+                yield return new ValidationResult("Chiều dài cần phải lớn hơn 0 cm và nhỏ hơn hoặc bằng 150 cm",
+                    new[] { nameof(Dimension) });
+            }
+            if (sizes[2] <= 0 || sizes[2] > 150)
+            {
+                yield return new ValidationResult("Chiều dài cần phải lớn hơn 0 cm và nhỏ hơn hoặc bằng 150 cm",
+                    new[] { nameof(Dimension) });
             }
         }
     }
