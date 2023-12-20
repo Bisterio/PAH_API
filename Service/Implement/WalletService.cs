@@ -120,6 +120,33 @@ namespace Service.Implement
             order.Status = orderStatus;
             _orderDAO.UpdateOrder(order);
         }
+        
+        public void CheckoutZalopay(int userId, int orderId, int orderStatus) {
+            var wallet = _walletDAO.Get(userId);
+            if (wallet == null) {
+                throw new Exception("404: Không tìm thấy ví");
+            }
+
+            var order = _orderDAO.Get(orderId);
+            if (order == null) {
+                throw new Exception("404: Không tìm thấy đơn hàng để thanh toán");
+            }
+
+            //Add transaction
+            _transactionDAO.Create(new DataAccess.Models.Transaction {
+                Id = 0,
+                WalletId = wallet.Id,
+                PaymentMethod = (int) PaymentType.Zalopay,
+                Amount = order.TotalAmount + order.ShippingCost,
+                Type = (int) TransactionType.Payment,
+                Date = DateTime.Now,
+                Description = $"Thanh toán đơn hàng: {orderId}",
+                Status = (int) Status.Available
+            });
+            //Update order status to Waiting for Seller Confirm
+            order.Status = orderStatus;
+            _orderDAO.UpdateOrder(order);
+        }
 
         public Wallet GetByCurrentUser(int id)
         {

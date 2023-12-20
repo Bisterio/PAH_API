@@ -154,7 +154,7 @@ namespace Service.Implement {
                     CheckoutWallet(totalWithShip, buyerId, dateNow); 
                     break;
                 case (int) PaymentType.Zalopay:
-                    CheckoutZalopay(); 
+                    CheckoutZalopay(totalWithShip, buyerId, dateNow); 
                     break;
                 default:
                     break;
@@ -168,8 +168,11 @@ namespace Service.Implement {
             });
         }
 
-        private void CheckoutZalopay() {
-
+        private void CheckoutZalopay(decimal total, int buyerId, DateTime now) {
+            var orderList = _orderDAO.GetAllByBuyerIdAfterCheckout(buyerId, now).ToList();
+            orderList.ForEach(order => {
+                _walletService.CheckoutZalopay(buyerId, order.Id, (int)OrderStatus.WaitingSellerConfirm);
+            });
         }
 
         private bool CheckPrice(decimal requestPrice, decimal dbPrice) {
